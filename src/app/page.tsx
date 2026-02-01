@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { UserSpecs, GameDetails, GameRequirements, ComparisonItem } from "@/types";
 import { compareSpecs } from "@/lib/compareSpecs";
+import { useBenchmarks } from "@/lib/useBenchmarks";
 import SystemSpecs from "@/components/SystemSpecs";
 import GameSearch from "@/components/GameSearch";
 import RequirementsEditor from "@/components/RequirementsEditor";
@@ -31,6 +32,7 @@ function hasAnyField(reqs: GameRequirements): boolean {
 }
 
 export default function Home() {
+  const { cpuList, gpuList, cpuScores, gpuScores } = useBenchmarks();
   const [specs, setSpecs] = useState<UserSpecs>(defaultSpecs);
   const [game, setGame] = useState<GameDetails | null>(null);
   const [minReqs, setMinReqs] = useState<GameRequirements>(emptyReqs);
@@ -51,8 +53,8 @@ export default function Home() {
     }
     const min = hasAnyField(minReqs) ? minReqs : null;
     const rec = hasAnyField(recReqs) ? recReqs : null;
-    setComparison(compareSpecs(specs, min, rec));
-  }, [specs, minReqs, recReqs]);
+    setComparison(compareSpecs(specs, min, rec, cpuScores, gpuScores));
+  }, [specs, minReqs, recReqs, cpuScores, gpuScores]);
 
   useEffect(() => {
     runComparison();
@@ -95,7 +97,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SystemSpecs specs={specs} onChange={setSpecs} />
+      <SystemSpecs specs={specs} onChange={setSpecs} cpuList={cpuList} gpuList={gpuList} />
       <GameSearch onSelect={handleGameSelect} />
 
       {!showEditor && (

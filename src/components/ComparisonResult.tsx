@@ -65,6 +65,9 @@ export default function ComparisonResult({ items, gameName }: Props) {
             <span className="badge badge-error badge-sm mr-1">FAIL</span> Your system does not meet this requirement
           </p>
           <p>
+            <span className="badge badge-warning badge-sm mr-1">CHECK</span> Different platform — verify compatibility manually
+          </p>
+          <p>
             <span className="badge badge-ghost badge-sm mr-1">INFO</span> Cannot be compared automatically — check manually
           </p>
         </div>

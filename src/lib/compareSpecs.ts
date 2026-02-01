@@ -1,5 +1,5 @@
 import { UserSpecs, GameRequirements, ComparisonItem, ComparisonStatus } from "@/types";
-import { cpuList, gpuList, cpuScores, gpuScores } from "@/lib/hardwareData";
+import { osList, osScores } from "@/lib/hardwareData";
 import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
 
 function parseGB(text: string): number | null {
@@ -27,6 +27,31 @@ function compareNumeric(
   return userVal >= reqVal ? "pass" : "fail";
 }
 
+function compareOS(userOS: string, reqOS: string): ComparisonStatus {
+  if (!userOS || !reqOS) return "info";
+
+  // Try to match both user and requirement OS against known OS list
+  const userMatch = fuzzyMatchHardware(userOS, osList);
+  const reqMatch = fuzzyMatchHardware(reqOS, osList);
+
+  if (!userMatch || !reqMatch) return "info";
+
+  const userScore = osScores[userMatch];
+  const reqScore = osScores[reqMatch];
+
+  if (userScore == null || reqScore == null) return "info";
+
+  // Check platform compatibility: Windows requirement can't be met by macOS/Linux and vice versa
+  const userPlatform = userMatch.startsWith("Windows") ? "windows"
+    : userMatch.startsWith("macOS") ? "macos" : "linux";
+  const reqPlatform = reqMatch.startsWith("Windows") ? "windows"
+    : reqMatch.startsWith("macOS") ? "macos" : "linux";
+
+  if (userPlatform !== reqPlatform) return "warn";
+
+  return userScore >= reqScore ? "pass" : "fail";
+}
+
 function compareHardware(
   userText: string,
   reqText: string,
@@ -51,21 +76,23 @@ function compareHardware(
 export function compareSpecs(
   user: UserSpecs,
   minimum: GameRequirements | null,
-  recommended: GameRequirements | null
+  recommended: GameRequirements | null,
+  cpuScores: Record<string, number>,
+  gpuScores: Record<string, number>
 ): ComparisonItem[] {
   const min = minimum ?? { os: "", cpu: "", gpu: "", ram: "", storage: "", directx: "" };
   const rec = recommended ?? { os: "", cpu: "", gpu: "", ram: "", storage: "", directx: "" };
 
   const items: ComparisonItem[] = [];
 
-  // OS — text comparison only
+  // OS — version-based comparison
   items.push({
     label: "Operating System",
     userValue: user.os || "Unknown",
     minValue: min.os || "—",
     recValue: rec.os || "—",
-    minStatus: "info",
-    recStatus: "info",
+    minStatus: compareOS(user.os, min.os),
+    recStatus: compareOS(user.os, rec.os),
   });
 
   // CPU — fuzzy match + score comparison
@@ -82,8 +109,8 @@ export function compareSpecs(
     userValue: cpuDisplay,
     minValue: min.cpu || "—",
     recValue: rec.cpu || "—",
-    minStatus: compareHardware(user.cpu, min.cpu, cpuList, cpuScores),
-    recStatus: compareHardware(user.cpu, rec.cpu, cpuList, cpuScores),
+    minStatus: compareHardware(user.cpu, min.cpu, Object.keys(cpuScores), cpuScores),
+    recStatus: compareHardware(user.cpu, rec.cpu, Object.keys(cpuScores), cpuScores),
   });
 
   // GPU — fuzzy match + score comparison
@@ -92,8 +119,8 @@ export function compareSpecs(
     userValue: user.gpu || "Unknown",
     minValue: min.gpu || "—",
     recValue: rec.gpu || "—",
-    minStatus: compareHardware(user.gpu, min.gpu, gpuList, gpuScores),
-    recStatus: compareHardware(user.gpu, rec.gpu, gpuList, gpuScores),
+    minStatus: compareHardware(user.gpu, min.gpu, Object.keys(gpuScores), gpuScores),
+    recStatus: compareHardware(user.gpu, rec.gpu, Object.keys(gpuScores), gpuScores),
   });
 
   // RAM — numeric comparison

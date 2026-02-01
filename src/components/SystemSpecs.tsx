@@ -4,14 +4,16 @@ import { useEffect, useState } from "react";
 import { UserSpecs } from "@/types";
 import { detectSpecs } from "@/lib/detectSpecs";
 import AutocompleteInput from "./AutocompleteInput";
-import { cpuList, gpuList, osList } from "@/lib/hardwareData";
+import { osList } from "@/lib/hardwareData";
 
 interface Props {
   specs: UserSpecs;
   onChange: (specs: UserSpecs) => void;
+  cpuList: string[];
+  gpuList: string[];
 }
 
-export default function SystemSpecs({ specs, onChange }: Props) {
+export default function SystemSpecs({ specs, onChange, cpuList, gpuList }: Props) {
   const [detected, setDetected] = useState(false);
 
   useEffect(() => {

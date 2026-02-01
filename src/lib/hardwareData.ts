@@ -72,6 +72,21 @@ export const cpuList: string[] = [
   "AMD Ryzen 7 7700X",
   "AMD Ryzen 9 7900X",
   "AMD Ryzen 9 7950X",
+  // Apple Silicon
+  "Apple M1",
+  "Apple M1 Pro",
+  "Apple M1 Max",
+  "Apple M1 Ultra",
+  "Apple M2",
+  "Apple M2 Pro",
+  "Apple M2 Max",
+  "Apple M2 Ultra",
+  "Apple M3",
+  "Apple M3 Pro",
+  "Apple M3 Max",
+  "Apple M4",
+  "Apple M4 Pro",
+  "Apple M4 Max",
 ];
 
 export const gpuList: string[] = [
@@ -136,6 +151,21 @@ export const gpuList: string[] = [
   "AMD Radeon RX 7800 XT",
   "AMD Radeon RX 7900 XT",
   "AMD Radeon RX 7900 XTX",
+  // Apple Silicon (integrated GPU)
+  "Apple M1 GPU",
+  "Apple M1 Pro GPU",
+  "Apple M1 Max GPU",
+  "Apple M1 Ultra GPU",
+  "Apple M2 GPU",
+  "Apple M2 Pro GPU",
+  "Apple M2 Max GPU",
+  "Apple M2 Ultra GPU",
+  "Apple M3 GPU",
+  "Apple M3 Pro GPU",
+  "Apple M3 Max GPU",
+  "Apple M4 GPU",
+  "Apple M4 Pro GPU",
+  "Apple M4 Max GPU",
 ];
 
 // Relative performance scores (~10-100 scale, not real benchmarks)
@@ -213,6 +243,21 @@ export const cpuScores: Record<string, number> = {
   "AMD Ryzen 7 7700X": 82,
   "AMD Ryzen 9 7900X": 90,
   "AMD Ryzen 9 7950X": 100,
+  // Apple Silicon
+  "Apple M1": 52,
+  "Apple M1 Pro": 65,
+  "Apple M1 Max": 72,
+  "Apple M1 Ultra": 85,
+  "Apple M2": 58,
+  "Apple M2 Pro": 70,
+  "Apple M2 Max": 78,
+  "Apple M2 Ultra": 90,
+  "Apple M3": 65,
+  "Apple M3 Pro": 75,
+  "Apple M3 Max": 85,
+  "Apple M4": 72,
+  "Apple M4 Pro": 82,
+  "Apple M4 Max": 92,
 };
 
 export const gpuScores: Record<string, number> = {
@@ -277,6 +322,40 @@ export const gpuScores: Record<string, number> = {
   "AMD Radeon RX 7800 XT": 65,
   "AMD Radeon RX 7900 XT": 80,
   "AMD Radeon RX 7900 XTX": 88,
+  // Apple Silicon (integrated GPU)
+  "Apple M1 GPU": 25,
+  "Apple M1 Pro GPU": 35,
+  "Apple M1 Max GPU": 48,
+  "Apple M1 Ultra GPU": 60,
+  "Apple M2 GPU": 30,
+  "Apple M2 Pro GPU": 40,
+  "Apple M2 Max GPU": 52,
+  "Apple M2 Ultra GPU": 65,
+  "Apple M3 GPU": 38,
+  "Apple M3 Pro GPU": 48,
+  "Apple M3 Max GPU": 62,
+  "Apple M4 GPU": 42,
+  "Apple M4 Pro GPU": 55,
+  "Apple M4 Max GPU": 70,
+};
+
+// OS version ordering for comparison (higher = newer)
+export const osScores: Record<string, number> = {
+  "Windows 7": 10,
+  "Windows 8": 20,
+  "Windows 8.1": 25,
+  "Windows 10": 30,
+  "Windows 11": 40,
+  "macOS Monterey": 30,
+  "macOS Ventura": 33,
+  "macOS Sonoma": 36,
+  "macOS Sequoia": 40,
+  "Ubuntu 22.04": 30,
+  "Ubuntu 24.04": 35,
+  "Linux Mint": 30,
+  "Fedora": 32,
+  "Arch Linux": 35,
+  "SteamOS": 30,
 };
 
 export const osList: string[] = [
