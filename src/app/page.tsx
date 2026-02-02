@@ -5,6 +5,8 @@ import { UserSpecs, GameDetails, GameRequirements, ComparisonItem } from "@/type
 import { compareSpecs } from "@/lib/compareSpecs";
 import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
+import { detectClientSpecs } from "@/lib/detectClientSpecs";
+import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
 import SystemSpecs from "@/components/SystemSpecs";
 import GameSearch from "@/components/GameSearch";
 import RequirementsEditor from "@/components/RequirementsEditor";
@@ -38,14 +40,32 @@ export default function Home() {
   const { cpuList, gpuList, cpuScores, gpuScores } = useBenchmarks();
   const [specs, setSpecs] = useState<UserSpecs>(defaultSpecs);
   const [detecting, setDetecting] = useState(true);
+  const [unmatchedFields, setUnmatchedFields] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("/api/detect")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data: UserSpecs) => setSpecs(data))
+    detectClientSpecs()
+      .then((data) => {
+        setSpecs(data);
+
+        // After benchmarks load, check which detected fields don't match
+        const unmatched: string[] = [];
+        if (data.cpu && cpuList.length > 0 && !fuzzyMatchHardware(data.cpu, cpuList)) {
+          unmatched.push("CPU");
+        }
+        if (data.gpu && gpuList.length > 0 && !fuzzyMatchHardware(data.gpu, gpuList)) {
+          unmatched.push("GPU");
+        }
+        if (!data.ramGB) {
+          unmatched.push("RAM");
+        }
+        if (!data.storageGB) {
+          unmatched.push("Storage");
+        }
+        setUnmatchedFields(unmatched);
+      })
       .catch(() => {})
       .finally(() => setDetecting(false));
-  }, []);
+  }, [cpuList, gpuList]);
   const [game, setGame] = useState<GameDetails | null>(null);
   const [minReqs, setMinReqs] = useState<GameRequirements>(emptyReqs);
   const [recReqs, setRecReqs] = useState<GameRequirements>(emptyReqs);
@@ -76,6 +96,21 @@ export default function Home() {
   function handleSpecsChange(newSpecs: UserSpecs) {
     setSpecs(newSpecs);
     setSpecsDirty(true);
+    // Re-evaluate matches when user edits specs
+    const unmatched: string[] = [];
+    if (newSpecs.cpu && cpuList.length > 0 && !fuzzyMatchHardware(newSpecs.cpu, cpuList)) {
+      unmatched.push("CPU");
+    }
+    if (newSpecs.gpu && gpuList.length > 0 && !fuzzyMatchHardware(newSpecs.gpu, gpuList)) {
+      unmatched.push("GPU");
+    }
+    if (!newSpecs.ramGB) {
+      unmatched.push("RAM");
+    }
+    if (!newSpecs.storageGB) {
+      unmatched.push("Storage");
+    }
+    setUnmatchedFields(unmatched);
   }
 
   async function handleGameSelect(appid: number) {
@@ -123,6 +158,7 @@ export default function Home() {
         cpuList={cpuList}
         gpuList={gpuList}
         detecting={detecting}
+        unmatchedFields={unmatchedFields}
       />
       <GameSearch onSelect={handleGameSelect} />
 
