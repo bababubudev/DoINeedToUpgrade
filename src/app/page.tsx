@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { UserSpecs, GameDetails, GameRequirements, ComparisonItem } from "@/types";
 import { compareSpecs } from "@/lib/compareSpecs";
 import { computeVerdict } from "@/lib/computeVerdict";
@@ -37,6 +37,15 @@ function hasAnyField(reqs: GameRequirements): boolean {
 export default function Home() {
   const { cpuList, gpuList, cpuScores, gpuScores } = useBenchmarks();
   const [specs, setSpecs] = useState<UserSpecs>(defaultSpecs);
+  const [detecting, setDetecting] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/detect")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data: UserSpecs) => setSpecs(data))
+      .catch(() => {})
+      .finally(() => setDetecting(false));
+  }, []);
   const [game, setGame] = useState<GameDetails | null>(null);
   const [minReqs, setMinReqs] = useState<GameRequirements>(emptyReqs);
   const [recReqs, setRecReqs] = useState<GameRequirements>(emptyReqs);
@@ -113,6 +122,7 @@ export default function Home() {
         dirty={specsDirty}
         cpuList={cpuList}
         gpuList={gpuList}
+        detecting={detecting}
       />
       <GameSearch onSelect={handleGameSelect} />
 

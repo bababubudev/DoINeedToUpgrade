@@ -8,6 +8,7 @@ interface Props {
   onSubmit?: () => void;
   options: string[];
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export default function AutocompleteInput({
@@ -16,6 +17,7 @@ export default function AutocompleteInput({
   onSubmit,
   options,
   placeholder,
+  disabled,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -62,6 +64,7 @@ export default function AutocompleteInput({
         }}
         onFocus={() => filtered.length > 0 && setIsOpen(true)}
         placeholder={placeholder}
+        disabled={disabled}
       />
       {isOpen && filtered.length > 0 && (
         <ul className="menu bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-60 overflow-y-auto shadow-lg">

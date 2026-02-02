@@ -20,7 +20,7 @@ export default function RootLayout({
             <ThemeToggle />
           </div>
           <h1 className="text-4xl font-bold text-center mb-2">
-            Do I Need To Upgrade
+            Do I Need To Upgrade?
           </h1>
           <p className="text-center text-base-content/60 mb-8">
             Find out if your PC needs an upgrade to run any Steam game

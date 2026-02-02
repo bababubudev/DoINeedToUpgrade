@@ -11,9 +11,10 @@ interface Props {
   dirty: boolean;
   cpuList: string[];
   gpuList: string[];
+  detecting?: boolean;
 }
 
-export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList }: Props) {
+export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList, detecting }: Props) {
   const update = (field: keyof UserSpecs, value: string | number | null) => {
     onChange({ ...specs, [field]: value });
   };
@@ -32,7 +33,9 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           <div>
             <h2 className="card-title">Your System Specs</h2>
             <p className="text-sm text-base-content/60">
-              Enter your system specifications below.
+              {detecting
+                ? "Detecting your hardware..."
+                : "Auto-detected specs. Edit if needed."}
             </p>
           </div>
           <button
@@ -53,71 +56,91 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
             <label className="label">
               <span className="label-text">Operating System</span>
             </label>
-            <AutocompleteInput
-              value={specs.os}
-              onChange={(v) => update("os", v)}
-              onSubmit={onSubmit}
-              options={osList}
-              placeholder="e.g., Windows 10"
-            />
+            <div className="relative">
+              <AutocompleteInput
+                value={specs.os}
+                onChange={(v) => update("os", v)}
+                onSubmit={onSubmit}
+                options={osList}
+                placeholder={detecting ? "Detecting..." : "e.g., Windows 10"}
+                disabled={detecting}
+              />
+              {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}
+            </div>
           </div>
 
           <div className="form-control">
             <label className="label">
               <span className="label-text">CPU</span>
             </label>
-            <AutocompleteInput
-              value={specs.cpu}
-              onChange={(v) => update("cpu", v)}
-              onSubmit={onSubmit}
-              options={cpuList}
-              placeholder="e.g., Intel Core i7-12700K"
-            />
+            <div className="relative">
+              <AutocompleteInput
+                value={specs.cpu}
+                onChange={(v) => update("cpu", v)}
+                onSubmit={onSubmit}
+                options={cpuList}
+                placeholder={detecting ? "Detecting..." : "e.g., Intel Core i7-12700K"}
+                disabled={detecting}
+              />
+              {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}
+            </div>
           </div>
 
           <div className="form-control">
             <label className="label">
               <span className="label-text">GPU</span>
             </label>
-            <AutocompleteInput
-              value={specs.gpu}
-              onChange={(v) => update("gpu", v)}
-              onSubmit={onSubmit}
-              options={gpuList}
-              placeholder="e.g., NVIDIA RTX 4070"
-            />
+            <div className="relative">
+              <AutocompleteInput
+                value={specs.gpu}
+                onChange={(v) => update("gpu", v)}
+                onSubmit={onSubmit}
+                options={gpuList}
+                placeholder={detecting ? "Detecting..." : "e.g., NVIDIA RTX 4070"}
+                disabled={detecting}
+              />
+              {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}
+            </div>
           </div>
 
           <div className="form-control">
             <label className="label">
               <span className="label-text">RAM (GB)</span>
             </label>
-            <input
-              type="number"
-              className="input input-bordered"
-              value={specs.ramGB ?? ""}
-              onChange={(e) =>
-                update("ramGB", e.target.value ? parseFloat(e.target.value) : null)
-              }
-              onKeyDown={handleKeyDown}
-              placeholder="e.g., 16"
-            />
+            <div className="relative">
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={specs.ramGB ?? ""}
+                onChange={(e) =>
+                  update("ramGB", e.target.value ? parseFloat(e.target.value) : null)
+                }
+                onKeyDown={handleKeyDown}
+                placeholder={detecting ? "Detecting..." : "e.g., 16"}
+                disabled={detecting}
+              />
+              {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}
+            </div>
           </div>
 
           <div className="form-control">
             <label className="label">
               <span className="label-text">Available Storage (GB)</span>
             </label>
-            <input
-              type="number"
-              className="input input-bordered"
-              value={specs.storageGB ?? ""}
-              onChange={(e) =>
-                update("storageGB", e.target.value ? parseFloat(e.target.value) : null)
-              }
-              onKeyDown={handleKeyDown}
-              placeholder="e.g., 500"
-            />
+            <div className="relative">
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={specs.storageGB ?? ""}
+                onChange={(e) =>
+                  update("storageGB", e.target.value ? parseFloat(e.target.value) : null)
+                }
+                onKeyDown={handleKeyDown}
+                placeholder={detecting ? "Detecting..." : "e.g., 500"}
+                disabled={detecting}
+              />
+              {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}
+            </div>
           </div>
         </div>
       </div>
