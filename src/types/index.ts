@@ -35,6 +35,22 @@ export interface GameDetails {
 
 export type ComparisonStatus = "pass" | "warn" | "fail" | "info";
 
+export type OverallVerdict = "pass" | "minimum" | "fail" | "unknown";
+export interface UpgradeItem {
+  component: string;
+  current: string;
+  required: string;
+}
+
+export interface VerdictResult {
+  verdict: OverallVerdict;
+  title: string;
+  description: string;
+  failedComponents: string[];
+  warnComponents: string[];
+  upgradeItems: UpgradeItem[];
+}
+
 export interface ComparisonItem {
   label: string;
   userValue: string;

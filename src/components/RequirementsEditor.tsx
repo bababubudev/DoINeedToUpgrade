@@ -8,6 +8,7 @@ interface Props {
   minimum: GameRequirements | null;
   recommended: GameRequirements | null;
   onChange: (min: GameRequirements, rec: GameRequirements) => void;
+  onSubmit: () => void;
 }
 
 const emptyReqs: GameRequirements = {
@@ -32,6 +33,7 @@ export default function RequirementsEditor({
   minimum,
   recommended,
   onChange,
+  onSubmit,
 }: Props) {
   const min = minimum ?? emptyReqs;
   const rec = recommended ?? emptyReqs;
@@ -48,6 +50,13 @@ export default function RequirementsEditor({
     onChange({ ...emptyReqs }, { ...emptyReqs });
   }
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onSubmit();
+    }
+  }
+
   function renderField(
     key: keyof GameRequirements,
     label: string,
@@ -59,6 +68,7 @@ export default function RequirementsEditor({
         <AutocompleteInput
           value={value}
           onChange={onFieldChange}
+          onSubmit={onSubmit}
           options={cpuList}
           placeholder={label}
         />
@@ -69,6 +79,7 @@ export default function RequirementsEditor({
         <AutocompleteInput
           value={value}
           onChange={onFieldChange}
+          onSubmit={onSubmit}
           options={gpuList}
           placeholder={label}
         />
@@ -80,13 +91,14 @@ export default function RequirementsEditor({
         className="input input-bordered w-full"
         value={value}
         onChange={(e) => onFieldChange(e.target.value)}
+        onKeyDown={handleKeyDown}
         placeholder={label}
       />
     );
   }
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
         <div className="flex items-center justify-between">
           <h3 className="card-title text-lg">Game Requirements</h3>

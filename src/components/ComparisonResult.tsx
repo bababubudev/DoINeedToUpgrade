@@ -22,7 +22,7 @@ function StatusBadge({ status }: { status: ComparisonStatus }) {
 
 export default function ComparisonResult({ items, gameName }: Props) {
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
         <h2 className="card-title">Comparison: {gameName}</h2>
         <div className="overflow-x-auto">
@@ -65,7 +65,7 @@ export default function ComparisonResult({ items, gameName }: Props) {
             <span className="badge badge-error badge-sm mr-1">FAIL</span> Your system does not meet this requirement
           </p>
           <p>
-            <span className="badge badge-warning badge-sm mr-1">CHECK</span> Different platform — verify compatibility manually
+            <span className="badge badge-warning badge-sm mr-1">CHECK</span> Could not determine exact match — verify manually
           </p>
           <p>
             <span className="badge badge-ghost badge-sm mr-1">INFO</span> Cannot be compared automatically — check manually

@@ -43,6 +43,7 @@ export function fuzzyMatchHardware(
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
+    .replace(/[®™©]+/g, "")
     .split(/[\s\-\/,@()]+/)
     .filter((t) => t.length > 0);
 }

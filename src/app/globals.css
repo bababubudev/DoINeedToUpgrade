@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body { @apply antialiased; }
+}
+@layer components {
+  .card { @apply shadow-sm border border-base-300; }
+  .input-bordered { @apply border-base-300 bg-base-100; }
+}

@@ -1,46 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { UserSpecs } from "@/types";
-import { detectSpecs } from "@/lib/detectSpecs";
 import AutocompleteInput from "./AutocompleteInput";
 import { osList } from "@/lib/hardwareData";
 
 interface Props {
   specs: UserSpecs;
   onChange: (specs: UserSpecs) => void;
+  onSubmit: () => void;
+  dirty: boolean;
   cpuList: string[];
   gpuList: string[];
 }
 
-export default function SystemSpecs({ specs, onChange, cpuList, gpuList }: Props) {
-  const [detected, setDetected] = useState(false);
-
-  useEffect(() => {
-    if (!detected) {
-      const auto = detectSpecs();
-      onChange({
-        ...specs,
-        os: auto.os || specs.os,
-        gpu: auto.gpu || specs.gpu,
-        cpuCores: auto.cpuCores ?? specs.cpuCores,
-        ramGB: auto.ramGB ?? specs.ramGB,
-      });
-      setDetected(true);
-    }
-  }, [detected]); // eslint-disable-line react-hooks/exhaustive-deps
-
+export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList }: Props) {
   const update = (field: keyof UserSpecs, value: string | number | null) => {
     onChange({ ...specs, [field]: value });
   };
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onSubmit();
+    }
+  }
+
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
-        <h2 className="card-title">Your System Specs</h2>
-        <p className="text-sm text-base-content/60 mb-4">
-          Auto-detected values are filled in. Override any field manually.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="card-title">Your System Specs</h2>
+            <p className="text-sm text-base-content/60">
+              Enter your system specifications below.
+            </p>
+          </div>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={onSubmit}
+            disabled={!dirty}
+            title="Recheck compatibility"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Recheck
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-control">
@@ -50,6 +56,7 @@ export default function SystemSpecs({ specs, onChange, cpuList, gpuList }: Props
             <AutocompleteInput
               value={specs.os}
               onChange={(v) => update("os", v)}
+              onSubmit={onSubmit}
               options={osList}
               placeholder="e.g., Windows 10"
             />
@@ -62,16 +69,10 @@ export default function SystemSpecs({ specs, onChange, cpuList, gpuList }: Props
             <AutocompleteInput
               value={specs.cpu}
               onChange={(v) => update("cpu", v)}
+              onSubmit={onSubmit}
               options={cpuList}
               placeholder="e.g., Intel Core i7-12700K"
             />
-            {specs.cpuCores && (
-              <label className="label">
-                <span className="label-text-alt">
-                  {specs.cpuCores} cores detected
-                </span>
-              </label>
-            )}
           </div>
 
           <div className="form-control">
@@ -81,6 +82,7 @@ export default function SystemSpecs({ specs, onChange, cpuList, gpuList }: Props
             <AutocompleteInput
               value={specs.gpu}
               onChange={(v) => update("gpu", v)}
+              onSubmit={onSubmit}
               options={gpuList}
               placeholder="e.g., NVIDIA RTX 4070"
             />
@@ -97,6 +99,7 @@ export default function SystemSpecs({ specs, onChange, cpuList, gpuList }: Props
               onChange={(e) =>
                 update("ramGB", e.target.value ? parseFloat(e.target.value) : null)
               }
+              onKeyDown={handleKeyDown}
               placeholder="e.g., 16"
             />
           </div>
@@ -112,6 +115,7 @@ export default function SystemSpecs({ specs, onChange, cpuList, gpuList }: Props
               onChange={(e) =>
                 update("storageGB", e.target.value ? parseFloat(e.target.value) : null)
               }
+              onKeyDown={handleKeyDown}
               placeholder="e.g., 500"
             />
           </div>

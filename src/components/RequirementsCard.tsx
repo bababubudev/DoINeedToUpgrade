@@ -19,7 +19,7 @@ const FIELDS: { key: keyof GameRequirements; label: string }[] = [
 export default function RequirementsCard({ title, requirements }: Props) {
   if (!requirements) {
     return (
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-base-100 shadow-sm">
         <div className="card-body">
           <h3 className="card-title text-lg">{title}</h3>
           <p className="text-base-content/50">Not available</p>
@@ -29,7 +29,7 @@ export default function RequirementsCard({ title, requirements }: Props) {
   }
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
         <h3 className="card-title text-lg">{title}</h3>
         <div className="overflow-x-auto">

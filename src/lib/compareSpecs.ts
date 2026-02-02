@@ -27,6 +27,14 @@ function compareNumeric(
   return userVal >= reqVal ? "pass" : "fail";
 }
 
+function extractPlatform(text: string): "windows" | "macos" | "linux" | null {
+  const lower = text.toLowerCase();
+  if (lower.includes("windows") || lower.includes("win")) return "windows";
+  if (lower.includes("macos") || lower.includes("mac os") || lower.includes("os x")) return "macos";
+  if (lower.includes("linux") || lower.includes("ubuntu") || lower.includes("steamos")) return "linux";
+  return null;
+}
+
 function compareOS(userOS: string, reqOS: string): ComparisonStatus {
   if (!userOS || !reqOS) return "info";
 
@@ -34,22 +42,37 @@ function compareOS(userOS: string, reqOS: string): ComparisonStatus {
   const userMatch = fuzzyMatchHardware(userOS, osList);
   const reqMatch = fuzzyMatchHardware(reqOS, osList);
 
-  if (!userMatch || !reqMatch) return "info";
+  // If both matched, use score-based comparison
+  if (userMatch && reqMatch) {
+    const userScore = osScores[userMatch];
+    const reqScore = osScores[reqMatch];
 
-  const userScore = osScores[userMatch];
-  const reqScore = osScores[reqMatch];
+    if (userScore != null && reqScore != null) {
+      const userPlatform = userMatch.startsWith("Windows") ? "windows"
+        : userMatch.startsWith("macOS") ? "macos" : "linux";
+      const reqPlatform = reqMatch.startsWith("Windows") ? "windows"
+        : reqMatch.startsWith("macOS") ? "macos" : "linux";
 
-  if (userScore == null || reqScore == null) return "info";
+      if (userPlatform !== reqPlatform) return "fail";
+      return userScore >= reqScore ? "pass" : "fail";
+    }
+  }
 
-  // Check platform compatibility: Windows requirement can't be met by macOS/Linux and vice versa
-  const userPlatform = userMatch.startsWith("Windows") ? "windows"
-    : userMatch.startsWith("macOS") ? "macos" : "linux";
-  const reqPlatform = reqMatch.startsWith("Windows") ? "windows"
-    : reqMatch.startsWith("macOS") ? "macos" : "linux";
+  // Fallback: platform-level comparison when fuzzy match fails
+  const userPlatform = extractPlatform(userOS);
+  const reqPlatform = extractPlatform(reqOS);
 
-  if (userPlatform !== reqPlatform) return "warn";
+  if (!userPlatform || !reqPlatform) return "info";
+  if (userPlatform === reqPlatform) return "pass";
+  return "warn";
+}
 
-  return userScore >= reqScore ? "pass" : "fail";
+function splitAlternatives(text: string): string[] {
+  // Split on comma, " or ", " / " to handle multi-item requirements
+  return text
+    .split(/,|\bor\b|\//i)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 }
 
 function compareHardware(
@@ -61,16 +84,26 @@ function compareHardware(
   if (!userText || !reqText) return "info";
 
   const userMatch = fuzzyMatchHardware(userText, candidates);
-  const reqMatch = fuzzyMatchHardware(reqText, candidates);
-
-  if (!userMatch || !reqMatch) return "info";
-
+  if (!userMatch) return "info";
   const userScore = scores[userMatch];
-  const reqScore = scores[reqMatch];
+  if (userScore == null) return "info";
 
-  if (userScore == null || reqScore == null) return "info";
+  // Try each alternative in the requirement text — pass if user beats any
+  const alternatives = splitAlternatives(reqText);
+  let bestReqScore: number | null = null;
 
-  return userScore >= reqScore ? "pass" : "fail";
+  for (const alt of alternatives) {
+    const reqMatch = fuzzyMatchHardware(alt, candidates);
+    if (reqMatch && scores[reqMatch] != null) {
+      if (bestReqScore === null || scores[reqMatch] < bestReqScore) {
+        bestReqScore = scores[reqMatch];
+      }
+    }
+  }
+
+  if (bestReqScore === null) return "info";
+
+  return userScore >= bestReqScore ? "pass" : "fail";
 }
 
 export function compareSpecs(

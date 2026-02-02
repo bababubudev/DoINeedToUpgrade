@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { UserSpecs, GameDetails, GameRequirements, ComparisonItem } from "@/types";
 import { compareSpecs } from "@/lib/compareSpecs";
+import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
 import SystemSpecs from "@/components/SystemSpecs";
 import GameSearch from "@/components/GameSearch";
 import RequirementsEditor from "@/components/RequirementsEditor";
 import ComparisonResult from "@/components/ComparisonResult";
+import VerdictBanner from "@/components/VerdictBanner";
+import UpgradeModal from "@/components/UpgradeModal";
 
 const defaultSpecs: UserSpecs = {
   os: "",
@@ -41,11 +44,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manualMode, setManualMode] = useState(false);
+  const [specsDirty, setSpecsDirty] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const showEditor = game !== null || manualMode;
   const hasReqs = hasAnyField(minReqs) || hasAnyField(recReqs);
+  const verdict = comparison ? computeVerdict(comparison) : null;
 
-  // Re-run comparison whenever specs or requirements change
   const runComparison = useCallback(() => {
     if (!hasAnyField(minReqs) && !hasAnyField(recReqs)) {
       setComparison(null);
@@ -53,12 +58,16 @@ export default function Home() {
     }
     const min = hasAnyField(minReqs) ? minReqs : null;
     const rec = hasAnyField(recReqs) ? recReqs : null;
-    setComparison(compareSpecs(specs, min, rec, cpuScores, gpuScores));
+    const result = compareSpecs(specs, min, rec, cpuScores, gpuScores);
+    setComparison(result);
+    setSpecsDirty(false);
+    setShowModal(true);
   }, [specs, minReqs, recReqs, cpuScores, gpuScores]);
 
-  useEffect(() => {
-    runComparison();
-  }, [runComparison]);
+  function handleSpecsChange(newSpecs: UserSpecs) {
+    setSpecs(newSpecs);
+    setSpecsDirty(true);
+  }
 
   async function handleGameSelect(appid: number) {
     setLoading(true);
@@ -97,7 +106,14 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SystemSpecs specs={specs} onChange={setSpecs} cpuList={cpuList} gpuList={gpuList} />
+      <SystemSpecs
+        specs={specs}
+        onChange={handleSpecsChange}
+        onSubmit={runComparison}
+        dirty={specsDirty}
+        cpuList={cpuList}
+        gpuList={gpuList}
+      />
       <GameSearch onSelect={handleGameSelect} />
 
       {!showEditor && (
@@ -128,8 +144,22 @@ export default function Home() {
             alt={game.name}
             className="w-48 rounded-lg shadow"
           />
-          <h2 className="text-2xl font-bold">{game.name}</h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-bold">{game.name}</h2>
+            <button className="btn btn-primary btn-sm w-fit" onClick={runComparison}>
+              Check Compatibility
+            </button>
+          </div>
         </div>
+      )}
+
+      {verdict && hasReqs && <VerdictBanner result={verdict} />}
+
+      {comparison && hasReqs && (
+        <ComparisonResult
+          items={comparison}
+          gameName={game?.name ?? "Manual Comparison"}
+        />
       )}
 
       {showEditor && (
@@ -137,13 +167,15 @@ export default function Home() {
           minimum={minReqs}
           recommended={recReqs}
           onChange={handleRequirementsChange}
+          onSubmit={runComparison}
         />
       )}
 
-      {comparison && hasReqs && (
-        <ComparisonResult
-          items={comparison}
-          gameName={game?.name ?? "Manual Comparison"}
+      {verdict && (
+        <UpgradeModal
+          result={verdict}
+          open={showModal}
+          onClose={() => setShowModal(false)}
         />
       )}
     </div>

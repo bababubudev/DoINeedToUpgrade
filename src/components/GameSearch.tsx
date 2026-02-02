@@ -51,7 +51,7 @@ export default function GameSearch({ onSelect }: Props) {
   }, []);
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
         <h2 className="card-title">Search for a Game</h2>
         <div ref={wrapperRef} className="relative">
@@ -68,7 +68,7 @@ export default function GameSearch({ onSelect }: Props) {
           )}
 
           {isOpen && results.length > 0 && (
-            <ul className="menu bg-base-300 rounded-box absolute z-50 w-full mt-1 max-h-72 overflow-y-auto shadow-lg">
+            <ul className="menu bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-72 overflow-y-auto shadow-lg">
               {results.map((game) => (
                 <li key={game.id}>
                   <button

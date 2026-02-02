@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 interface Props {
   value: string;
   onChange: (value: string) => void;
+  onSubmit?: () => void;
   options: string[];
   placeholder?: string;
 }
@@ -12,6 +13,7 @@ interface Props {
 export default function AutocompleteInput({
   value,
   onChange,
+  onSubmit,
   options,
   placeholder,
 }: Props) {
@@ -52,11 +54,17 @@ export default function AutocompleteInput({
           onChange(e.target.value);
           setIsOpen(true);
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !isOpen) {
+            e.preventDefault();
+            onSubmit?.();
+          }
+        }}
         onFocus={() => filtered.length > 0 && setIsOpen(true)}
         placeholder={placeholder}
       />
       {isOpen && filtered.length > 0 && (
-        <ul className="menu bg-base-300 rounded-box absolute z-50 w-full mt-1 max-h-60 overflow-y-auto shadow-lg">
+        <ul className="menu bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-60 overflow-y-auto shadow-lg">
           {filtered.map((item) => (
             <li key={item}>
               <button
