@@ -21,8 +21,10 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
         required: item.recValue,
       });
     }
-    if (item.minStatus === "warn" || item.recStatus === "warn") {
-      warnComponents.push(item.label);
+    if (item.minStatus === "warn" || item.recStatus === "warn" || item.minStatus === "info" || item.recStatus === "info") {
+      if (!warnComponents.includes(item.label)) {
+        warnComponents.push(item.label);
+      }
     }
   }
 
@@ -38,14 +40,19 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
     };
   }
 
-  const allMinPass = items.every(
+  const allMinPass = items.every((i) => i.minStatus === "pass");
+  const allMinPassOrInfo = items.every(
     (i) => i.minStatus === "pass" || i.minStatus === "info"
   );
-  const allRecPass = items.every(
+  const allRecPass = items.every((i) => i.recStatus === "pass");
+  const allRecPassOrInfo = items.every(
     (i) => i.recStatus === "pass" || i.recStatus === "info"
   );
+  const hasInfo = items.some(
+    (i) => i.minStatus === "info" || i.recStatus === "info"
+  );
 
-  // All min pass and all rec pass → pass
+  // All confirmed pass → pass
   if (allMinPass && allRecPass) {
     return {
       verdict: "pass",
@@ -57,8 +64,20 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
     };
   }
 
-  // All min pass but some rec aren't → minimum
-  if (allMinPass) {
+  // Everything passes or is unknown — but some are unknown → needs review
+  if (allMinPassOrInfo && allRecPassOrInfo && hasInfo) {
+    return {
+      verdict: "unknown",
+      title: "Likely OK — Verify Manually",
+      description: `We couldn't compare ${warnComponents.join(", ")} accurately. Check ${warnComponents.length === 1 ? "it" : "them"} manually to be sure.`,
+      failedComponents,
+      warnComponents,
+      upgradeItems,
+    };
+  }
+
+  // All min pass (or info) but some rec fail → minimum
+  if (allMinPassOrInfo) {
     return {
       verdict: "minimum",
       title: "Upgrade Recommended",

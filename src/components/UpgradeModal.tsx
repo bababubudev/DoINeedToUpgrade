@@ -78,7 +78,7 @@ export default function UpgradeModal({ result, open, onClose }: Props) {
                     <tr key={item.component}>
                       <td className="font-semibold">{item.component}</td>
                       <td className="text-info">{item.current}</td>
-                      <td className="text-base-content/60">{item.required}</td>
+                      <td className="text-base-content/70">{item.required}</td>
                     </tr>
                   ))}
                 </tbody>

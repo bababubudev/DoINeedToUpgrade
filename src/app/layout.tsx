@@ -13,18 +13,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="light">
+    <html lang="en" data-theme="dark">
       <body className="min-h-screen bg-base-200">
-        <div className="container mx-auto px-4 py-8 max-w-5xl">
-          <div className="flex justify-end mb-2">
+        <div className="navbar bg-base-100 border-b border-base-300 px-4">
+          <div className="flex-1">
+            <span className="text-lg font-bold">Do I Need To Upgrade?</span>
+          </div>
+          <div className="flex-none">
             <ThemeToggle />
           </div>
-          <h1 className="text-4xl font-bold text-center mb-2">
-            Do I Need To Upgrade?
-          </h1>
-          <p className="text-center text-base-content/60 mb-8">
-            Find out if your PC needs an upgrade to run any Steam game
-          </p>
+        </div>
+        <div className="container mx-auto px-4 py-4 max-w-5xl">
           {children}
         </div>
       </body>

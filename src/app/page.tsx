@@ -7,12 +7,12 @@ import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
 import { detectClientSpecs } from "@/lib/detectClientSpecs";
 import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
-import SystemSpecs from "@/components/SystemSpecs";
-import GameSearch from "@/components/GameSearch";
+import WizardStepper from "@/components/WizardStepper";
+import StepGameSelect from "@/components/StepGameSelect";
+import StepSystemSpecs from "@/components/StepSystemSpecs";
+import StepResults from "@/components/StepResults";
 import RequirementsEditor from "@/components/RequirementsEditor";
-import ComparisonResult from "@/components/ComparisonResult";
-import VerdictBanner from "@/components/VerdictBanner";
-import UpgradeModal from "@/components/UpgradeModal";
+import SystemSpecs from "@/components/SystemSpecs";
 
 const defaultSpecs: UserSpecs = {
   os: "",
@@ -42,12 +42,23 @@ export default function Home() {
   const [detecting, setDetecting] = useState(true);
   const [unmatchedFields, setUnmatchedFields] = useState<string[]>([]);
 
+  const [step, setStep] = useState(1);
+  const [maxReached, setMaxReached] = useState(1);
+  const [specsConfirmed, setSpecsConfirmed] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+
+  const [game, setGame] = useState<GameDetails | null>(null);
+  const [minReqs, setMinReqs] = useState<GameRequirements>(emptyReqs);
+  const [recReqs, setRecReqs] = useState<GameRequirements>(emptyReqs);
+  const [comparison, setComparison] = useState<ComparisonItem[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [specsDirty, setSpecsDirty] = useState(false);
+
   useEffect(() => {
     detectClientSpecs()
       .then((data) => {
         setSpecs(data);
-
-        // After benchmarks load, check which detected fields don't match
         const unmatched: string[] = [];
         if (data.cpu && cpuList.length > 0 && !fuzzyMatchHardware(data.cpu, cpuList)) {
           unmatched.push("CPU");
@@ -55,62 +66,51 @@ export default function Home() {
         if (data.gpu && gpuList.length > 0 && !fuzzyMatchHardware(data.gpu, gpuList)) {
           unmatched.push("GPU");
         }
-        if (!data.ramGB) {
-          unmatched.push("RAM");
-        }
-        if (!data.storageGB) {
-          unmatched.push("Storage");
-        }
+        if (!data.ramGB) unmatched.push("RAM");
+        if (!data.storageGB) unmatched.push("Storage");
         setUnmatchedFields(unmatched);
       })
       .catch(() => {})
       .finally(() => setDetecting(false));
   }, [cpuList, gpuList]);
-  const [game, setGame] = useState<GameDetails | null>(null);
-  const [minReqs, setMinReqs] = useState<GameRequirements>(emptyReqs);
-  const [recReqs, setRecReqs] = useState<GameRequirements>(emptyReqs);
-  const [comparison, setComparison] = useState<ComparisonItem[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [manualMode, setManualMode] = useState(false);
-  const [specsDirty, setSpecsDirty] = useState(false);
-  const [showModal, setShowModal] = useState(false);
 
-  const showEditor = game !== null || manualMode;
-  const hasReqs = hasAnyField(minReqs) || hasAnyField(recReqs);
   const verdict = comparison ? computeVerdict(comparison) : null;
 
-  const runComparison = useCallback(() => {
-    if (!hasAnyField(minReqs) && !hasAnyField(recReqs)) {
-      setComparison(null);
-      return;
-    }
-    const min = hasAnyField(minReqs) ? minReqs : null;
-    const rec = hasAnyField(recReqs) ? recReqs : null;
-    const result = compareSpecs(specs, min, rec, cpuScores, gpuScores);
-    setComparison(result);
-    setSpecsDirty(false);
-    setShowModal(true);
-  }, [specs, minReqs, recReqs, cpuScores, gpuScores]);
+  const runComparison = useCallback(
+    (min?: GameRequirements, rec?: GameRequirements) => {
+      const minR = min ?? minReqs;
+      const recR = rec ?? recReqs;
+      if (!hasAnyField(minR) && !hasAnyField(recR)) {
+        setComparison(null);
+        return;
+      }
+      const minArg = hasAnyField(minR) ? minR : null;
+      const recArg = hasAnyField(recR) ? recR : null;
+      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+      setComparison(result);
+      setSpecsDirty(false);
+    },
+    [specs, minReqs, recReqs, cpuScores, gpuScores]
+  );
+
+  function goToStep(s: number) {
+    setStep(s);
+    setMaxReached((prev) => Math.max(prev, s));
+  }
+
+  function evaluateUnmatched(s: UserSpecs) {
+    const unmatched: string[] = [];
+    if (s.cpu && cpuList.length > 0 && !fuzzyMatchHardware(s.cpu, cpuList)) unmatched.push("CPU");
+    if (s.gpu && gpuList.length > 0 && !fuzzyMatchHardware(s.gpu, gpuList)) unmatched.push("GPU");
+    if (!s.ramGB) unmatched.push("RAM");
+    if (!s.storageGB) unmatched.push("Storage");
+    setUnmatchedFields(unmatched);
+  }
 
   function handleSpecsChange(newSpecs: UserSpecs) {
     setSpecs(newSpecs);
     setSpecsDirty(true);
-    // Re-evaluate matches when user edits specs
-    const unmatched: string[] = [];
-    if (newSpecs.cpu && cpuList.length > 0 && !fuzzyMatchHardware(newSpecs.cpu, cpuList)) {
-      unmatched.push("CPU");
-    }
-    if (newSpecs.gpu && gpuList.length > 0 && !fuzzyMatchHardware(newSpecs.gpu, gpuList)) {
-      unmatched.push("GPU");
-    }
-    if (!newSpecs.ramGB) {
-      unmatched.push("RAM");
-    }
-    if (!newSpecs.storageGB) {
-      unmatched.push("Storage");
-    }
-    setUnmatchedFields(unmatched);
+    evaluateUnmatched(newSpecs);
   }
 
   async function handleGameSelect(appid: number) {
@@ -126,18 +126,27 @@ export default function Home() {
 
       const data: GameDetails = await res.json();
       setGame(data);
-      setMinReqs(data.requirements.minimum ?? { ...emptyReqs });
-      setRecReqs(data.requirements.recommended ?? { ...emptyReqs });
+      const newMin = data.requirements.minimum ?? { ...emptyReqs };
+      const newRec = data.requirements.recommended ?? { ...emptyReqs };
+      setMinReqs(newMin);
+      setRecReqs(newRec);
+
+      if (specsConfirmed) {
+        // Auto-run comparison and skip to results
+        const minArg = hasAnyField(newMin) ? newMin : null;
+        const recArg = hasAnyField(newRec) ? newRec : null;
+        const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+        setComparison(result);
+        setSpecsDirty(false);
+        goToStep(3);
+      } else {
+        goToStep(2);
+      }
     } catch {
       setError("Failed to load game requirements. Please try again.");
     } finally {
       setLoading(false);
     }
-  }
-
-  function handleRequirementsChange(min: GameRequirements, rec: GameRequirements) {
-    setMinReqs(min);
-    setRecReqs(rec);
   }
 
   function handleManualMode() {
@@ -146,82 +155,106 @@ export default function Home() {
     setMinReqs({ ...emptyReqs });
     setRecReqs({ ...emptyReqs });
     setComparison(null);
+    goToStep(2);
+  }
+
+  function handleSpecsConfirm() {
+    setSpecsConfirmed(true);
+    runComparison();
+    goToStep(3);
+  }
+
+  function handleCheckAnother() {
+    setGame(null);
+    setComparison(null);
+    setMinReqs({ ...emptyReqs });
+    setRecReqs({ ...emptyReqs });
+    setManualMode(false);
+    goToStep(1);
+  }
+
+  function handleEditSpecs() {
+    goToStep(2);
+  }
+
+  function handleRequirementsChange(min: GameRequirements, rec: GameRequirements) {
+    setMinReqs(min);
+    setRecReqs(rec);
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <SystemSpecs
-        specs={specs}
-        onChange={handleSpecsChange}
-        onSubmit={runComparison}
-        dirty={specsDirty}
-        cpuList={cpuList}
-        gpuList={gpuList}
-        detecting={detecting}
-        unmatchedFields={unmatchedFields}
+    <div className="flex flex-col gap-4">
+      <WizardStepper
+        currentStep={step}
+        onStepClick={goToStep}
+        maxReached={maxReached}
       />
-      <GameSearch onSelect={handleGameSelect} />
 
-      {!showEditor && (
-        <div className="flex justify-center">
-          <button className="btn btn-outline" onClick={handleManualMode}>
-            Enter Requirements Manually
-          </button>
-        </div>
+      {step === 1 && (
+        <StepGameSelect
+          onSelect={handleGameSelect}
+          onManualMode={handleManualMode}
+          loading={loading}
+          error={error}
+        />
       )}
 
-      {loading && (
-        <div className="flex justify-center py-8">
-          <span className="loading loading-bars loading-lg" />
-        </div>
+      {step === 2 && !manualMode && (
+        <StepSystemSpecs
+          specs={specs}
+          onChange={handleSpecsChange}
+          dirty={specsDirty}
+          cpuList={cpuList}
+          gpuList={gpuList}
+          detecting={detecting}
+          unmatchedFields={unmatchedFields}
+          game={game}
+          onBack={() => goToStep(1)}
+          onConfirm={handleSpecsConfirm}
+        />
       )}
 
-      {error && (
-        <div className="alert alert-error">
-          <span>{error}</span>
-        </div>
-      )}
-
-      {game && (
-        <div className="flex items-center gap-4 px-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={game.headerImage}
-            alt={game.name}
-            className="w-48 rounded-lg shadow"
+      {step === 2 && manualMode && (
+        <div className="animate-fadeIn flex flex-col gap-4">
+          <SystemSpecs
+            specs={specs}
+            onChange={handleSpecsChange}
+            onSubmit={handleSpecsConfirm}
+            dirty={specsDirty}
+            cpuList={cpuList}
+            gpuList={gpuList}
+            detecting={detecting}
+            unmatchedFields={unmatchedFields}
+            hideSubmit
           />
-          <div className="flex flex-col gap-2">
-            <h2 className="text-2xl font-bold">{game.name}</h2>
-            <button className="btn btn-primary btn-sm w-fit" onClick={runComparison}>
-              Check Compatibility
+          <RequirementsEditor
+            minimum={minReqs}
+            recommended={recReqs}
+            onChange={handleRequirementsChange}
+            onSubmit={handleSpecsConfirm}
+          />
+          <div className="flex justify-between">
+            <button className="btn btn-ghost" onClick={() => goToStep(1)}>
+              &larr; Back
+            </button>
+            <button className="btn btn-primary" onClick={handleSpecsConfirm}>
+              Check Compatibility &rarr;
             </button>
           </div>
         </div>
       )}
 
-      {verdict && hasReqs && <VerdictBanner result={verdict} />}
-
-      {comparison && hasReqs && (
-        <ComparisonResult
-          items={comparison}
-          gameName={game?.name ?? "Manual Comparison"}
-        />
-      )}
-
-      {showEditor && (
-        <RequirementsEditor
-          minimum={minReqs}
-          recommended={recReqs}
-          onChange={handleRequirementsChange}
-          onSubmit={runComparison}
-        />
-      )}
-
-      {verdict && (
-        <UpgradeModal
-          result={verdict}
-          open={showModal}
-          onClose={() => setShowModal(false)}
+      {step === 3 && (
+        <StepResults
+          game={game}
+          verdict={verdict}
+          comparison={comparison}
+          minReqs={minReqs}
+          recReqs={recReqs}
+          onRequirementsChange={handleRequirementsChange}
+          onRerun={() => runComparison()}
+          onCheckAnother={handleCheckAnother}
+          onEditSpecs={handleEditSpecs}
         />
       )}
     </div>

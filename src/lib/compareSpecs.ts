@@ -38,33 +38,33 @@ function extractPlatform(text: string): "windows" | "macos" | "linux" | null {
 function compareOS(userOS: string, reqOS: string): ComparisonStatus {
   if (!userOS || !reqOS) return "info";
 
-  // Try to match both user and requirement OS against known OS list
-  const userMatch = fuzzyMatchHardware(userOS, osList);
-  const reqMatch = fuzzyMatchHardware(reqOS, osList);
+  // Always check platform first — cross-platform is always "warn"
+  const userPlatform = extractPlatform(userOS);
+  const reqPlatform = extractPlatform(reqOS);
 
-  // If both matched, use score-based comparison
+  if (!userPlatform || !reqPlatform) return "info";
+  if (userPlatform !== reqPlatform) return "warn";
+
+  // Same platform — try score-based comparison via fuzzy match
+  // Only match against candidates from the same platform to avoid cross-platform false matches
+  const samePlatformList = osList.filter(
+    (os) => extractPlatform(os) === userPlatform
+  );
+
+  const userMatch = fuzzyMatchHardware(userOS, samePlatformList);
+  const reqMatch = fuzzyMatchHardware(reqOS, samePlatformList);
+
   if (userMatch && reqMatch) {
     const userScore = osScores[userMatch];
     const reqScore = osScores[reqMatch];
 
     if (userScore != null && reqScore != null) {
-      const userPlatform = userMatch.startsWith("Windows") ? "windows"
-        : userMatch.startsWith("macOS") ? "macos" : "linux";
-      const reqPlatform = reqMatch.startsWith("Windows") ? "windows"
-        : reqMatch.startsWith("macOS") ? "macos" : "linux";
-
-      if (userPlatform !== reqPlatform) return "fail";
       return userScore >= reqScore ? "pass" : "fail";
     }
   }
 
-  // Fallback: platform-level comparison when fuzzy match fails
-  const userPlatform = extractPlatform(userOS);
-  const reqPlatform = extractPlatform(reqOS);
-
-  if (!userPlatform || !reqPlatform) return "info";
-  if (userPlatform === reqPlatform) return "pass";
-  return "warn";
+  // Same platform but couldn't determine version ordering
+  return "pass";
 }
 
 function splitAlternatives(text: string): string[] {

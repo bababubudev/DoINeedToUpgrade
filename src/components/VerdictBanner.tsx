@@ -32,17 +32,17 @@ function XIcon() {
 
 function QuestionIcon() {
   return (
-    <svg className="w-8 h-8 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg className="w-8 h-8 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }
 
 const verdictStyles = {
-  pass: "border-success/40 bg-success/10",
-  minimum: "border-warning/40 bg-warning/10",
-  fail: "border-error/40 bg-error/10",
-  unknown: "border-info/40 bg-info/10",
+  pass: "alert alert-success",
+  minimum: "alert alert-warning",
+  fail: "alert alert-error",
+  unknown: "card bg-base-100 dark:bg-warning/20 shadow-sm",
 } as const;
 
 const verdictIcons = {
@@ -54,31 +54,32 @@ const verdictIcons = {
 
 export default function VerdictBanner({ result }: Props) {
   const Icon = verdictIcons[result.verdict];
+  const isUnknown = result.verdict === "unknown";
+
+  if (isUnknown) {
+    return (
+      <div className={verdictStyles.unknown}>
+        <div className="card-body p-4 flex-row items-start gap-3">
+          <Icon />
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-warning">
+              {result.warnComponents.length > 0
+                ? `Manual check needed for ${result.warnComponents.map((c) => c.toLowerCase()).join(" and ")}`
+                : result.title}
+            </h3>
+            <p className="text-sm text-base-content/70 mt-1">{result.description}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`rounded-lg border-2 p-5 ${verdictStyles[result.verdict]}`}>
-      <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 mt-0.5">
-          <Icon />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-bold text-base-content">{result.title}</h3>
-          <p className="text-sm text-base-content/70 mt-1">{result.description}</p>
-          {result.failedComponents.length > 0 && (
-            <div className="mt-2">
-              <span className="text-sm font-medium text-error">
-                Failed: {result.failedComponents.join(", ")}
-              </span>
-            </div>
-          )}
-          {result.warnComponents.length > 0 && (
-            <div className="mt-1">
-              <span className="text-sm font-medium text-warning">
-                Needs review: {result.warnComponents.join(", ")}
-              </span>
-            </div>
-          )}
-        </div>
+    <div role="alert" className={verdictStyles[result.verdict]}>
+      <Icon />
+      <div className="flex-1">
+        <h3 className="text-lg font-bold">{result.title}</h3>
+        <p className="text-sm mt-1">{result.description}</p>
       </div>
     </div>
   );

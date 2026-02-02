@@ -4,27 +4,22 @@ import { ComparisonItem, ComparisonStatus } from "@/types";
 
 interface Props {
   items: ComparisonItem[];
-  gameName: string;
 }
 
-function StatusBadge({ status }: { status: ComparisonStatus }) {
+function cellColor(status: ComparisonStatus): string {
   switch (status) {
-    case "pass":
-      return <span className="badge badge-success badge-sm">PASS</span>;
-    case "fail":
-      return <span className="badge badge-error badge-sm">FAIL</span>;
+    case "pass": return "bg-success/30";
+    case "fail": return "bg-error/30";
     case "warn":
-      return <span className="badge badge-warning badge-sm">CHECK</span>;
-    case "info":
-      return <span className="badge badge-ghost badge-sm">INFO</span>;
+    case "info": return "bg-warning/30";
   }
 }
 
-export default function ComparisonResult({ items, gameName }: Props) {
+export default function ComparisonResult({ items }: Props) {
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
-        <h2 className="card-title">Comparison: {gameName}</h2>
+        <h2 className="card-title">Component Breakdown</h2>
         <div className="overflow-x-auto">
           <table className="table">
             <thead>
@@ -39,37 +34,18 @@ export default function ComparisonResult({ items, gameName }: Props) {
               {items.map((item) => (
                 <tr key={item.label}>
                   <td className="font-semibold">{item.label}</td>
-                  <td>{item.userValue}</td>
-                  <td>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm">{item.minValue}</span>
-                      <StatusBadge status={item.minStatus} />
-                    </div>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm">{item.recValue}</span>
-                      <StatusBadge status={item.recStatus} />
-                    </div>
-                  </td>
+                  <td className="whitespace-normal break-words">{item.userValue}</td>
+                  <td className={`text-sm max-w-[200px] truncate ${cellColor(item.minStatus)}`} title={item.minValue}>{item.minValue}</td>
+                  <td className={`text-sm max-w-[200px] truncate ${cellColor(item.recStatus)}`} title={item.recValue}>{item.recValue}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="mt-4 text-sm text-base-content/60">
-          <p>
-            <span className="badge badge-success badge-sm mr-1">PASS</span> Your system meets this requirement
-          </p>
-          <p>
-            <span className="badge badge-error badge-sm mr-1">FAIL</span> Your system does not meet this requirement
-          </p>
-          <p>
-            <span className="badge badge-warning badge-sm mr-1">CHECK</span> Could not determine exact match — verify manually
-          </p>
-          <p>
-            <span className="badge badge-ghost badge-sm mr-1">INFO</span> Cannot be compared automatically — check manually
-          </p>
+        <div className="flex gap-4 text-xs text-base-content/60 pt-2 justify-end">
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-success/30 border border-success/50" /> Pass — meets or exceeds</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-warning/30 border border-warning/50" /> Check — verify manually</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-error/30 border border-error/50" /> Fail — below requirement</span>
         </div>
       </div>
     </div>
