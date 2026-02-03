@@ -55,7 +55,7 @@ export default function Home() {
   const [specsDirty, setSpecsDirty] = useState(false);
 
   useEffect(() => {
-    detectClientSpecs()
+    detectClientSpecs(gpuList)
       .then((data) => {
         setSpecs(data);
         const unmatched: string[] = [];
@@ -65,8 +65,8 @@ export default function Home() {
         if (data.gpu && gpuList.length > 0 && !fuzzyMatchHardware(data.gpu, gpuList)) {
           unmatched.push("GPU");
         }
-        if (!data.ramGB) unmatched.push("RAM");
-        if (!data.storageGB) unmatched.push("Storage");
+        if (!data.ramGB || data.ramGB === 8) unmatched.push("RAM");
+        unmatched.push("Storage");
         setUnmatchedFields(unmatched);
       })
       .catch(() => {})
@@ -101,8 +101,8 @@ export default function Home() {
     const unmatched: string[] = [];
     if (!s.cpu || (cpuList.length > 0 && !fuzzyMatchHardware(s.cpu, cpuList))) unmatched.push("CPU");
     if (s.gpu && gpuList.length > 0 && !fuzzyMatchHardware(s.gpu, gpuList)) unmatched.push("GPU");
-    if (!s.ramGB) unmatched.push("RAM");
-    if (!s.storageGB) unmatched.push("Storage");
+    if (!s.ramGB || s.ramGB === 8) unmatched.push("RAM");
+    unmatched.push("Storage");
     setUnmatchedFields(unmatched);
   }
 

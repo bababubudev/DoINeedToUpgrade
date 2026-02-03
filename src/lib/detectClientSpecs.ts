@@ -1,4 +1,5 @@
 import { UserSpecs } from "@/types";
+import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
 
 const macosVersionMap: Record<string, string> = {
   "10.13": "macOS High Sierra",
@@ -87,12 +88,50 @@ function cleanGPURenderer(raw: string): string {
     cleaned = segments.length >= 2 ? segments[1] : segments[0];
   }
 
+  // Strip hex device IDs: (0x00001B81) etc.
+  cleaned = cleaned.replace(/\(0x[0-9A-Fa-f]+\)/g, "");
+
+  // Strip Direct3D / D3D references
+  cleaned = cleaned.replace(/\bDirect3D\d*\b/gi, "");
+  cleaned = cleaned.replace(/\bD3D\d*\b/gi, "");
+
+  // Strip shader model tokens: vs_5_0, ps_5_0, etc.
+  cleaned = cleaned.replace(/\b[vp]s_\d+_\d+\b/gi, "");
+
+  // Strip standalone API names
+  cleaned = cleaned.replace(/\bOpenGL\b/gi, "");
+  cleaned = cleaned.replace(/\bVulkan\b/gi, "");
+  cleaned = cleaned.replace(/\bMetal\b/gi, "");
+
+  // Strip trademark markers
+  cleaned = cleaned.replace(/\(R\)/gi, "");
+  cleaned = cleaned.replace(/\(TM\)/gi, "");
+
+  // Collapse whitespace and trim
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+
   // For Apple Silicon: if it matches "Apple M<digit>", append " GPU"
   if (/^Apple M\d/i.test(cleaned) && !cleaned.toLowerCase().includes("gpu")) {
     cleaned = cleaned + " GPU";
   }
 
   return cleaned;
+}
+
+function inferCPUFromGPU(gpu: string, os: string): string {
+  // Only infer for macOS with Apple Silicon GPUs
+  if (!os.toLowerCase().includes("macos") && !os.toLowerCase().includes("mac")) {
+    return "";
+  }
+
+  // Match "Apple M1/M2/M3/M4 [Pro/Max/Ultra] GPU"
+  const match = gpu.match(/^Apple (M\d+(?:\s+(?:Pro|Max|Ultra))?)\s*GPU$/i);
+  if (match) {
+    return `Apple ${match[1]}`;
+  }
+
+  // "Apple GPU" alone (Safari privacy) — can't infer
+  return "";
 }
 
 function detectGPU(): string {
@@ -112,10 +151,21 @@ function detectGPU(): string {
   }
 }
 
-export async function detectClientSpecs(): Promise<UserSpecs> {
+export async function detectClientSpecs(gpuList?: string[]): Promise<UserSpecs> {
   const os = detectOS();
-  const gpu = detectGPU();
+  let gpu = detectGPU();
   const cpuCores = navigator.hardwareConcurrency ?? null;
+
+  // Fuzzy-match cleaned GPU string against known GPU list for canonical name
+  if (gpu && gpuList && gpuList.length > 0) {
+    const matched = fuzzyMatchHardware(gpu, gpuList);
+    if (matched) {
+      gpu = matched;
+    }
+  }
+
+  // Try to infer CPU from GPU (works for Apple Silicon Macs)
+  const cpu = inferCPUFromGPU(gpu, os);
 
   // navigator.deviceMemory is Chrome/Edge only (returns approximate GB as power of 2)
   const deviceMemory = (navigator as unknown as { deviceMemory?: number })
@@ -137,7 +187,7 @@ export async function detectClientSpecs(): Promise<UserSpecs> {
 
   return {
     os,
-    cpu: "",
+    cpu,
     cpuCores,
     gpu,
     ramGB,

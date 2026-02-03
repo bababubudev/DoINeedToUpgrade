@@ -5,8 +5,9 @@
 
 const NOISE_WORDS = new Set([
   // GPU renderer noise
-  "angle", "opengl", "direct3d11", "d3d11", "vulkan", "metal",
-  "google", "inc", "corporation", "vs_5_0", "ps_5_0",
+  "angle", "opengl", "direct3d11", "direct3d12", "d3d11", "d3d12",
+  "vulkan", "metal", "google", "inc", "corporation", "technologies",
+  "vs_4_0", "ps_4_0", "vs_5_0", "ps_5_0", "vs_6_0", "ps_6_0",
   // Requirement text noise
   "equivalent", "better", "compatible", "above", "later", "with",
   "or", "and", "series",

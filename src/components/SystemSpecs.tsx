@@ -122,6 +122,9 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           <div className="form-control">
             <label className="label">
               <span className="label-text">RAM (GB)</span>
+              {!detecting && specs.ramGB != null && specs.ramGB <= 8 && (
+                <span className="label-text-alt text-warning">Browser may underreport</span>
+              )}
             </label>
             <div className="relative">
               <input
@@ -142,6 +145,9 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           <div className="form-control">
             <label className="label">
               <span className="label-text">Available Storage (GB)</span>
+              {!detecting && (
+                <span className="label-text-alt text-warning">Estimated — verify manually</span>
+              )}
             </label>
             <div className="relative">
               <input
