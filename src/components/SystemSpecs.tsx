@@ -95,7 +95,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
                 onChange={(v) => update("cpu", v)}
                 onSubmit={onSubmit}
                 options={cpuList}
-                placeholder={detecting ? "Detecting..." : "e.g., Intel Core i7-12700K"}
+                placeholder={detecting ? "Detecting..." : (specs.cpu ? "e.g., Intel Core i7-12700K" : "Not detectable — enter your CPU model")}
                 disabled={detecting}
               />
               {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}

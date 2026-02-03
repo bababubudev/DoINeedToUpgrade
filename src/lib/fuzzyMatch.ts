@@ -2,13 +2,23 @@
  * Fuzzy-match free-form hardware text against a list of known candidates.
  * Returns the best matching candidate name, or null if nothing scores above threshold.
  */
+
+const NOISE_WORDS = new Set([
+  // GPU renderer noise
+  "angle", "opengl", "direct3d11", "d3d11", "vulkan", "metal",
+  "google", "inc", "corporation", "vs_5_0", "ps_5_0",
+  // Requirement text noise
+  "equivalent", "better", "compatible", "above", "later", "with",
+  "or", "and", "series",
+]);
+
 export function fuzzyMatchHardware(
   input: string,
   candidates: string[]
 ): string | null {
   if (!input.trim()) return null;
 
-  const inputTokens = tokenize(input);
+  const inputTokens = tokenize(input).filter((t) => !NOISE_WORDS.has(t));
   if (inputTokens.length === 0) return null;
 
   let bestCandidate: string | null = null;

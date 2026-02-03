@@ -60,7 +60,7 @@ export default function Home() {
       .then((data) => {
         setSpecs(data);
         const unmatched: string[] = [];
-        if (data.cpu && cpuList.length > 0 && !fuzzyMatchHardware(data.cpu, cpuList)) {
+        if (!data.cpu || (cpuList.length > 0 && !fuzzyMatchHardware(data.cpu, cpuList))) {
           unmatched.push("CPU");
         }
         if (data.gpu && gpuList.length > 0 && !fuzzyMatchHardware(data.gpu, gpuList)) {
@@ -100,7 +100,7 @@ export default function Home() {
 
   function evaluateUnmatched(s: UserSpecs) {
     const unmatched: string[] = [];
-    if (s.cpu && cpuList.length > 0 && !fuzzyMatchHardware(s.cpu, cpuList)) unmatched.push("CPU");
+    if (!s.cpu || (cpuList.length > 0 && !fuzzyMatchHardware(s.cpu, cpuList))) unmatched.push("CPU");
     if (s.gpu && gpuList.length > 0 && !fuzzyMatchHardware(s.gpu, gpuList)) unmatched.push("GPU");
     if (!s.ramGB) unmatched.push("RAM");
     if (!s.storageGB) unmatched.push("Storage");

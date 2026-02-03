@@ -38,6 +38,13 @@ function QuestionIcon() {
   );
 }
 
+function formatList(items: string[]): string {
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
 const verdictStyles = {
   pass: "alert alert-success",
   minimum: "alert alert-warning",
@@ -64,7 +71,7 @@ export default function VerdictBanner({ result }: Props) {
           <div className="flex-1">
             <h3 className="text-lg font-bold text-warning">
               {result.warnComponents.length > 0
-                ? `Manual check needed for ${result.warnComponents.map((c) => c.toLowerCase()).join(" and ")}`
+                ? `Manual check needed for ${formatList(result.warnComponents.map((c) => c.toLowerCase()))}`
                 : result.title}
             </h3>
             <p className="text-sm text-base-content/70 mt-1">{result.description}</p>

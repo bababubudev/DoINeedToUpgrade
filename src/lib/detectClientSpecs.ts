@@ -1,20 +1,60 @@
 import { UserSpecs } from "@/types";
 
+const macosVersionMap: Record<string, string> = {
+  "10.13": "macOS High Sierra",
+  "10.14": "macOS Mojave",
+  "10.15": "macOS Catalina",
+  "11": "macOS Big Sur",
+  "12": "macOS Monterey",
+  "13": "macOS Ventura",
+  "14": "macOS Sonoma",
+  "15": "macOS Sequoia",
+};
+
+function macosVersionToCodename(version: string): string | null {
+  // Try exact match first (e.g. "10.15")
+  if (macosVersionMap[version]) return macosVersionMap[version];
+  // Try major version only (e.g. "14.1" → "14")
+  const major = version.split(".")[0];
+  if (macosVersionMap[major]) return macosVersionMap[major];
+  // For 10.x, try "10.major"
+  if (major === "10") {
+    const minor = version.split(".")[1];
+    if (minor && macosVersionMap[`10.${minor}`]) return macosVersionMap[`10.${minor}`];
+  }
+  return null;
+}
+
 function detectOS(): string {
+  const ua = navigator.userAgent;
+
   // Try modern User-Agent Client Hints API first
   const uaData = (navigator as unknown as { userAgentData?: { platform: string } })
     .userAgentData;
   if (uaData?.platform) {
     const platform = uaData.platform;
-    if (platform === "Windows") return "Windows";
-    if (platform === "macOS") return "macOS";
+    if (platform === "macOS") {
+      // Client Hints gives bare "macOS" — try to get version from UA string
+      const match = ua.match(/Mac OS X (\d+[._]\d+)/);
+      if (match) {
+        const version = match[1].replace("_", ".");
+        const codename = macosVersionToCodename(version);
+        if (codename) return codename;
+        return `macOS ${version}`;
+      }
+      return "macOS";
+    }
+    if (platform === "Windows") {
+      // Try to get specific Windows version from UA
+      if (ua.includes("Windows NT 10.0")) return "Windows 10/11";
+      return "Windows";
+    }
     if (platform === "Linux") return "Linux";
     if (platform === "Chrome OS") return "Chrome OS";
     return platform;
   }
 
   // Fallback to userAgent string parsing
-  const ua = navigator.userAgent;
   if (ua.includes("Windows NT 10.0")) return "Windows 10/11";
   if (ua.includes("Windows NT 6.3")) return "Windows 8.1";
   if (ua.includes("Windows NT 6.2")) return "Windows 8";
@@ -24,6 +64,8 @@ function detectOS(): string {
     const match = ua.match(/Mac OS X (\d+[._]\d+)/);
     if (match) {
       const version = match[1].replace("_", ".");
+      const codename = macosVersionToCodename(version);
+      if (codename) return codename;
       return `macOS ${version}`;
     }
     return "macOS";
@@ -31,6 +73,26 @@ function detectOS(): string {
   if (ua.includes("Linux")) return "Linux";
   if (ua.includes("CrOS")) return "Chrome OS";
   return "Unknown OS";
+}
+
+function cleanGPURenderer(raw: string): string {
+  let cleaned = raw;
+
+  // Strip ANGLE(...) wrapper
+  const angleMatch = cleaned.match(/^ANGLE\s*\((.+)\)$/i);
+  if (angleMatch) {
+    const inner = angleMatch[1];
+    // Split by comma, take segment[1] (the GPU model) if available
+    const segments = inner.split(",").map((s) => s.trim());
+    cleaned = segments.length >= 2 ? segments[1] : segments[0];
+  }
+
+  // For Apple Silicon: if it matches "Apple M<digit>", append " GPU"
+  if (/^Apple M\d/i.test(cleaned) && !cleaned.toLowerCase().includes("gpu")) {
+    cleaned = cleaned + " GPU";
+  }
+
+  return cleaned;
 }
 
 function detectGPU(): string {
@@ -43,7 +105,8 @@ function detectGPU(): string {
     const ext = gl.getExtension("WEBGL_debug_renderer_info");
     if (!ext) return "";
 
-    return gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) ?? "";
+    const raw = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) ?? "";
+    return cleanGPURenderer(raw);
   } catch {
     return "";
   }
@@ -74,7 +137,7 @@ export async function detectClientSpecs(): Promise<UserSpecs> {
 
   return {
     os,
-    cpu: cpuCores ? `Unknown (${cpuCores} cores)` : "",
+    cpu: "",
     cpuCores,
     gpu,
     ramGB,
