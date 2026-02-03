@@ -24,7 +24,6 @@ function parseSection(text: string): GameRequirements {
     gpu: "",
     ram: "",
     storage: "",
-    directx: "",
   };
 
   for (const line of lines) {
@@ -46,8 +45,6 @@ function parseSection(text: string): GameRequirements {
       result.ram = value;
     } else if (key.includes("storage") || key.includes("hard") || key.includes("disk") || key.includes("space")) {
       result.storage = value;
-    } else if (key.includes("directx")) {
-      result.directx = value;
     }
   }
 

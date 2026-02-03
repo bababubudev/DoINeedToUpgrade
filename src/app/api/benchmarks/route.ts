@@ -69,8 +69,10 @@ export async function GET() {
       return NextResponse.json(getStaticFallback());
     }
 
-    const cpuData: GeekbenchCPUEntry[] = await cpuRes.json();
-    const gpuData: GeekbenchGPUEntry[] = await gpuRes.json();
+    const cpuJson = await cpuRes.json();
+    const cpuData: GeekbenchCPUEntry[] = cpuJson.devices ?? [];
+    const gpuJson = await gpuRes.json();
+    const gpuData: GeekbenchGPUEntry[] = gpuJson.devices ?? [];
 
     const cpu = normalizeScores(
       cpuData

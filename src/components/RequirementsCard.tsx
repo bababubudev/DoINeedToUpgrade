@@ -13,7 +13,6 @@ const FIELDS: { key: keyof GameRequirements; label: string }[] = [
   { key: "gpu", label: "Graphics" },
   { key: "ram", label: "Memory" },
   { key: "storage", label: "Storage" },
-  { key: "directx", label: "DirectX" },
 ];
 
 export default function RequirementsCard({ title, requirements }: Props) {

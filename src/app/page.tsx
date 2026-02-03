@@ -29,7 +29,6 @@ const emptyReqs: GameRequirements = {
   gpu: "",
   ram: "",
   storage: "",
-  directx: "",
 };
 
 function hasAnyField(reqs: GameRequirements): boolean {

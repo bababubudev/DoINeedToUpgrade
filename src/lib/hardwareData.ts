@@ -1,4 +1,13 @@
 export const cpuList: string[] = [
+  // Intel 3rd Gen
+  "Intel Core i5-3570K",
+  "Intel Core i7-3770K",
+  // Intel 4th Gen
+  "Intel Core i3-4170",
+  "Intel Core i5-4460",
+  "Intel Core i5-4690K",
+  "Intel Core i7-4770K",
+  "Intel Core i7-4790K",
   // Intel 6th Gen
   "Intel Core i3-6100",
   "Intel Core i5-6400",
@@ -49,6 +58,12 @@ export const cpuList: string[] = [
   "Intel Core i5-14600K",
   "Intel Core i7-14700K",
   "Intel Core i9-14900K",
+  // Intel Core Ultra 200 series
+  "Intel Core Ultra 5 225",
+  "Intel Core Ultra 5 235",
+  "Intel Core Ultra 7 255",
+  "Intel Core Ultra 7 265K",
+  "Intel Core Ultra 9 285K",
   // AMD Ryzen 1000
   "AMD Ryzen 3 1200",
   "AMD Ryzen 5 1400",
@@ -67,11 +82,19 @@ export const cpuList: string[] = [
   "AMD Ryzen 7 5800X",
   "AMD Ryzen 9 5900X",
   "AMD Ryzen 9 5950X",
+  // AMD Ryzen 4000 desktop
+  "AMD Ryzen 5 4500",
+  "AMD Ryzen 5 4600G",
   // AMD Ryzen 7000
   "AMD Ryzen 5 7600X",
   "AMD Ryzen 7 7700X",
   "AMD Ryzen 9 7900X",
   "AMD Ryzen 9 7950X",
+  // AMD Ryzen 9000
+  "AMD Ryzen 5 9600X",
+  "AMD Ryzen 7 9700X",
+  "AMD Ryzen 9 9900X",
+  "AMD Ryzen 9 9950X",
   // Apple Silicon
   "Apple M1",
   "Apple M1 Pro",
@@ -90,6 +113,17 @@ export const cpuList: string[] = [
 ];
 
 export const gpuList: string[] = [
+  // NVIDIA GTX 700 series
+  "NVIDIA GeForce GTX 750 Ti",
+  "NVIDIA GeForce GTX 760",
+  "NVIDIA GeForce GTX 770",
+  "NVIDIA GeForce GTX 780",
+  "NVIDIA GeForce GTX 780 Ti",
+  // NVIDIA GTX 900 series
+  "NVIDIA GeForce GTX 960",
+  "NVIDIA GeForce GTX 970",
+  "NVIDIA GeForce GTX 980",
+  "NVIDIA GeForce GTX 980 Ti",
   // NVIDIA GTX 1000 series
   "NVIDIA GeForce GTX 1050",
   "NVIDIA GeForce GTX 1050 Ti",
@@ -133,6 +167,12 @@ export const gpuList: string[] = [
   "NVIDIA GeForce RTX 4080",
   "NVIDIA GeForce RTX 4080 Super",
   "NVIDIA GeForce RTX 4090",
+  // NVIDIA RTX 5000 series
+  "NVIDIA GeForce RTX 5060 Ti",
+  "NVIDIA GeForce RTX 5070",
+  "NVIDIA GeForce RTX 5070 Ti",
+  "NVIDIA GeForce RTX 5080",
+  "NVIDIA GeForce RTX 5090",
   // AMD RX 5000 series
   "AMD Radeon RX 5500 XT",
   "AMD Radeon RX 5600 XT",
@@ -151,6 +191,13 @@ export const gpuList: string[] = [
   "AMD Radeon RX 7800 XT",
   "AMD Radeon RX 7900 XT",
   "AMD Radeon RX 7900 XTX",
+  // AMD RX 9000 series
+  "AMD Radeon RX 9070",
+  "AMD Radeon RX 9070 XT",
+  // Intel Arc
+  "Intel Arc A580",
+  "Intel Arc A750",
+  "Intel Arc A770",
   // Apple Silicon (integrated GPU)
   "Apple M1 GPU",
   "Apple M1 Pro GPU",
@@ -170,6 +217,15 @@ export const gpuList: string[] = [
 
 // Relative performance scores (~10-100 scale, not real benchmarks)
 export const cpuScores: Record<string, number> = {
+  // Intel 3rd Gen
+  "Intel Core i5-3570K": 15,
+  "Intel Core i7-3770K": 18,
+  // Intel 4th Gen
+  "Intel Core i3-4170": 14,
+  "Intel Core i5-4460": 16,
+  "Intel Core i5-4690K": 18,
+  "Intel Core i7-4770K": 20,
+  "Intel Core i7-4790K": 22,
   // Intel 6th Gen
   "Intel Core i3-6100": 20,
   "Intel Core i5-6400": 25,
@@ -220,6 +276,12 @@ export const cpuScores: Record<string, number> = {
   "Intel Core i5-14600K": 74,
   "Intel Core i7-14700K": 85,
   "Intel Core i9-14900K": 95,
+  // Intel Core Ultra 200 series
+  "Intel Core Ultra 5 225": 62,
+  "Intel Core Ultra 5 235": 68,
+  "Intel Core Ultra 7 255": 78,
+  "Intel Core Ultra 7 265K": 85,
+  "Intel Core Ultra 9 285K": 98,
   // AMD Ryzen 1000
   "AMD Ryzen 3 1200": 18,
   "AMD Ryzen 5 1400": 22,
@@ -238,11 +300,19 @@ export const cpuScores: Record<string, number> = {
   "AMD Ryzen 7 5800X": 70,
   "AMD Ryzen 9 5900X": 80,
   "AMD Ryzen 9 5950X": 85,
+  // AMD Ryzen 4000 desktop
+  "AMD Ryzen 5 4500": 40,
+  "AMD Ryzen 5 4600G": 42,
   // AMD Ryzen 7000
   "AMD Ryzen 5 7600X": 75,
   "AMD Ryzen 7 7700X": 82,
   "AMD Ryzen 9 7900X": 90,
   "AMD Ryzen 9 7950X": 100,
+  // AMD Ryzen 9000
+  "AMD Ryzen 5 9600X": 80,
+  "AMD Ryzen 7 9700X": 88,
+  "AMD Ryzen 9 9900X": 95,
+  "AMD Ryzen 9 9950X": 100,
   // Apple Silicon
   "Apple M1": 52,
   "Apple M1 Pro": 65,
@@ -261,6 +331,17 @@ export const cpuScores: Record<string, number> = {
 };
 
 export const gpuScores: Record<string, number> = {
+  // NVIDIA GTX 700 series
+  "NVIDIA GeForce GTX 750 Ti": 8,
+  "NVIDIA GeForce GTX 760": 10,
+  "NVIDIA GeForce GTX 770": 12,
+  "NVIDIA GeForce GTX 780": 15,
+  "NVIDIA GeForce GTX 780 Ti": 18,
+  // NVIDIA GTX 900 series
+  "NVIDIA GeForce GTX 960": 14,
+  "NVIDIA GeForce GTX 970": 20,
+  "NVIDIA GeForce GTX 980": 25,
+  "NVIDIA GeForce GTX 980 Ti": 32,
   // NVIDIA GTX 1000 series
   "NVIDIA GeForce GTX 1050": 15,
   "NVIDIA GeForce GTX 1050 Ti": 18,
@@ -304,6 +385,12 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA GeForce RTX 4080": 82,
   "NVIDIA GeForce RTX 4080 Super": 85,
   "NVIDIA GeForce RTX 4090": 100,
+  // NVIDIA RTX 5000 series
+  "NVIDIA GeForce RTX 5060 Ti": 75,
+  "NVIDIA GeForce RTX 5070": 85,
+  "NVIDIA GeForce RTX 5070 Ti": 92,
+  "NVIDIA GeForce RTX 5080": 105,
+  "NVIDIA GeForce RTX 5090": 130,
   // AMD RX 5000 series
   "AMD Radeon RX 5500 XT": 22,
   "AMD Radeon RX 5600 XT": 32,
@@ -322,6 +409,13 @@ export const gpuScores: Record<string, number> = {
   "AMD Radeon RX 7800 XT": 65,
   "AMD Radeon RX 7900 XT": 80,
   "AMD Radeon RX 7900 XTX": 88,
+  // AMD RX 9000 series
+  "AMD Radeon RX 9070": 78,
+  "AMD Radeon RX 9070 XT": 85,
+  // Intel Arc
+  "Intel Arc A580": 35,
+  "Intel Arc A750": 42,
+  "Intel Arc A770": 48,
   // Apple Silicon (integrated GPU)
   "Apple M1 GPU": 25,
   "Apple M1 Pro GPU": 35,

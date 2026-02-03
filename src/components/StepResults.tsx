@@ -21,7 +21,7 @@ interface Props {
 function UpgradeCard({ result }: { result: VerdictResult }) {
   if (result.verdict === "pass" || result.upgradeItems.length === 0) return null;
 
-  const [open, setOpen] = useState(result.verdict === "fail");
+  const [open, setOpen] = useState(false);
   const isFail = result.verdict === "fail";
 
   return (
@@ -33,12 +33,14 @@ function UpgradeCard({ result }: { result: VerdictResult }) {
         >
           <div>
             <h3 className={`font-bold text-base ${isFail ? "text-error" : "text-info"}`}>
-              {isFail ? "Upgrade Required" : "Upgrade Optional"}
+              {isFail
+                ? `What you need to upgrade (${result.upgradeItems.length})`
+                : `What you could upgrade (${result.upgradeItems.length})`}
             </h3>
             <p className="text-sm text-base-content/70 mt-1">
               {isFail
-                ? result.description
-                : "Your system can run this game! For a better experience, consider upgrading."}
+                ? "See what's holding your system back"
+                : "Your system can run this game, but these upgrades would improve the experience"}
             </p>
           </div>
           <svg

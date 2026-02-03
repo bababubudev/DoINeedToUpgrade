@@ -13,7 +13,6 @@ export interface GameRequirements {
   gpu: string;
   ram: string;
   storage: string;
-  directx: string;
 }
 
 export interface ParsedGameRequirements {

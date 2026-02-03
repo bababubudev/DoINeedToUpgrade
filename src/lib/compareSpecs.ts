@@ -113,8 +113,8 @@ export function compareSpecs(
   cpuScores: Record<string, number>,
   gpuScores: Record<string, number>
 ): ComparisonItem[] {
-  const min = minimum ?? { os: "", cpu: "", gpu: "", ram: "", storage: "", directx: "" };
-  const rec = recommended ?? { os: "", cpu: "", gpu: "", ram: "", storage: "", directx: "" };
+  const min = minimum ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
+  const rec = recommended ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
 
   const items: ComparisonItem[] = [];
 
@@ -177,18 +177,6 @@ export function compareSpecs(
     minStatus: compareNumeric(user.storageGB, min.storage),
     recStatus: compareNumeric(user.storageGB, rec.storage),
   });
-
-  // DirectX — info only
-  if (min.directx || rec.directx) {
-    items.push({
-      label: "DirectX",
-      userValue: "—",
-      minValue: min.directx || "—",
-      recValue: rec.directx || "—",
-      minStatus: "info",
-      recStatus: "info",
-    });
-  }
 
   return items;
 }

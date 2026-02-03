@@ -67,7 +67,7 @@ export default function AutocompleteInput({
         disabled={disabled}
       />
       {isOpen && filtered.length > 0 && (
-        <ul className="menu bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-60 overflow-y-auto shadow-lg">
+        <ul className="flex flex-col bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-60 overflow-y-auto shadow-lg p-2 gap-1">
           {filtered.map((item) => (
             <li key={item}>
               <button
