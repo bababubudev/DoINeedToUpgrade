@@ -11,12 +11,7 @@ interface Props {
 
 export default function StepGameSelect({ onSelect, onManualMode, loading, error }: Props) {
   return (
-    <div className="animate-fadeIn flex flex-col items-center gap-4 py-4">
-      <h1 className="text-3xl font-bold text-center">What game do you want to check?</h1>
-      <p className="text-base-content/70 text-center">
-        Search for a Steam game to check if your system can run it.
-      </p>
-
+    <div className="animate-fadeIn flex flex-col items-center gap-3 py-2">
       <div className="w-full max-w-xl">
         <GameSearch onSelect={onSelect} />
       </div>
@@ -34,7 +29,7 @@ export default function StepGameSelect({ onSelect, onManualMode, loading, error 
       )}
 
       <button className="btn btn-ghost btn-sm" onClick={onManualMode}>
-        Enter Requirements Manually
+        or enter requirements manually
       </button>
     </div>
   );

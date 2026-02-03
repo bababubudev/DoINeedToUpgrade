@@ -68,11 +68,11 @@ export default function GameSearch({ onSelect }: Props) {
           )}
 
           {isOpen && results.length > 0 && (
-            <ul className="menu bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-72 overflow-y-auto shadow-lg">
+            <ul className="flex flex-col bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-72 overflow-y-auto shadow-lg">
               {results.map((game) => (
                 <li key={game.id}>
                   <button
-                    className="flex items-center gap-3"
+                    className="flex items-center gap-3 w-full px-3 py-2 hover:bg-base-200 text-left"
                     onClick={() => {
                       setQuery(game.name);
                       setIsOpen(false);
@@ -83,9 +83,9 @@ export default function GameSearch({ onSelect }: Props) {
                     <img
                       src={game.tiny_image}
                       alt={game.name}
-                      className="w-12 h-auto rounded"
+                      className="w-12 h-auto rounded shrink-0"
                     />
-                    <span>{game.name}</span>
+                    <span className="truncate">{game.name}</span>
                   </button>
                 </li>
               ))}
