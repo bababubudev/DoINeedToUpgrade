@@ -129,31 +129,35 @@ export function compareSpecs(
   });
 
   // CPU — fuzzy match + score comparison
-  const cpuDisplay = user.cpu
-    ? user.cpuCores
-      ? `${user.cpu} (${user.cpuCores} cores)`
-      : user.cpu
-    : user.cpuCores
-      ? `${user.cpuCores} cores detected`
-      : "Unknown";
+  const cpuDisplay = user.cpu || "Unknown";
+  let cpuMinStatus = compareHardware(user.cpu, min.cpu, Object.keys(cpuScores), cpuScores);
+  let cpuRecStatus = compareHardware(user.cpu, rec.cpu, Object.keys(cpuScores), cpuScores);
+  // If one column is unmatched but the other passes, promote info → pass
+  if (cpuMinStatus === "info" && cpuRecStatus === "pass") cpuMinStatus = "pass";
+  if (cpuRecStatus === "info" && cpuMinStatus === "pass") cpuRecStatus = "pass";
 
   items.push({
     label: "Processor",
     userValue: cpuDisplay,
     minValue: min.cpu || "—",
     recValue: rec.cpu || "—",
-    minStatus: compareHardware(user.cpu, min.cpu, Object.keys(cpuScores), cpuScores),
-    recStatus: compareHardware(user.cpu, rec.cpu, Object.keys(cpuScores), cpuScores),
+    minStatus: cpuMinStatus,
+    recStatus: cpuRecStatus,
   });
 
   // GPU — fuzzy match + score comparison
+  let gpuMinStatus = compareHardware(user.gpu, min.gpu, Object.keys(gpuScores), gpuScores);
+  let gpuRecStatus = compareHardware(user.gpu, rec.gpu, Object.keys(gpuScores), gpuScores);
+  if (gpuMinStatus === "info" && gpuRecStatus === "pass") gpuMinStatus = "pass";
+  if (gpuRecStatus === "info" && gpuMinStatus === "pass") gpuRecStatus = "pass";
+
   items.push({
     label: "Graphics",
     userValue: user.gpu || "Unknown",
     minValue: min.gpu || "—",
     recValue: rec.gpu || "—",
-    minStatus: compareHardware(user.gpu, min.gpu, Object.keys(gpuScores), gpuScores),
-    recStatus: compareHardware(user.gpu, rec.gpu, Object.keys(gpuScores), gpuScores),
+    minStatus: gpuMinStatus,
+    recStatus: gpuRecStatus,
   });
 
   // RAM — numeric comparison

@@ -1,3 +1,5 @@
+export type DetectionSource = "auto";
+
 export interface UserSpecs {
   os: string;
   cpu: string;
@@ -5,6 +7,8 @@ export interface UserSpecs {
   gpu: string;
   ramGB: number | null;
   storageGB: number | null;
+  detectionSource?: DetectionSource;
+  ramApproximate?: boolean;
 }
 
 export interface GameRequirements {

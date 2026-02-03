@@ -141,11 +141,42 @@ function detectGPU(): string {
       canvas.getContext("webgl2") ?? canvas.getContext("webgl");
     if (!gl) return "";
 
+    // Try WEBGL_debug_renderer_info first (Chrome, Edge, etc.)
     const ext = gl.getExtension("WEBGL_debug_renderer_info");
-    if (!ext) return "";
+    if (ext) {
+      const raw = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) ?? "";
+      if (raw) return cleanGPURenderer(raw);
+    }
 
-    const raw = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) ?? "";
-    return cleanGPURenderer(raw);
+    // Firefox fallback: gl.getParameter(gl.RENDERER) now returns detailed GPU info
+    const renderer = gl.getParameter(gl.RENDERER) ?? "";
+    if (renderer && renderer !== "Mozilla" && renderer !== "Generic Renderer") {
+      return cleanGPURenderer(renderer);
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+async function detectGPUViaWebGPU(): Promise<string> {
+  try {
+    const nav = navigator as unknown as { gpu?: { requestAdapter(): Promise<unknown> } };
+    if (!nav.gpu) return "";
+
+    const adapter = await nav.gpu.requestAdapter() as {
+      info?: { vendor?: string; architecture?: string; device?: string; description?: string };
+    } | null;
+    if (!adapter?.info) return "";
+
+    const info = adapter.info;
+    // Prefer description if available, otherwise construct from vendor + architecture
+    if (info.description) return cleanGPURenderer(info.description);
+    if (info.vendor && info.architecture) {
+      return cleanGPURenderer(`${info.vendor} ${info.architecture}`);
+    }
+    return "";
   } catch {
     return "";
   }
@@ -155,6 +186,11 @@ export async function detectClientSpecs(gpuList?: string[]): Promise<UserSpecs> 
   const os = detectOS();
   let gpu = detectGPU();
   const cpuCores = navigator.hardwareConcurrency ?? null;
+
+  // If WebGL detection failed or returned empty, try WebGPU as fallback
+  if (!gpu) {
+    gpu = await detectGPUViaWebGPU();
+  }
 
   // Fuzzy-match cleaned GPU string against known GPU list for canonical name
   if (gpu && gpuList && gpuList.length > 0) {
@@ -171,6 +207,7 @@ export async function detectClientSpecs(gpuList?: string[]): Promise<UserSpecs> 
   const deviceMemory = (navigator as unknown as { deviceMemory?: number })
     .deviceMemory;
   const ramGB = deviceMemory ? Math.round(deviceMemory) : null;
+  const ramApproximate = deviceMemory != null;
 
   // Storage estimate gives the browser's quota, not actual disk size
   let storageGB: number | null = null;
@@ -192,5 +229,7 @@ export async function detectClientSpecs(gpuList?: string[]): Promise<UserSpecs> 
     gpu,
     ramGB,
     storageGB,
+    detectionSource: "auto",
+    ramApproximate,
   };
 }

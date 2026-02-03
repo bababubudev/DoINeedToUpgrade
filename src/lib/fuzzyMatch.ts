@@ -19,7 +19,9 @@ export function fuzzyMatchHardware(
 ): string | null {
   if (!input.trim()) return null;
 
-  const inputTokens = tokenize(input).filter((t) => !NOISE_WORDS.has(t));
+  const allInputTokens = tokenize(input);
+  const hasSeries = allInputTokens.includes("series");
+  const inputTokens = allInputTokens.filter((t) => !NOISE_WORDS.has(t));
   if (inputTokens.length === 0) return null;
 
   let bestCandidate: string | null = null;
@@ -33,7 +35,12 @@ export function fuzzyMatchHardware(
     for (const ct of candidateTokens) {
       const weight = isNumericToken(ct) ? 3 : 1;
       maxPossible += weight;
-      if (inputTokens.some((it) => it === ct || it.includes(ct) || ct.includes(it))) {
+      const isNumeric = isNumericToken(ct);
+      if (inputTokens.some((it) =>
+        isNumeric
+          ? matchNumericToken(it, ct, hasSeries)
+          : (it === ct || it.includes(ct) || ct.includes(it))
+      )) {
         score += weight;
       }
     }
@@ -49,6 +56,34 @@ export function fuzzyMatchHardware(
 
   // Require at least 60% match
   return bestScore >= 0.6 ? bestCandidate : null;
+}
+
+/**
+ * Match numeric tokens. When hasSeries is true and the input token is a round
+ * hundred (600, 700, etc.), allow matching any candidate token in the same
+ * hundred range (e.g. 600 matches 650, 660, 670).
+ */
+function matchNumericToken(
+  inputToken: string,
+  candidateToken: string,
+  hasSeries: boolean
+): boolean {
+  if (inputToken === candidateToken) return true;
+
+  if (hasSeries && isRoundHundred(inputToken)) {
+    const inputNum = parseInt(inputToken, 10);
+    const candidateNum = parseInt(candidateToken, 10);
+    if (!isNaN(inputNum) && !isNaN(candidateNum)) {
+      return Math.abs(Math.floor(candidateNum / 100) - Math.floor(inputNum / 100)) <= 1;
+    }
+  }
+
+  return false;
+}
+
+function isRoundHundred(token: string): boolean {
+  const num = parseInt(token, 10);
+  return !isNaN(num) && num >= 100 && num % 100 === 0 && String(num) === token;
 }
 
 function tokenize(text: string): string[] {

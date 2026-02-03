@@ -1,8 +1,9 @@
 "use client";
 
-import { UserSpecs } from "@/types";
+import { UserSpecs, DetectionSource } from "@/types";
 import AutocompleteInput from "./AutocompleteInput";
 import { osList } from "@/lib/hardwareData";
+import { HiRefresh, HiExclamation } from "react-icons/hi";
 
 interface Props {
   specs: UserSpecs;
@@ -15,6 +16,10 @@ interface Props {
   unmatchedFields?: string[];
   hideSubmit?: boolean;
 }
+
+const sourceLabels: Record<DetectionSource, string> = {
+  auto: "Auto-detected",
+};
 
 export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList, detecting, unmatchedFields = [], hideSubmit = false }: Props) {
   const update = (field: keyof UserSpecs, value: string | number | null) => {
@@ -37,7 +42,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
             <p className="text-sm text-base-content/70">
               {detecting
                 ? "Detecting your hardware..."
-                : "Auto-detected specs. Edit if needed."}
+                : `${sourceLabels[specs.detectionSource ?? "auto"]} specs. Edit if needed.`}
             </p>
           </div>
           {!hideSubmit && (
@@ -47,9 +52,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
               disabled={!dirty}
               title="Recheck compatibility"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
+              <HiRefresh className="w-4 h-4" />
               Recheck
             </button>
           )}
@@ -57,9 +60,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
 
         {!detecting && unmatchedFields.length > 0 && (
           <div role="alert" className="alert alert-warning text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
+            <HiExclamation className="h-5 w-5 shrink-0" />
             <span>
               Could not accurately auto-detect your <strong>{unmatchedFields.join(", ")}</strong>.
               Please enter {unmatchedFields.length === 1 ? "it" : "them"} manually using the fields below for accurate comparison.
@@ -121,7 +122,12 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">RAM (GB)</span>
+              <span className="label-text">
+                RAM (GB)
+                {!detecting && specs.ramApproximate && specs.ramGB != null && (
+                  <span className="text-base-content/50 font-normal"> (~{specs.ramGB} GB approximate)</span>
+                )}
+              </span>
               {!detecting && specs.ramGB != null && specs.ramGB <= 8 && (
                 <span className="label-text-alt text-warning">Browser may underreport</span>
               )}

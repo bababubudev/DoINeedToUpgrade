@@ -39,7 +39,7 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
   if (failedComponents.length > 0) {
     return {
       verdict: "fail",
-      title: `You need to upgrade your ${formatList(failedComponents)}`,
+      title: `You need to upgrade your ${formatList(failedComponents.map((c) => c.toLowerCase()))}`,
       description: `Your system does not meet the minimum requirements.`,
       failedComponents,
       warnComponents,
@@ -76,7 +76,7 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
     return {
       verdict: "unknown",
       title: "Likely OK — verify manually",
-      description: `We couldn't compare ${warnComponents.join(", ")} accurately. Check ${warnComponents.length === 1 ? "it" : "them"} manually to be sure.`,
+      description: `We couldn't compare ${warnComponents.map((c) => c.toLowerCase()).join(", ")} accurately. Check ${warnComponents.length === 1 ? "it" : "them"} manually to be sure.`,
       failedComponents,
       warnComponents,
       upgradeItems,
@@ -85,7 +85,7 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
 
   // All min pass (or info) but some rec fail → minimum
   if (allMinPassOrInfo) {
-    const recFailed = upgradeItems.map((u) => u.component);
+    const recFailed = upgradeItems.map((u) => u.component.toLowerCase());
     return {
       verdict: "minimum",
       title: recFailed.length > 0

@@ -10,7 +10,7 @@ const steps = ["Pick a Game", "Your System", "Results"];
 
 export default function WizardStepper({ currentStep, onStepClick, maxReached }: Props) {
   return (
-    <ul className="steps steps-horizontal w-full">
+    <ul className="steps steps-horizontal w-full max-w-xl mx-auto mb-6">
       {steps.map((label, i) => {
         const stepNum = i + 1;
         const completed = stepNum < currentStep;
@@ -23,7 +23,7 @@ export default function WizardStepper({ currentStep, onStepClick, maxReached }: 
             className={`step ${completed || active ? "step-primary" : ""}`}
           >
             <button
-              className={`text-sm ${clickable ? "cursor-pointer hover:underline font-medium" : "cursor-default"} ${active ? "font-bold" : ""}`}
+              className={`text-sm font-light ${clickable ? "cursor-pointer hover:underline" : "cursor-default"}`}
               onClick={() => clickable && onStepClick(stepNum)}
               disabled={!clickable}
             >

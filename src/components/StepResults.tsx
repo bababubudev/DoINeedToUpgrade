@@ -5,6 +5,7 @@ import { GameDetails, GameRequirements, VerdictResult, ComparisonItem } from "@/
 import VerdictBanner from "@/components/VerdictBanner";
 import ComparisonResult from "@/components/ComparisonResult";
 import RequirementsEditor from "@/components/RequirementsEditor";
+import { HiExclamation, HiInformationCircle, HiChevronDown } from "react-icons/hi";
 
 interface Props {
   game: GameDetails | null;
@@ -25,33 +26,32 @@ function UpgradeCard({ result }: { result: VerdictResult }) {
   const isFail = result.verdict === "fail";
 
   return (
-    <div className={`card shadow-sm bg-base-100 ${isFail ? "dark:bg-error/20" : "dark:bg-info/20"}`}>
+    <div className={`card shadow-sm bg-base-100 hover:bg-base-content/5 transition-colors cursor-pointer ${isFail ? "dark:bg-error/20 dark:hover:bg-error/25" : "dark:bg-info/20 dark:hover:bg-info/25"}`} onClick={() => setOpen(!open)}>
       <div className="card-body p-4">
         <button
           className="flex items-center justify-between w-full text-left"
-          onClick={() => setOpen(!open)}
         >
-          <div>
-            <h3 className={`font-bold text-base ${isFail ? "text-error" : "text-info"}`}>
-              {isFail
-                ? `What you need to upgrade (${result.upgradeItems.length})`
-                : `What you could upgrade (${result.upgradeItems.length})`}
-            </h3>
-            <p className="text-sm text-base-content/70 mt-1">
-              {isFail
-                ? "See what's holding your system back"
-                : "Your system can run this game, but these upgrades would improve the experience"}
-            </p>
+          <div className="flex items-center gap-3">
+            {isFail
+              ? <HiExclamation className={`w-8 h-8 shrink-0 text-error`} />
+              : <HiInformationCircle className={`w-8 h-8 shrink-0 text-info`} />}
+            <div>
+              <h3 className={`font-bold text-lg ${isFail ? "text-error" : "text-info"}`}>
+                {isFail
+                  ? `What you need to upgrade (${result.upgradeItems.length})`
+                  : `What you could upgrade (${result.upgradeItems.length})`}
+              </h3>
+              <p className="text-sm text-base-content/70 mt-1">
+                {isFail
+                  ? "See what's holding your system back"
+                  : "Your system can run this game, but these upgrades would improve the experience"}
+              </p>
+            </div>
           </div>
-          <svg
-            className={`w-5 h-5 shrink-0 ml-2 text-base-content/50 transition-transform ${open ? "rotate-180" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+          <div className={`flex items-center gap-1 shrink-0 ml-2 text-base-content/50 text-xs`}>
+            <span>{open ? "Hide" : "Show"}</span>
+            <HiChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
+          </div>
         </button>
         {open && (
           <div className="overflow-x-auto mt-2">
@@ -124,15 +124,7 @@ export default function StepResults({
           onClick={() => setShowEditor(!showEditor)}
         >
           {showEditor ? "Hide" : "Show"} Requirements Editor
-          <svg
-            className={`w-4 h-4 transition-transform ${showEditor ? "rotate-180" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+          <HiChevronDown className={`w-4 h-4 transition-transform ${showEditor ? "rotate-180" : ""}`} />
         </button>
         {showEditor && (
           <div className="mt-2">

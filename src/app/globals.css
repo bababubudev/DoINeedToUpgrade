@@ -10,6 +10,12 @@
   .input-bordered { @apply border-base-300 bg-base-100; }
 }
 
+.steps .step::before {
+  font-weight: 900;
+  font-size: 1.1rem;
+  transform: scale(1.15);
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

@@ -56,7 +56,7 @@ export default function Home() {
 
   useEffect(() => {
     detectClientSpecs(gpuList)
-      .then((data) => {
+      .then(async (data) => {
         setSpecs(data);
         const unmatched: string[] = [];
         if (!data.cpu || (cpuList.length > 0 && !fuzzyMatchHardware(data.cpu, cpuList))) {
