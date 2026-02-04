@@ -3,7 +3,7 @@
 import { UserSpecs, DetectionSource } from "@/types";
 import AutocompleteInput from "./AutocompleteInput";
 import { osList } from "@/lib/hardwareData";
-import { HiRefresh, HiExclamation } from "react-icons/hi";
+import { HiRefresh, HiExclamation, HiInformationCircle } from "react-icons/hi";
 
 interface Props {
   specs: UserSpecs;
@@ -58,15 +58,28 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           )}
         </div>
 
-        {!detecting && unmatchedFields.length > 0 && (
-          <div role="alert" className="alert alert-warning text-sm">
-            <HiExclamation className="h-5 w-5 shrink-0" />
+        {!detecting && specs.guessedFields && specs.guessedFields.length > 0 && (
+          <div role="alert" className="alert alert-info text-sm">
+            <HiInformationCircle className="h-5 w-5 shrink-0" />
             <span>
-              Could not accurately auto-detect your <strong>{unmatchedFields.join(", ")}</strong>.
-              Please enter {unmatchedFields.length === 1 ? "it" : "them"} manually using the fields below for accurate comparison.
+              We estimated your <strong>{specs.guessedFields.join(", ")}</strong> based on your Mac model.
+              Please verify {specs.guessedFields.length === 1 ? "it is" : "they are"} correct or adjust below.
             </span>
           </div>
         )}
+
+        {!detecting && (() => {
+          const nonGuessed = unmatchedFields.filter(f => !specs.guessedFields?.includes(f));
+          return nonGuessed.length > 0 ? (
+            <div role="alert" className="alert alert-warning text-sm">
+              <HiExclamation className="h-5 w-5 shrink-0" />
+              <span>
+                Could not accurately auto-detect your <strong>{nonGuessed.join(", ")}</strong>.
+                Please enter {nonGuessed.length === 1 ? "it" : "them"} manually using the fields below for accurate comparison.
+              </span>
+            </div>
+          ) : null;
+        })()}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-control">

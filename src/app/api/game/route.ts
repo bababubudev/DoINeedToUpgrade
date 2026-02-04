@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseRequirements } from "@/lib/parseRequirements";
+import { Platform, ParsedGameRequirements, PlatformRequirements } from "@/types";
 
 export async function GET(request: NextRequest) {
   const appid = request.nextUrl.searchParams.get("appid");
@@ -25,14 +26,35 @@ export async function GET(request: NextRequest) {
     }
 
     const info = appData.data;
-    const pcReqs = info.pc_requirements || {};
 
-    const requirements = parseRequirements(pcReqs.minimum, pcReqs.recommended);
+    const platformMap: Record<Platform, Record<string, string>> = {
+      windows: info.pc_requirements || {},
+      macos: info.mac_requirements || {},
+      linux: info.linux_requirements || {},
+    };
+
+    const platformRequirements: PlatformRequirements = {};
+    const availablePlatforms: Platform[] = [];
+
+    for (const [platform, reqs] of Object.entries(platformMap) as [Platform, Record<string, string>][]) {
+      if (reqs.minimum || reqs.recommended) {
+        const parsed: ParsedGameRequirements = parseRequirements(reqs.minimum, reqs.recommended);
+        if (parsed.minimum || parsed.recommended) {
+          platformRequirements[platform] = parsed;
+          availablePlatforms.push(platform);
+        }
+      }
+    }
+
+    // Backward compat: default to Windows requirements
+    const requirements = platformRequirements.windows ?? platformRequirements[availablePlatforms[0]] ?? { minimum: null, recommended: null };
 
     return NextResponse.json({
       name: info.name,
       headerImage: info.header_image,
       requirements,
+      platformRequirements,
+      availablePlatforms,
     });
   } catch {
     return NextResponse.json({ error: "Failed to fetch game" }, { status: 500 });

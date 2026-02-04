@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { GameDetails, GameRequirements, VerdictResult, ComparisonItem } from "@/types";
+import { GameDetails, GameRequirements, VerdictResult, ComparisonItem, Platform } from "@/types";
 import VerdictBanner from "@/components/VerdictBanner";
 import ComparisonResult from "@/components/ComparisonResult";
 import RequirementsEditor from "@/components/RequirementsEditor";
 import { HiExclamation, HiInformationCircle, HiChevronDown } from "react-icons/hi";
+
+const platformLabels: Record<Platform, string> = {
+  windows: "Windows",
+  macos: "macOS",
+  linux: "Linux",
+};
 
 interface Props {
   game: GameDetails | null;
@@ -17,6 +23,10 @@ interface Props {
   onRerun: () => void;
   onCheckAnother: () => void;
   onEditSpecs: () => void;
+  platform: Platform;
+  userPlatform: Platform;
+  availablePlatforms: Platform[];
+  onPlatformChange: (platform: Platform) => void;
 }
 
 function UpgradeCard({ result }: { result: VerdictResult }) {
@@ -90,6 +100,10 @@ export default function StepResults({
   onRerun,
   onCheckAnother,
   onEditSpecs,
+  platform,
+  userPlatform,
+  availablePlatforms,
+  onPlatformChange,
 }: Props) {
   const [showEditor, setShowEditor] = useState(false);
 
@@ -109,6 +123,32 @@ export default function StepResults({
           </div>
         </div>
       )}
+
+      {availablePlatforms.length > 1 ? (
+        <div className="flex flex-col gap-1">
+          <div role="tablist" className="tabs tabs-boxed w-fit">
+            {availablePlatforms.map((p) => (
+              <button
+                key={p}
+                role="tab"
+                className={`tab ${p === platform ? "tab-active" : ""}`}
+                onClick={() => onPlatformChange(p)}
+              >
+                {platformLabels[p]}
+              </button>
+            ))}
+          </div>
+          {platform !== userPlatform && (
+            <p className="text-xs text-base-content/50">
+              Showing {platformLabels[platform]} requirements (your OS: {platformLabels[userPlatform]})
+            </p>
+          )}
+        </div>
+      ) : availablePlatforms.length === 1 && platform !== userPlatform ? (
+        <p className="text-xs text-base-content/50">
+          This game only lists {platformLabels[platform]} requirements. Comparing other specs against those.
+        </p>
+      ) : null}
 
       {verdict && <VerdictBanner result={verdict} />}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { UserSpecs, GameDetails, GameRequirements, ComparisonItem } from "@/types";
+import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform } from "@/types";
 import { compareSpecs } from "@/lib/compareSpecs";
 import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
@@ -31,6 +31,13 @@ const emptyReqs: GameRequirements = {
   storage: "",
 };
 
+function detectPlatformFromOS(os: string): Platform {
+  const lower = os.toLowerCase();
+  if (lower.includes("mac")) return "macos";
+  if (lower.includes("linux")) return "linux";
+  return "windows";
+}
+
 function hasAnyField(reqs: GameRequirements): boolean {
   return Object.values(reqs).some((v) => v.trim() !== "");
 }
@@ -53,11 +60,16 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [specsDirty, setSpecsDirty] = useState(false);
+  const [platform, setPlatform] = useState<Platform>("windows");
+  const [userPlatform, setUserPlatform] = useState<Platform>("windows");
 
   useEffect(() => {
     detectClientSpecs(gpuList)
       .then(async (data) => {
         setSpecs(data);
+        const detected = detectPlatformFromOS(data.os);
+        setPlatform(detected);
+        setUserPlatform(detected);
         const unmatched: string[] = [];
         if (!data.cpu || (cpuList.length > 0 && !fuzzyMatchHardware(data.cpu, cpuList))) {
           unmatched.push("CPU");
@@ -67,6 +79,12 @@ export default function Home() {
         }
         if (!data.ramGB || data.ramGB === 8) unmatched.push("RAM");
         unmatched.push("Storage");
+        // Merge guessed fields — these have values but need user confirmation
+        if (data.guessedFields) {
+          for (const f of data.guessedFields) {
+            if (!unmatched.includes(f)) unmatched.push(f);
+          }
+        }
         setUnmatchedFields(unmatched);
       })
       .catch(() => {})
@@ -74,6 +92,8 @@ export default function Home() {
   }, [cpuList, gpuList]);
 
   const verdict = comparison ? computeVerdict(comparison) : null;
+
+  const isSinglePlatformGame = (game?.availablePlatforms.length ?? 0) <= 1;
 
   const runComparison = useCallback(
     (min?: GameRequirements, rec?: GameRequirements) => {
@@ -85,11 +105,11 @@ export default function Home() {
       }
       const minArg = hasAnyField(minR) ? minR : null;
       const recArg = hasAnyField(recR) ? recR : null;
-      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores, isSinglePlatformGame);
       setComparison(result);
       setSpecsDirty(false);
     },
-    [specs, minReqs, recReqs, cpuScores, gpuScores]
+    [specs, minReqs, recReqs, cpuScores, gpuScores, isSinglePlatformGame]
   );
 
   function goToStep(s: number) {
@@ -125,16 +145,24 @@ export default function Home() {
 
       const data: GameDetails = await res.json();
       setGame(data);
-      const newMin = data.requirements.minimum ?? { ...emptyReqs };
-      const newRec = data.requirements.recommended ?? { ...emptyReqs };
+
+      // Auto-select platform: prefer user's OS, fall back to first available
+      const selectedPlatform = data.availablePlatforms.includes(userPlatform)
+        ? userPlatform
+        : data.availablePlatforms[0] ?? "windows";
+      setPlatform(selectedPlatform);
+
+      const platformReqs = data.platformRequirements[selectedPlatform] ?? data.requirements;
+      const newMin = platformReqs.minimum ?? { ...emptyReqs };
+      const newRec = platformReqs.recommended ?? { ...emptyReqs };
       setMinReqs(newMin);
       setRecReqs(newRec);
 
       if (specsConfirmed) {
-        // Auto-run comparison and skip to results
         const minArg = hasAnyField(newMin) ? newMin : null;
         const recArg = hasAnyField(newRec) ? newRec : null;
-        const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+        const singlePlatform = (data.availablePlatforms.length ?? 0) <= 1;
+        const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores, singlePlatform);
         setComparison(result);
         setSpecsDirty(false);
         goToStep(3);
@@ -179,6 +207,23 @@ export default function Home() {
   function handleRequirementsChange(min: GameRequirements, rec: GameRequirements) {
     setMinReqs(min);
     setRecReqs(rec);
+  }
+
+  function handlePlatformChange(newPlatform: Platform) {
+    if (!game) return;
+    setPlatform(newPlatform);
+    const platformReqs = game.platformRequirements[newPlatform] ?? game.requirements;
+    const newMin = platformReqs.minimum ?? { ...emptyReqs };
+    const newRec = platformReqs.recommended ?? { ...emptyReqs };
+    setMinReqs(newMin);
+    setRecReqs(newRec);
+    if (specsConfirmed) {
+      const minArg = hasAnyField(newMin) ? newMin : null;
+      const recArg = hasAnyField(newRec) ? newRec : null;
+      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores, isSinglePlatformGame);
+      setComparison(result);
+      setSpecsDirty(false);
+    }
   }
 
   return (
@@ -254,6 +299,10 @@ export default function Home() {
           onRerun={() => runComparison()}
           onCheckAnother={handleCheckAnother}
           onEditSpecs={handleEditSpecs}
+          platform={platform}
+          userPlatform={userPlatform}
+          availablePlatforms={game?.availablePlatforms ?? []}
+          onPlatformChange={handlePlatformChange}
         />
       )}
     </div>

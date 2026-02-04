@@ -111,7 +111,8 @@ export function compareSpecs(
   minimum: GameRequirements | null,
   recommended: GameRequirements | null,
   cpuScores: Record<string, number>,
-  gpuScores: Record<string, number>
+  gpuScores: Record<string, number>,
+  singlePlatformGame?: boolean
 ): ComparisonItem[] {
   const min = minimum ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
   const rec = recommended ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
@@ -119,13 +120,20 @@ export function compareSpecs(
   const items: ComparisonItem[] = [];
 
   // OS — version-based comparison
+  // When a game only lists requirements for a single platform, treat cross-platform as pass
+  let osMinStatus = compareOS(user.os, min.os);
+  let osRecStatus = compareOS(user.os, rec.os);
+  if (singlePlatformGame) {
+    if (osMinStatus === "warn") osMinStatus = "pass";
+    if (osRecStatus === "warn") osRecStatus = "pass";
+  }
   items.push({
     label: "Operating System",
     userValue: user.os || "Unknown",
     minValue: min.os || "—",
     recValue: rec.os || "—",
-    minStatus: compareOS(user.os, min.os),
-    recStatus: compareOS(user.os, rec.os),
+    minStatus: osMinStatus,
+    recStatus: osRecStatus,
   });
 
   // CPU — fuzzy match + score comparison

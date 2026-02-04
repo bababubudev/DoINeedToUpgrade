@@ -9,6 +9,7 @@ export interface UserSpecs {
   storageGB: number | null;
   detectionSource?: DetectionSource;
   ramApproximate?: boolean;
+  guessedFields?: string[];
 }
 
 export interface GameRequirements {
@@ -24,6 +25,10 @@ export interface ParsedGameRequirements {
   recommended: GameRequirements | null;
 }
 
+export type Platform = "windows" | "macos" | "linux";
+
+export type PlatformRequirements = Partial<Record<Platform, ParsedGameRequirements>>;
+
 export interface GameSearchResult {
   id: number;
   name: string;
@@ -34,6 +39,8 @@ export interface GameDetails {
   name: string;
   headerImage: string;
   requirements: ParsedGameRequirements;
+  platformRequirements: PlatformRequirements;
+  availablePlatforms: Platform[];
 }
 
 export type ComparisonStatus = "pass" | "warn" | "fail" | "info";

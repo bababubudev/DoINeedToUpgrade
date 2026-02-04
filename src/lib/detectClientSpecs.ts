@@ -26,16 +26,56 @@ function macosVersionToCodename(version: string): string | null {
   return null;
 }
 
-function detectOS(): string {
+interface UADataWithHints {
+  platform: string;
+  getHighEntropyValues?(hints: string[]): Promise<{ platformVersion?: string }>;
+}
+
+// Safari major version → macOS major version mapping.
+// Safari versions are tied to specific macOS releases.
+const safariVersionToMacOS: Record<number, string> = {
+  14: "11",   // Safari 14 → macOS Big Sur
+  15: "12",   // Safari 15 → macOS Monterey
+  16: "13",   // Safari 16 → macOS Ventura
+  17: "14",   // Safari 17 → macOS Sonoma
+  18: "15",   // Safari 18 → macOS Sequoia
+  19: "16",   // Safari 19 → future
+};
+
+function inferMacOSFromSafariVersion(ua: string): string | null {
+  // Safari UA contains "Version/18.2 Safari/605.1.15"
+  const match = ua.match(/Version\/(\d+)\.\d+.*Safari\//);
+  if (!match) return null;
+  const safariMajor = parseInt(match[1], 10);
+  const macVersion = safariVersionToMacOS[safariMajor];
+  if (!macVersion) return null;
+  return macosVersionToCodename(macVersion);
+}
+
+async function detectOS(): Promise<string> {
   const ua = navigator.userAgent;
 
-  // Try modern User-Agent Client Hints API first
-  const uaData = (navigator as unknown as { userAgentData?: { platform: string } })
+  // Try modern User-Agent Client Hints API first (Chrome/Edge)
+  const uaData = (navigator as unknown as { userAgentData?: UADataWithHints })
     .userAgentData;
   if (uaData?.platform) {
     const platform = uaData.platform;
     if (platform === "macOS") {
-      // Client Hints gives bare "macOS" — try to get version from UA string
+      // Chrome freezes the macOS version in the UA string to 10_15_7.
+      // Use getHighEntropyValues to get the real platform version.
+      if (uaData.getHighEntropyValues) {
+        try {
+          const hints = await uaData.getHighEntropyValues(["platformVersion"]);
+          if (hints.platformVersion) {
+            const codename = macosVersionToCodename(hints.platformVersion);
+            if (codename) return codename;
+            return `macOS ${hints.platformVersion}`;
+          }
+        } catch {
+          // Fall through to UA string parsing
+        }
+      }
+      // Fallback to UA string (will be frozen on Chromium browsers)
       const match = ua.match(/Mac OS X (\d+[._]\d+)/);
       if (match) {
         const version = match[1].replace("_", ".");
@@ -46,7 +86,6 @@ function detectOS(): string {
       return "macOS";
     }
     if (platform === "Windows") {
-      // Try to get specific Windows version from UA
       if (ua.includes("Windows NT 10.0")) return "Windows 10/11";
       return "Windows";
     }
@@ -55,13 +94,19 @@ function detectOS(): string {
     return platform;
   }
 
-  // Fallback to userAgent string parsing
+  // Fallback to userAgent string parsing (Safari, Firefox, etc.)
   if (ua.includes("Windows NT 10.0")) return "Windows 10/11";
   if (ua.includes("Windows NT 6.3")) return "Windows 8.1";
   if (ua.includes("Windows NT 6.2")) return "Windows 8";
   if (ua.includes("Windows NT 6.1")) return "Windows 7";
   if (ua.includes("Windows")) return "Windows";
   if (ua.includes("Mac OS X")) {
+    // Safari also freezes macOS version to 10_15_7 in the UA string.
+    // Use the Safari version number to infer the real macOS version.
+    const safariInferred = inferMacOSFromSafariVersion(ua);
+    if (safariInferred) return safariInferred;
+
+    // Non-Safari browsers (Firefox) may report the real version
     const match = ua.match(/Mac OS X (\d+[._]\d+)/);
     if (match) {
       const version = match[1].replace("_", ".");
@@ -134,6 +179,51 @@ function inferCPUFromGPU(gpu: string, os: string): string {
   return "";
 }
 
+function getMacOSMajorVersion(os: string): number | null {
+  const codenameMap: Record<string, number> = {
+    "macOS Big Sur": 11,
+    "macOS Monterey": 12,
+    "macOS Ventura": 13,
+    "macOS Sonoma": 14,
+    "macOS Sequoia": 15,
+  };
+  if (codenameMap[os]) return codenameMap[os];
+  const match = os.match(/macOS\s+(\d+)/);
+  if (match) return parseInt(match[1], 10);
+  return null;
+}
+
+function guessAppleSilicon(
+  coreCount: number,
+  macosVersion: number
+): { cpu: string; gpu: string } | null {
+  if (macosVersion < 11) return null; // Intel Mac
+
+  let gen: number;
+  if (macosVersion >= 15) gen = 4;
+  else if (macosVersion >= 14) gen = 3;
+  else if (macosVersion >= 13) gen = 2;
+  else gen = 1;
+
+  let variant = "";
+  // M4 base has 10 cores; M1-M3 base has 8 cores
+  if (gen === 4) {
+    if (coreCount >= 20) variant = " Ultra";
+    else if (coreCount >= 16) variant = " Max";
+    else if (coreCount >= 12) variant = " Pro";
+  } else {
+    if (coreCount >= 20) variant = " Ultra";
+    else if (coreCount >= 14) variant = " Max";
+    else if (coreCount >= 10) variant = " Pro";
+  }
+
+  const chip = `M${gen}${variant}`;
+  return {
+    cpu: `Apple ${chip}`,
+    gpu: `Apple ${chip} GPU`,
+  };
+}
+
 function detectGPU(): string {
   try {
     const canvas = document.createElement("canvas");
@@ -183,7 +273,7 @@ async function detectGPUViaWebGPU(): Promise<string> {
 }
 
 export async function detectClientSpecs(gpuList?: string[]): Promise<UserSpecs> {
-  const os = detectOS();
+  const os = await detectOS();
   let gpu = detectGPU();
   const cpuCores = navigator.hardwareConcurrency ?? null;
 
@@ -201,13 +291,44 @@ export async function detectClientSpecs(gpuList?: string[]): Promise<UserSpecs> 
   }
 
   // Try to infer CPU from GPU (works for Apple Silicon Macs)
-  const cpu = inferCPUFromGPU(gpu, os);
+  let cpu = inferCPUFromGPU(gpu, os);
 
   // navigator.deviceMemory is Chrome/Edge only (returns approximate GB as power of 2)
   const deviceMemory = (navigator as unknown as { deviceMemory?: number })
     .deviceMemory;
-  const ramGB = deviceMemory ? Math.round(deviceMemory) : null;
+  let ramGB = deviceMemory ? Math.round(deviceMemory) : null;
   const ramApproximate = deviceMemory != null;
+
+  // On macOS, if GPU/CPU detection failed, use heuristic based on core count + OS version
+  const guessedFields: string[] = [];
+  const isMac = os.toLowerCase().includes("mac");
+  const isGenericAppleGPU = !gpu || gpu === "Apple GPU";
+
+  if (isMac && isGenericAppleGPU && cpuCores) {
+    const macVersion = getMacOSMajorVersion(os);
+    if (macVersion) {
+      const guess = guessAppleSilicon(cpuCores, macVersion);
+      if (guess) {
+        // Apply guess and match against known hardware lists
+        const gpuMatch = gpuList && gpuList.length > 0
+          ? fuzzyMatchHardware(guess.gpu, gpuList)
+          : null;
+        gpu = gpuMatch ?? guess.gpu;
+        cpu = guess.cpu;
+        guessedFields.push("CPU", "GPU");
+      }
+    }
+  }
+
+  // Estimate RAM for Apple Silicon Macs when deviceMemory is unavailable
+  if (isMac && ramGB === null) {
+    // Conservative minimums by variant — user will be prompted to confirm
+    if (cpu.includes("Ultra")) ramGB = 64;
+    else if (cpu.includes("Max")) ramGB = 36;
+    else if (cpu.includes("Pro")) ramGB = 18;
+    else if (cpu.includes("Apple M")) ramGB = 8;
+    if (ramGB !== null) guessedFields.push("RAM");
+  }
 
   // Storage estimate gives the browser's quota, not actual disk size
   let storageGB: number | null = null;
@@ -231,5 +352,6 @@ export async function detectClientSpecs(gpuList?: string[]): Promise<UserSpecs> 
     storageGB,
     detectionSource: "auto",
     ramApproximate,
+    guessedFields: guessedFields.length > 0 ? guessedFields : undefined,
   };
 }
