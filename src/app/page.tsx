@@ -13,6 +13,7 @@ import StepSystemSpecs from "@/components/StepSystemSpecs";
 import StepResults from "@/components/StepResults";
 import RequirementsEditor from "@/components/RequirementsEditor";
 import SystemSpecs from "@/components/SystemSpecs";
+import HardwareScanner from "@/components/HardwareScanner";
 
 const defaultSpecs: UserSpecs = {
   os: "",
@@ -200,6 +201,12 @@ export default function Home() {
     goToStep(1);
   }
 
+  function handleScriptImport(importedSpecs: UserSpecs) {
+    setSpecs(importedSpecs);
+    setUnmatchedFields([]);
+    setSpecsDirty(true);
+  }
+
   function handleEditSpecs() {
     goToStep(2);
   }
@@ -255,11 +262,13 @@ export default function Home() {
           game={game}
           onBack={() => goToStep(1)}
           onConfirm={handleSpecsConfirm}
+          onScriptImport={handleScriptImport}
         />
       )}
 
       {step === 2 && manualMode && (
         <div className="animate-fadeIn flex flex-col gap-4">
+          <HardwareScanner onImport={handleScriptImport} />
           <SystemSpecs
             specs={specs}
             onChange={handleSpecsChange}

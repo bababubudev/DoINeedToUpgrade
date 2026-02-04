@@ -1,6 +1,6 @@
 # Style Guide
 
-Design system reference for the System Requirements Checker application.
+Design system reference for the Do I Need An Upgrade application.
 
 ---
 

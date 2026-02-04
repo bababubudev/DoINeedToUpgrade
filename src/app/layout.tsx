@@ -6,7 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Do I Need To Upgrade",
+  title: "Do I Need An Upgrade",
   description: "Find out if your PC needs an upgrade to run any Steam game",
 };
 
@@ -20,7 +20,7 @@ export default function RootLayout({
       <body className={`${montserrat.className} min-h-screen bg-base-200`}>
         <div className="navbar bg-base-100 border-b border-base-300 px-4">
           <div className="flex-1">
-            <span className="text-xl font-extrabold tracking-tight">Do I Need To Upgrade?</span>
+            <span className="text-xl font-extrabold tracking-tight">Do I Need An Upgrade?</span>
           </div>
           <div className="flex-none">
             <ThemeToggle />

@@ -1,6 +1,6 @@
 # System Design
 
-Architecture reference for the System Requirements Checker application.
+Architecture reference for the Do I Need An Upgrade application.
 
 ---
 

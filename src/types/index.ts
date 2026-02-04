@@ -1,4 +1,4 @@
-export type DetectionSource = "auto";
+export type DetectionSource = "auto" | "script";
 
 export interface UserSpecs {
   os: string;

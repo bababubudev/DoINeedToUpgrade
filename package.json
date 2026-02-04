@@ -1,5 +1,5 @@
 {
-  "name": "system-requirements-checker",
+  "name": "do-i-need-an-upgrade",
   "version": "1.0.0",
   "private": true,
   "scripts": {

@@ -2,6 +2,7 @@
 
 import { UserSpecs, GameDetails } from "@/types";
 import SystemSpecs from "@/components/SystemSpecs";
+import HardwareScanner from "@/components/HardwareScanner";
 
 interface Props {
   specs: UserSpecs;
@@ -14,6 +15,7 @@ interface Props {
   game: GameDetails | null;
   onBack: () => void;
   onConfirm: () => void;
+  onScriptImport?: (specs: UserSpecs) => void;
 }
 
 export default function StepSystemSpecs({
@@ -27,6 +29,7 @@ export default function StepSystemSpecs({
   game,
   onBack,
   onConfirm,
+  onScriptImport,
 }: Props) {
   return (
     <div className="animate-fadeIn flex flex-col gap-4">
@@ -44,6 +47,8 @@ export default function StepSystemSpecs({
           </div>
         </div>
       )}
+
+      {onScriptImport && <HardwareScanner onImport={onScriptImport} />}
 
       <SystemSpecs
         specs={specs}

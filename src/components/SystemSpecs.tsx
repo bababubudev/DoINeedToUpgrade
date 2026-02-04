@@ -19,6 +19,7 @@ interface Props {
 
 const sourceLabels: Record<DetectionSource, string> = {
   auto: "Auto-detected",
+  script: "Detected via hardware scan",
 };
 
 export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList, detecting, unmatchedFields = [], hideSubmit = false }: Props) {
