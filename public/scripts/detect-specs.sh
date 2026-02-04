@@ -97,3 +97,5 @@ echo "Copy the code below and paste it into DoINeedAnUpgrade:"
 echo ""
 echo "DINAU:${ENCODED}"
 echo ""
+Write-Host "Press enter to exit"
+Read-Host
