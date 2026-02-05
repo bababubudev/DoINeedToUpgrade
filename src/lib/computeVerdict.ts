@@ -39,8 +39,8 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
   if (failedComponents.length > 0) {
     return {
       verdict: "fail",
-      title: `You need to upgrade your ${formatList(failedComponents.map((c) => c.toLowerCase()))}`,
-      description: `Your system does not meet the minimum requirements.`,
+      title: "Yes, you need an upgrade",
+      description: `Your ${formatList(failedComponents.map((c) => c.toLowerCase()))} ${failedComponents.length === 1 ? "doesn't" : "don't"} meet the minimum requirements.`,
       failedComponents,
       warnComponents,
       upgradeItems,
@@ -63,8 +63,8 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
   if (allMinPass && allRecPass) {
     return {
       verdict: "pass",
-      title: "No upgrade needed!",
-      description: "Your system meets or exceeds the recommended requirements.",
+      title: "No, you don't need an upgrade!",
+      description: "Your system meets or exceeds the recommended specs.",
       failedComponents,
       warnComponents,
       upgradeItems,
@@ -75,8 +75,8 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
   if (allMinPassOrInfo && allRecPassOrInfo && hasInfo) {
     return {
       verdict: "unknown",
-      title: "Likely OK — verify manually",
-      description: `We couldn't compare ${warnComponents.map((c) => c.toLowerCase()).join(", ")} accurately. Check ${warnComponents.length === 1 ? "it" : "them"} manually to be sure.`,
+      title: "Probably not, but we're not 100% sure",
+      description: `We couldn't verify your ${formatList(warnComponents.map((c) => c.toLowerCase()))} automatically.`,
       failedComponents,
       warnComponents,
       upgradeItems,
@@ -88,11 +88,10 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
     const recFailed = upgradeItems.map((u) => u.component.toLowerCase());
     return {
       verdict: "minimum",
-      title: recFailed.length > 0
-        ? `Consider upgrading your ${formatList(recFailed)}`
-        : "Upgrade recommended",
-      description:
-        "Your system meets minimum requirements but falls short of recommended specs.",
+      title: "Not required, but an upgrade would help",
+      description: recFailed.length > 0
+        ? `Upgrading your ${formatList(recFailed)} would improve the experience.`
+        : "You may need to lower graphics settings for smoother performance.",
       failedComponents,
       warnComponents,
       upgradeItems,
@@ -102,9 +101,8 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
   // Otherwise → unknown
   return {
     verdict: "unknown",
-    title: "Manual check needed",
-    description:
-      "We couldn't determine a clear verdict. Please review the comparison details below.",
+    title: "We're not sure — check the details below",
+    description: "Review the comparison below to decide.",
     failedComponents,
     warnComponents,
     upgradeItems,

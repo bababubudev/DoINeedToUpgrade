@@ -23,8 +23,14 @@ const sourceLabels: Record<DetectionSource, string> = {
 };
 
 export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList, detecting, unmatchedFields = [], hideSubmit = false }: Props) {
+  const isAuto = specs.detectionSource === "auto";
+  const isScript = specs.detectionSource === "script";
+  const manual = specs.manualFields ?? [];
+  const isEstimated = (field: string) => isAuto && !manual.includes(field);
+
   const update = (field: keyof UserSpecs, value: string | number | null) => {
-    onChange({ ...specs, [field]: value });
+    const updated = manual.includes(field) ? manual : [...manual, field];
+    onChange({ ...specs, [field]: value, manualFields: updated });
   };
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -59,7 +65,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           )}
         </div>
 
-        {!detecting && specs.guessedFields && specs.guessedFields.length > 0 && (
+        {!detecting && isAuto && specs.guessedFields && specs.guessedFields.length > 0 && (
           <div role="alert" className="alert alert-info text-sm">
             <HiInformationCircle className="h-5 w-5 shrink-0" />
             <span>
@@ -69,14 +75,13 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           </div>
         )}
 
-        {!detecting && (() => {
+        {!detecting && isAuto && (() => {
           const nonGuessed = unmatchedFields.filter(f => !specs.guessedFields?.includes(f));
           return nonGuessed.length > 0 ? (
             <div role="alert" className="alert alert-warning text-sm">
               <HiExclamation className="h-5 w-5 shrink-0" />
               <span>
-                Could not accurately auto-detect your <strong>{nonGuessed.join(", ")}</strong>.
-                Please enter {nonGuessed.length === 1 ? "it" : "them"} manually using the fields below for accurate comparison.
+                Specs are estimated and may not be accurate. Download the hardware scanner above for precise detection.
               </span>
             </div>
           ) : null;
@@ -86,6 +91,9 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           <div className="form-control">
             <label className="label">
               <span className="label-text">Operating System</span>
+              {!detecting && isEstimated("os") && specs.os && (
+                <span className="label-text-alt text-warning">*Estimated</span>
+              )}
             </label>
             <div className="relative">
               <AutocompleteInput
@@ -103,6 +111,9 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           <div className="form-control">
             <label className="label">
               <span className="label-text">CPU</span>
+              {!detecting && isEstimated("cpu") && specs.cpu && (
+                <span className="label-text-alt text-warning">*Estimated</span>
+              )}
             </label>
             <div className="relative">
               <AutocompleteInput
@@ -120,6 +131,9 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           <div className="form-control">
             <label className="label">
               <span className="label-text">GPU</span>
+              {!detecting && isEstimated("gpu") && specs.gpu && (
+                <span className="label-text-alt text-warning">*Estimated</span>
+              )}
             </label>
             <div className="relative">
               <AutocompleteInput
@@ -142,8 +156,8 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
                   <span className="text-base-content/50 font-normal"> (~{specs.ramGB} GB approximate)</span>
                 )}
               </span>
-              {!detecting && specs.ramGB != null && specs.ramGB <= 8 && (
-                <span className="label-text-alt text-warning">Browser may underreport</span>
+              {!detecting && isEstimated("ramGB") && specs.ramGB != null && (
+                <span className="label-text-alt text-warning">*Estimated</span>
               )}
             </label>
             <div className="relative">
@@ -165,8 +179,8 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
           <div className="form-control">
             <label className="label">
               <span className="label-text">Available Storage (GB)</span>
-              {!detecting && (
-                <span className="label-text-alt text-warning">Estimated — verify manually</span>
+              {!detecting && isEstimated("storageGB") && (
+                <span className="label-text-alt text-warning">*Estimated</span>
               )}
             </label>
             <div className="relative">

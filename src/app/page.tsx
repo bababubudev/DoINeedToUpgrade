@@ -7,6 +7,7 @@ import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
 import { detectClientSpecs } from "@/lib/detectClientSpecs";
 import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
+import { HiCheckCircle } from "react-icons/hi";
 import WizardStepper from "@/components/WizardStepper";
 import StepGameSelect from "@/components/StepGameSelect";
 import StepSystemSpecs from "@/components/StepSystemSpecs";
@@ -53,6 +54,7 @@ export default function Home() {
   const [maxReached, setMaxReached] = useState(1);
   const [specsConfirmed, setSpecsConfirmed] = useState(false);
   const [manualMode, setManualMode] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const [game, setGame] = useState<GameDetails | null>(null);
   const [minReqs, setMinReqs] = useState<GameRequirements>(emptyReqs);
@@ -63,33 +65,59 @@ export default function Home() {
   const [specsDirty, setSpecsDirty] = useState(false);
   const [platform, setPlatform] = useState<Platform>("windows");
   const [userPlatform, setUserPlatform] = useState<Platform>("windows");
+  const [toast, setToast] = useState(false);
 
+  // Load saved specs from localStorage on mount, or detect automatically
   useEffect(() => {
-    detectClientSpecs(gpuList)
-      .then(async (data) => {
-        setSpecs(data);
-        const detected = detectPlatformFromOS(data.os);
-        setPlatform(detected);
-        setUserPlatform(detected);
-        const unmatched: string[] = [];
-        if (!data.cpu || (cpuList.length > 0 && !fuzzyMatchHardware(data.cpu, cpuList))) {
-          unmatched.push("CPU");
+    let hasSaved = false;
+    try {
+      const raw = localStorage.getItem("savedSpecs");
+      if (raw) {
+        const { specs: saved, savedAt: date } = JSON.parse(raw);
+        if (saved) {
+          setSpecs(saved);
+          setSavedAt(date ?? null);
+          hasSaved = true;
+          setToast(true);
+          setTimeout(() => setToast(false), 3000);
+          // Set platform from saved OS
+          const detected = detectPlatformFromOS(saved.os || "");
+          setPlatform(detected);
+          setUserPlatform(detected);
+          setDetecting(false);
         }
-        if (data.gpu && gpuList.length > 0 && !fuzzyMatchHardware(data.gpu, gpuList)) {
-          unmatched.push("GPU");
-        }
-        if (!data.ramGB || data.ramGB === 8) unmatched.push("RAM");
-        unmatched.push("Storage");
-        // Merge guessed fields — these have values but need user confirmation
-        if (data.guessedFields) {
-          for (const f of data.guessedFields) {
-            if (!unmatched.includes(f)) unmatched.push(f);
+      }
+    } catch {
+      // ignore corrupt data
+    }
+
+    if (!hasSaved) {
+      detectClientSpecs(gpuList)
+        .then(async (data) => {
+          setSpecs(data);
+          const detected = detectPlatformFromOS(data.os);
+          setPlatform(detected);
+          setUserPlatform(detected);
+          const unmatched: string[] = [];
+          if (!data.cpu || (cpuList.length > 0 && !fuzzyMatchHardware(data.cpu, cpuList))) {
+            unmatched.push("CPU");
           }
-        }
-        setUnmatchedFields(unmatched);
-      })
-      .catch(() => {})
-      .finally(() => setDetecting(false));
+          if (data.gpu && gpuList.length > 0 && !fuzzyMatchHardware(data.gpu, gpuList)) {
+            unmatched.push("GPU");
+          }
+          if (!data.ramGB || data.ramGB === 8) unmatched.push("RAM");
+          unmatched.push("Storage");
+          // Merge guessed fields — these have values but need user confirmation
+          if (data.guessedFields) {
+            for (const f of data.guessedFields) {
+              if (!unmatched.includes(f)) unmatched.push(f);
+            }
+          }
+          setUnmatchedFields(unmatched);
+        })
+        .catch(() => {})
+        .finally(() => setDetecting(false));
+    }
   }, [cpuList, gpuList]);
 
   const verdict = comparison ? computeVerdict(comparison) : null;
@@ -188,6 +216,9 @@ export default function Home() {
 
   function handleSpecsConfirm() {
     setSpecsConfirmed(true);
+    const now = new Date().toISOString();
+    setSavedAt(now);
+    localStorage.setItem("savedSpecs", JSON.stringify({ specs, savedAt: now }));
     runComparison();
     goToStep(3);
   }
@@ -205,6 +236,23 @@ export default function Home() {
     setSpecs(importedSpecs);
     setUnmatchedFields([]);
     setSpecsDirty(true);
+    const now = new Date().toISOString();
+    setSavedAt(now);
+    localStorage.setItem("savedSpecs", JSON.stringify({ specs: importedSpecs, savedAt: now }));
+  }
+
+  function handleClearSavedSpecs() {
+    localStorage.removeItem("savedSpecs");
+    setSavedAt(null);
+    setSpecs(defaultSpecs);
+    setDetecting(true);
+    detectClientSpecs(gpuList)
+      .then((data) => {
+        setSpecs(data);
+        evaluateUnmatched(data);
+      })
+      .catch(() => {})
+      .finally(() => setDetecting(false));
   }
 
   function handleEditSpecs() {
@@ -263,6 +311,8 @@ export default function Home() {
           onBack={() => goToStep(1)}
           onConfirm={handleSpecsConfirm}
           onScriptImport={handleScriptImport}
+          savedAt={savedAt}
+          onClearSaved={handleClearSavedSpecs}
         />
       )}
 
@@ -313,6 +363,15 @@ export default function Home() {
           availablePlatforms={game?.availablePlatforms ?? []}
           onPlatformChange={handlePlatformChange}
         />
+      )}
+
+      {toast && (
+        <div className="toast toast-end toast-bottom z-50">
+          <div className="alert alert-info text-sm py-2 px-4 flex items-center gap-2">
+            <HiCheckCircle className="w-5 h-5" />
+            <span>System specs loaded from previous session</span>
+          </div>
+        </div>
       )}
     </div>
   );

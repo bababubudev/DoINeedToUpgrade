@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GameDetails, GameRequirements, VerdictResult, ComparisonItem, Platform } from "@/types";
-import VerdictBanner from "@/components/VerdictBanner";
 import ComparisonResult from "@/components/ComparisonResult";
 import RequirementsEditor from "@/components/RequirementsEditor";
-import { HiExclamation, HiInformationCircle, HiChevronDown } from "react-icons/hi";
+import { HiCheckCircle, HiXCircle, HiQuestionMarkCircle, HiInformationCircle, HiChevronDown } from "react-icons/hi";
 
 const platformLabels: Record<Platform, string> = {
   windows: "Windows",
@@ -29,62 +28,82 @@ interface Props {
   onPlatformChange: (platform: Platform) => void;
 }
 
-function UpgradeCard({ result }: { result: VerdictResult }) {
-  if (result.verdict === "pass" || result.upgradeItems.length === 0) return null;
+const verdictIcons = {
+  pass: HiCheckCircle,
+  minimum: HiInformationCircle,
+  fail: HiXCircle,
+  unknown: HiQuestionMarkCircle,
+} as const;
 
+function VerdictCard({ result }: { result: VerdictResult }) {
   const [open, setOpen] = useState(false);
+  const Icon = verdictIcons[result.verdict];
+  const hasUpgrades = result.upgradeItems.length > 0 && result.verdict !== "pass";
   const isFail = result.verdict === "fail";
 
+  // Reset collapse when verdict changes (e.g. platform switch)
+  useEffect(() => {
+    setOpen(false);
+  }, [result.verdict, result.title]);
+
+  const cardColors = {
+    pass: "bg-success/20 text-success",
+    minimum: "bg-info/20 text-info",
+    fail: "bg-error/20 text-error",
+    unknown: "bg-warning/20 text-warning",
+  } as const;
+
+  if (!hasUpgrades) {
+    return (
+      <div className={`${cardColors[result.verdict]} rounded-box flex items-center gap-3 py-5 px-4`}>
+        <Icon className="w-6 h-6 shrink-0" />
+        <h3 className="text-base font-bold">{result.title}</h3>
+      </div>
+    );
+  }
+
+  const contentColors = {
+    pass: "bg-success/10",
+    minimum: "bg-info/10",
+    fail: "bg-error/10",
+    unknown: "bg-warning/10",
+  } as const;
+
   return (
-    <div className={`card shadow-sm bg-base-100 hover:bg-base-content/5 transition-colors cursor-pointer ${isFail ? "dark:bg-error/20 dark:hover:bg-error/25" : "dark:bg-info/20 dark:hover:bg-info/25"}`} onClick={() => setOpen(!open)}>
-      <div className="card-body p-4">
-        <button
-          className="flex items-center justify-between w-full text-left"
-        >
-          <div className="flex items-center gap-3">
-            {isFail
-              ? <HiExclamation className={`w-8 h-8 shrink-0 text-error`} />
-              : <HiInformationCircle className={`w-8 h-8 shrink-0 text-info`} />}
-            <div>
-              <h3 className={`font-bold text-lg ${isFail ? "text-error" : "text-info"}`}>
-                {isFail
-                  ? `What you need to upgrade (${result.upgradeItems.length})`
-                  : `What you could upgrade (${result.upgradeItems.length})`}
-              </h3>
-              <p className="text-sm text-base-content/70 mt-1">
-                {isFail
-                  ? "See what's holding your system back"
-                  : "Your system can run this game, but these upgrades would improve the experience"}
-              </p>
-            </div>
-          </div>
-          <div className={`flex items-center gap-1 shrink-0 ml-2 text-base-content/50 text-xs`}>
-            <span>{open ? "Hide" : "Show"}</span>
-            <HiChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
-          </div>
-        </button>
-        {open && (
-          <div className="overflow-x-auto mt-2">
-            <table className="table table-sm">
-              <thead>
-                <tr>
-                  <th>Component</th>
-                  <th>Your Current</th>
-                  <th>{isFail ? "Required" : "Recommended"}</th>
+    <div className={`collapse rounded-box ${cardColors[result.verdict]} cursor-pointer hover:brightness-95 transition-[filter]`}>
+      <input type="checkbox" onChange={(e) => setOpen(e.target.checked)} />
+      <div className="collapse-title flex items-center justify-between !min-h-0 !py-5 !px-4">
+        <div className="flex items-center gap-3">
+          <Icon className="w-6 h-6 shrink-0" />
+          <h3 className="text-base font-bold">{result.title}</h3>
+        </div>
+        <div className="flex items-center gap-1 opacity-70 text-xs font-medium">
+          <span>{open ? "Hide" : "Show"} details</span>
+          <HiChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
+        </div>
+      </div>
+      <div className={`collapse-content px-4 ${contentColors[result.verdict]} rounded-b-box text-base-content`}>
+        <p className="text-sm text-base-content/70 mb-3 pt-3">{result.description}</p>
+        <div className="overflow-x-auto">
+          <table className="table table-sm w-full [&_tr]:border-base-content/10">
+            <thead>
+              <tr className="text-base-content/40">
+                <th>Component</th>
+                <th>Your Current</th>
+                <th>{isFail ? "Required" : "Recommended"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.upgradeItems.map((item) => (
+                <tr key={item.component} className="text-base-content/70">
+                  <td className="font-semibold">{item.component}</td>
+                  <td>{item.current}</td>
+                  <td>{item.required}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {result.upgradeItems.map((item) => (
-                  <tr key={item.component}>
-                    <td className="font-semibold">{item.component}</td>
-                    <td>{item.current}</td>
-                    <td>{item.required}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -110,16 +129,17 @@ export default function StepResults({
   return (
     <div className="animate-fadeIn flex flex-col gap-4">
       {game && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-base-200/50">
+        <div className="relative flex items-center gap-4 p-4 rounded-lg bg-base-200/50 overflow-hidden">
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl font-bold text-base-content/5 select-none pointer-events-none">?</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={game.headerImage}
             alt={game.name}
-            className="w-24 rounded shadow-sm"
+            className="w-36 rounded shadow-md relative z-10"
           />
-          <div>
-            <p className="text-sm text-base-content/70">Results for</p>
-            <h3 className="font-bold text-lg">{game.name}</h3>
+          <div className="relative z-10">
+            <p className="text-base text-base-content/60">Do I need an upgrade for</p>
+            <h3 className="font-bold text-2xl">{game.name}</h3>
           </div>
         </div>
       )}
@@ -150,9 +170,7 @@ export default function StepResults({
         </p>
       ) : null}
 
-      {verdict && <VerdictBanner result={verdict} />}
-
-      {verdict && <UpgradeCard result={verdict} />}
+      {verdict && <VerdictCard key={`${verdict.verdict}-${platform}`} result={verdict} />}
 
       {comparison && (
         <ComparisonResult items={comparison} />

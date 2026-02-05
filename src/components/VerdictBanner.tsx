@@ -35,28 +35,22 @@ export default function VerdictBanner({ result }: Props) {
   if (isUnknown) {
     return (
       <div className={verdictStyles.unknown}>
-        <div className="card-body p-4 flex-row items-start gap-3">
-          <Icon className="w-8 h-8 text-warning/30" />
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-warning">
-              {result.warnComponents.length > 0
-                ? `Manual check needed for ${formatList(result.warnComponents.map((c) => c.toLowerCase()))}`
-                : result.title}
-            </h3>
-            <p className="text-sm text-base-content/70 mt-1">{result.description}</p>
-          </div>
+        <div className="card-body p-3 flex-row items-center gap-3">
+          <Icon className="w-6 h-6 text-warning/30" />
+          <h3 className="text-base font-bold text-warning">
+            {result.warnComponents.length > 0
+              ? `Manual check needed for ${formatList(result.warnComponents.map((c) => c.toLowerCase()))}`
+              : result.title}
+          </h3>
         </div>
       </div>
     );
   }
 
   return (
-    <div role="alert" className={verdictStyles[result.verdict]}>
-      <Icon className="w-8 h-8" />
-      <div className="flex-1">
-        <h3 className="text-lg font-bold">{result.title}</h3>
-        <p className="text-sm mt-1">{result.description}</p>
-      </div>
+    <div role="alert" className={`${verdictStyles[result.verdict]} py-2 text-black`}>
+      <Icon className="w-6 h-6" />
+      <h3 className="text-base font-bold">{result.title}</h3>
     </div>
   );
 }

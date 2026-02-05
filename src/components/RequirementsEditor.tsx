@@ -138,6 +138,12 @@ export default function RequirementsEditor({
             </div>
           </div>
         </div>
+
+        <div className="flex justify-end mt-4">
+          <button className="btn btn-primary btn-sm" onClick={onSubmit}>
+            Apply Changes
+          </button>
+        </div>
       </div>
     </div>
   );

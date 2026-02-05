@@ -10,6 +10,7 @@ export interface UserSpecs {
   detectionSource?: DetectionSource;
   ramApproximate?: boolean;
   guessedFields?: string[];
+  manualFields?: string[];
 }
 
 export interface GameRequirements {

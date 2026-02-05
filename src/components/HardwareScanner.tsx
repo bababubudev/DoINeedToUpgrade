@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { UserSpecs } from "@/types";
 import { decodeSpecsPayload } from "@/lib/decodeSpecsPayload";
-import { HiChevronDown, HiCheckCircle, HiExclamation } from "react-icons/hi";
+import { HiChevronDown, HiCheckCircle, HiExclamation, HiDownload } from "react-icons/hi";
 
 interface Props {
   onImport: (specs: UserSpecs) => void;
@@ -47,11 +47,16 @@ export default function HardwareScanner({ onImport }: Props) {
     setClientPlatform(detectClientPlatform());
   }, []);
 
+  const [toast, setToast] = useState(false);
+
   function handleImport() {
     const result = decodeSpecsPayload(pasteValue);
     if (result) {
       setStatus("success");
       onImport(result);
+      setOpen(false);
+      setToast(true);
+      setTimeout(() => setToast(false), 3000);
     } else {
       setStatus("error");
     }
@@ -67,6 +72,7 @@ export default function HardwareScanner({ onImport }: Props) {
   const sorted = [clientPlatform, ...platforms.filter((p) => p !== clientPlatform)];
 
   return (
+    <>
     <div className="card bg-base-100 shadow-sm">
       <div
         className="card-body p-4 cursor-pointer select-none"
@@ -103,6 +109,7 @@ export default function HardwareScanner({ onImport }: Props) {
                     download
                     className={`btn btn-sm ${isUserPlatform ? "btn-primary" : "btn-outline"}`}
                   >
+                    {isUserPlatform && <HiDownload className="w-4 h-4" />}
                     {info.label}
                     {isUserPlatform && " (Your OS)"}
                   </a>
@@ -167,5 +174,15 @@ export default function HardwareScanner({ onImport }: Props) {
         </div>
       )}
     </div>
+
+      {toast && (
+        <div className="toast toast-end toast-bottom z-50">
+          <div className="alert alert-success text-sm py-2 px-4 flex items-center gap-2">
+            <HiCheckCircle className="w-5 h-5" />
+            <span>Hardware specs imported successfully!</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

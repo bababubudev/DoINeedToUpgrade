@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import ThemeToggle from "@/components/ThemeToggle";
+import NavButtons from "@/components/NavButtons";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -22,7 +23,8 @@ export default function RootLayout({
           <div className="flex-1">
             <span className="text-xl font-extrabold tracking-tight">Do I Need An Upgrade?</span>
           </div>
-          <div className="flex-none">
+          <div className="flex-none flex items-center gap-1">
+            <NavButtons />
             <ThemeToggle />
           </div>
         </div>
