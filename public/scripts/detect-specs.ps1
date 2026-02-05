@@ -56,3 +56,5 @@ Write-Host "Copy the code below and paste it into DoINeedAnUpgrade:" -Foreground
 Write-Host ""
 Write-Host "DINAU:$encoded" -ForegroundColor Green
 Write-Host ""
+Write-Host "Press Enter to exit..."
+Read-Host
