@@ -11,6 +11,8 @@ const NOISE_WORDS = new Set([
   // Requirement text noise
   "equivalent", "better", "compatible", "above", "later", "with",
   "or", "and", "series",
+  // Spec descriptor noise
+  "ghz", "mhz", "processor", "graphics", "card",
 ]);
 
 export function fuzzyMatchHardware(
@@ -19,13 +21,15 @@ export function fuzzyMatchHardware(
 ): string | null {
   if (!input.trim()) return null;
 
-  const allInputTokens = tokenize(input);
+  const cleaned = stripSpecPatterns(input);
+  const allInputTokens = tokenize(cleaned);
   const hasSeries = allInputTokens.includes("series");
   const inputTokens = allInputTokens.filter((t) => !NOISE_WORDS.has(t));
   if (inputTokens.length === 0) return null;
 
   let bestCandidate: string | null = null;
   let bestScore = 0;
+  let bestRawScore = 0;
 
   for (const candidate of candidates) {
     const candidateTokens = tokenize(candidate);
@@ -48,8 +52,10 @@ export function fuzzyMatchHardware(
     // Normalize to 0-1 range
     const normalized = maxPossible > 0 ? score / maxPossible : 0;
 
-    if (normalized > bestScore) {
+    // When normalized scores tie, prefer the more specific candidate (higher raw score)
+    if (normalized > bestScore || (normalized === bestScore && score > bestRawScore)) {
       bestScore = normalized;
+      bestRawScore = score;
       bestCandidate = candidate;
     }
   }
@@ -84,6 +90,18 @@ function matchNumericToken(
 function isRoundHundred(token: string): boolean {
   const num = parseInt(token, 10);
   return !isNaN(num) && num >= 100 && num % 100 === 0 && String(num) === token;
+}
+
+/**
+ * Strip clock speed, core count, and thread count patterns so they
+ * don't interfere with model-name matching.
+ */
+function stripSpecPatterns(text: string): string {
+  return text
+    .replace(/@?\s*\d+(\.\d+)?\s*(GHz|MHz)/gi, "")
+    .replace(/\d+\s*-?\s*cores?\b/gi, "")
+    .replace(/\d+\s*-?\s*threads?\b/gi, "")
+    .trim();
 }
 
 function tokenize(text: string): string[] {
