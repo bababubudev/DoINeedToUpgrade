@@ -7,8 +7,48 @@ import NavButtons from "@/components/NavButtons";
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Do I Need An Upgrade",
-  description: "Find out if your PC needs an upgrade to run any Steam game",
+  title: {
+    default: "Do I Need An Upgrade",
+    template: "%s | Do I Need An Upgrade",
+  },
+  description: "Check if your PC can run any Steam game. Compare your CPU, GPU, RAM and storage against game requirements instantly.",
+  keywords: ["PC upgrade", "system requirements", "can I run it", "Steam games", "PC specs", "hardware check", "GPU comparison", "CPU benchmark"],
+  authors: [{ name: "Do I Need An Upgrade" }],
+  creator: "Do I Need An Upgrade",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "Do I Need An Upgrade",
+    title: "Do I Need An Upgrade",
+    description: "Check if your PC can run any Steam game. Compare your hardware against game requirements instantly.",
+    images: [
+      {
+        url: "/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Do I Need An Upgrade",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Do I Need An Upgrade",
+    description: "Check if your PC can run any Steam game. Compare your hardware against game requirements instantly.",
+    images: ["/icon-512.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

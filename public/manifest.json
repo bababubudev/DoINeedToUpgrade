@@ -1,0 +1,21 @@
+{
+  "name": "Do I Need An Upgrade",
+  "short_name": "PC Upgrade",
+  "description": "Check if your PC can run any Steam game. Compare your CPU, GPU, RAM and storage against game requirements instantly.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1d232a",
+  "theme_color": "#1d232a",
+  "categories": ["utilities", "games"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "/favicon.ico", "type": "image/x-icon", "sizes": "16x16 32x32" },
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "/icon-192-maskable.png", "type": "image/png", "sizes": "192x192", "purpose": "maskable" },
+    { "src": "/icon-512-maskable.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}
