@@ -7,7 +7,6 @@ import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
 import { detectClientSpecs } from "@/lib/detectClientSpecs";
 import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
-import { HiCheckCircle } from "react-icons/hi";
 import WizardStepper from "@/components/WizardStepper";
 import StepGameSelect from "@/components/StepGameSelect";
 import StepSystemSpecs from "@/components/StepSystemSpecs";
@@ -65,7 +64,7 @@ export default function Home() {
   const [specsDirty, setSpecsDirty] = useState(false);
   const [platform, setPlatform] = useState<Platform>("windows");
   const [userPlatform, setUserPlatform] = useState<Platform>("windows");
-  const [toast, setToast] = useState(false);
+  const [showStorageToast, setShowStorageToast] = useState(false);
 
   // Load saved specs from localStorage on mount, or detect automatically
   useEffect(() => {
@@ -78,8 +77,7 @@ export default function Home() {
           setSpecs(saved);
           setSavedAt(date ?? null);
           hasSaved = true;
-          setToast(true);
-          setTimeout(() => setToast(false), 3000);
+          setShowStorageToast(true);
           // Set platform from saved OS
           const detected = detectPlatformFromOS(saved.os || "");
           setPlatform(detected);
@@ -313,6 +311,8 @@ export default function Home() {
           onScriptImport={handleScriptImport}
           savedAt={savedAt}
           onClearSaved={handleClearSavedSpecs}
+          showStorageToast={showStorageToast}
+          onToastShown={() => setShowStorageToast(false)}
         />
       )}
 
@@ -365,14 +365,6 @@ export default function Home() {
         />
       )}
 
-      {toast && (
-        <div className="toast toast-end toast-bottom z-50">
-          <div className="alert alert-info text-sm py-2 px-4 flex items-center gap-2">
-            <HiCheckCircle className="w-5 h-5" />
-            <span>System specs loaded from previous session</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

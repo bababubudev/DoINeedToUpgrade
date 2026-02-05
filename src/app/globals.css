@@ -23,3 +23,25 @@
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out;
 }
+
+@keyframes toastSlideIn {
+  0%   { transform: translateX(calc(100% + 1rem)); opacity: 0; }
+  50%  { transform: translateX(-8px); opacity: 1; }
+  70%  { transform: translateX(4px); }
+  85%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes toastSlideOut {
+  0%   { transform: translateX(0); opacity: 1; }
+  20%  { transform: translateX(-8px); opacity: 1; }
+  100% { transform: translateX(calc(100% + 1rem)); opacity: 0; }
+}
+
+.animate-toast-in {
+  animation: toastSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-toast-out {
+  animation: toastSlideOut 0.4s ease-in forwards;
+}
