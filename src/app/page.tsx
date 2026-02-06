@@ -70,6 +70,7 @@ function Home() {
   const [userPlatform, setUserPlatform] = useState<Platform>("windows");
   const [showStorageToast, setShowStorageToast] = useState(false);
   const [showUrlImportToast, setShowUrlImportToast] = useState(false);
+  const [importedFromScanner, setImportedFromScanner] = useState(false);
 
   // Auto-dismiss URL import toast
   useEffect(() => {
@@ -96,6 +97,7 @@ function Home() {
         setUnmatchedFields([]);
         setDetecting(false);
         setShowUrlImportToast(true);
+        setImportedFromScanner(true);
         // Clean up URL without reload
         if (typeof window !== "undefined") {
           const url = new URL(window.location.href);
@@ -225,7 +227,8 @@ function Home() {
       setMinReqs(newMin);
       setRecReqs(newRec);
 
-      if (specsConfirmed) {
+      // In scanner mode, specs are already confirmed, so go directly to results
+      if (importedFromScanner || specsConfirmed) {
         const minArg = hasAnyField(newMin) ? newMin : null;
         const recArg = hasAnyField(newRec) ? newRec : null;
         const singlePlatform = (data.availablePlatforms.length ?? 0) <= 1;
@@ -249,7 +252,11 @@ function Home() {
     setMinReqs({ ...emptyReqs });
     setRecReqs({ ...emptyReqs });
     setComparison(null);
-    goToStep(2);
+    // In scanner mode, we're already at step 2 (game select); stay there
+    // In normal mode, go to step 2 (which is system specs / manual entry)
+    if (!importedFromScanner) {
+      goToStep(2);
+    }
   }
 
   function handleSpecsConfirm() {
@@ -261,13 +268,28 @@ function Home() {
     goToStep(3);
   }
 
+  function handleSpecsConfirmForScanner() {
+    setSpecsConfirmed(true);
+    const now = new Date().toISOString();
+    setSavedAt(now);
+    localStorage.setItem("savedSpecs", JSON.stringify({ specs, savedAt: now }));
+    goToStep(2); // Go to game select (step 2 in scanner mode)
+  }
+
   function handleCheckAnother() {
     setGame(null);
     setComparison(null);
     setMinReqs({ ...emptyReqs });
     setRecReqs({ ...emptyReqs });
     setManualMode(false);
-    goToStep(1);
+    // In scanner mode, go to step 2 (game select); in normal mode, go to step 1 (game select)
+    if (importedFromScanner) {
+      goToStep(2);
+      setMaxReached(2);
+    } else {
+      goToStep(1);
+      setMaxReached(1);
+    }
   }
 
   function handleScriptImport(importedSpecs: UserSpecs) {
@@ -294,7 +316,9 @@ function Home() {
   }
 
   function handleEditSpecs() {
-    goToStep(2);
+    // In scanner mode, go to step 1 (Your System)
+    // In normal mode, go to step 2 (Your System)
+    goToStep(importedFromScanner ? 1 : 2);
   }
 
   function handleRequirementsChange(min: GameRequirements, rec: GameRequirements) {
@@ -319,15 +343,45 @@ function Home() {
     }
   }
 
+  // When imported from scanner: "Your System" → "Pick a Game" → "Results"
+  // Normal mode: "Pick a Game" → "Your System" → "Results"
+  const stepLabels = importedFromScanner
+    ? ["Your System", "Pick a Game", "Results"]
+    : ["Pick a Game", "Your System", "Results"];
+
   return (
     <div className="flex flex-col gap-6">
       <WizardStepper
         currentStep={step}
         onStepClick={goToStep}
         maxReached={maxReached}
+        steps={stepLabels}
       />
 
-      {step === 1 && (
+      {/* Scanner import mode: Step 1 shows system specs */}
+      {importedFromScanner && step === 1 && !manualMode && (
+        <StepSystemSpecs
+          specs={specs}
+          onChange={handleSpecsChange}
+          dirty={specsDirty}
+          cpuList={cpuList}
+          gpuList={gpuList}
+          detecting={detecting}
+          unmatchedFields={unmatchedFields}
+          game={null}
+          onBack={() => {}}
+          onConfirm={handleSpecsConfirmForScanner}
+          savedAt={savedAt}
+          onClearSaved={handleClearSavedSpecs}
+          showStorageToast={false}
+          onToastShown={() => {}}
+          hideBack
+          confirmLabel="Continue"
+        />
+      )}
+
+      {/* Scanner import mode: Step 2 shows game search */}
+      {importedFromScanner && step === 2 && !manualMode && (
         <StepGameSelect
           onSelect={handleGameSelect}
           onManualMode={handleManualMode}
@@ -336,7 +390,49 @@ function Home() {
         />
       )}
 
-      {step === 2 && !manualMode && (
+      {/* Scanner import mode: Step 2 manual mode */}
+      {importedFromScanner && step === 2 && manualMode && (
+        <div className="animate-fadeIn flex flex-col gap-4">
+          <SystemSpecs
+            specs={specs}
+            onChange={handleSpecsChange}
+            onSubmit={handleSpecsConfirm}
+            dirty={specsDirty}
+            cpuList={cpuList}
+            gpuList={gpuList}
+            detecting={detecting}
+            unmatchedFields={unmatchedFields}
+            hideSubmit
+          />
+          <RequirementsEditor
+            minimum={minReqs}
+            recommended={recReqs}
+            onChange={handleRequirementsChange}
+            onSubmit={handleSpecsConfirm}
+          />
+          <div className="flex justify-between">
+            <button className="btn btn-ghost" onClick={() => setManualMode(false)}>
+              &larr; Back to Game Search
+            </button>
+            <button className="btn btn-primary" onClick={handleSpecsConfirm}>
+              Check Compatibility &rarr;
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Normal mode: Step 1 shows game search only */}
+      {!importedFromScanner && step === 1 && (
+        <StepGameSelect
+          onSelect={handleGameSelect}
+          onManualMode={handleManualMode}
+          loading={loading}
+          error={error}
+        />
+      )}
+
+      {/* Normal mode: Step 2 shows system specs */}
+      {!importedFromScanner && step === 2 && !manualMode && (
         <StepSystemSpecs
           specs={specs}
           onChange={handleSpecsChange}
@@ -356,7 +452,7 @@ function Home() {
         />
       )}
 
-      {step === 2 && manualMode && (
+      {!importedFromScanner && step === 2 && manualMode && (
         <div className="animate-fadeIn flex flex-col gap-4">
           <HardwareScanner onImport={handleScriptImport} />
           <SystemSpecs
@@ -387,6 +483,7 @@ function Home() {
         </div>
       )}
 
+      {/* Results step - always step 3 */}
       {step === 3 && (
         <StepResults
           game={game}

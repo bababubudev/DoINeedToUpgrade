@@ -1,34 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { HiDownload, HiInformationCircle } from "react-icons/hi";
-
-type ClientPlatform = "windows" | "macos" | "linux";
-
-function detectClientPlatform(): ClientPlatform {
-  if (typeof navigator === "undefined") return "windows";
-  const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("mac")) return "macos";
-  if (ua.includes("linux")) return "linux";
-  return "windows";
-}
-
-const platformInfo: Record<ClientPlatform, { label: string; file: string }> = {
-  windows: { label: "Windows (.ps1)", file: "/scripts/detect-specs.ps1" },
-  macos: { label: "macOS (.sh)", file: "/scripts/detect-specs.sh" },
-  linux: { label: "Linux (.sh)", file: "/scripts/detect-specs.sh" },
-};
 
 export default function NavButtons() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [clientPlatform, setClientPlatform] = useState<ClientPlatform>("windows");
+  const [showTooltip, setShowTooltip] = useState(false);
 
-  useEffect(() => {
-    setClientPlatform(detectClientPlatform());
-  }, []);
-
-  const platforms: ClientPlatform[] = ["windows", "macos", "linux"];
-  const sorted = [clientPlatform, ...platforms.filter((p) => p !== clientPlatform)];
+  function handleDownloadClick() {
+    const scannerSection = document.getElementById("hardware-scanner");
+    if (scannerSection) {
+      scannerSection.scrollIntoView({ behavior: "smooth" });
+    } else {
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 3000);
+    }
+  }
 
   return (
     <>
@@ -40,28 +27,19 @@ export default function NavButtons() {
         <span className="hidden sm:inline">How It Works</span>
       </button>
 
-      <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
+      <div className="relative">
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={handleDownloadClick}
+        >
           <HiDownload className="w-4 h-4" />
           <span className="hidden sm:inline">Download Scanner</span>
-        </div>
-        <ul
-          tabIndex={0}
-          className="dropdown-content menu bg-base-200 rounded-box z-50 w-56 p-2 shadow-lg"
-        >
-          {sorted.map((p) => {
-            const info = platformInfo[p];
-            const isUser = p === clientPlatform;
-            return (
-              <li key={p}>
-                <a href={info.file} download className={isUser ? "active" : ""}>
-                  {info.label}
-                  {isUser && " (Your OS)"}
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+        </button>
+        {showTooltip && (
+          <div className="absolute right-0 top-full mt-2 z-50 bg-base-200 text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
+            Select a game first to access the scanner
+          </div>
+        )}
       </div>
 
       {modalOpen && (
@@ -90,62 +68,35 @@ export default function NavButtons() {
 
               <div>
                 <h4 className="font-semibold text-base-content mb-1">How it detects them</h4>
-                <div className="space-y-2">
-                  <div>
-                    <span className="font-medium">Windows (PowerShell):</span>{" "}
-                    Uses <code className="text-xs bg-base-200 px-1 rounded">Get-CimInstance</code> WMI queries
-                    (Win32_OperatingSystem, Win32_Processor, Win32_VideoController, Win32_ComputerSystem, Win32_LogicalDisk)
-                  </div>
-                  <div>
-                    <span className="font-medium">macOS:</span>{" "}
-                    Uses <code className="text-xs bg-base-200 px-1 rounded">sw_vers</code>,{" "}
-                    <code className="text-xs bg-base-200 px-1 rounded">sysctl</code>,{" "}
-                    <code className="text-xs bg-base-200 px-1 rounded">system_profiler</code>, and{" "}
-                    <code className="text-xs bg-base-200 px-1 rounded">df</code>
-                  </div>
-                  <div>
-                    <span className="font-medium">Linux:</span>{" "}
-                    Reads <code className="text-xs bg-base-200 px-1 rounded">/etc/os-release</code>,{" "}
-                    <code className="text-xs bg-base-200 px-1 rounded">lscpu</code> or{" "}
-                    <code className="text-xs bg-base-200 px-1 rounded">/proc/cpuinfo</code>,{" "}
-                    <code className="text-xs bg-base-200 px-1 rounded">lspci</code>,{" "}
-                    <code className="text-xs bg-base-200 px-1 rounded">/proc/meminfo</code>, and{" "}
-                    <code className="text-xs bg-base-200 px-1 rounded">df</code>
-                  </div>
-                </div>
+                <p>
+                  The scanner app uses native system APIs to read your hardware information.
+                  On Windows, it queries WMI. On macOS, it uses system_profiler and sysctl.
+                  On Linux, it reads /proc and uses lspci.
+                </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-base-content mb-1">What it outputs</h4>
+                <h4 className="font-semibold text-base-content mb-1">What happens when you run it</h4>
                 <p>
-                  The script produces a Base64-encoded JSON string prefixed with{" "}
-                  <code className="text-xs bg-base-200 px-1 rounded">DINAU:</code>.
-                  Nothing is sent to any server — you manually copy and paste the output
-                  into this site.
+                  The scanner app detects your hardware specs and automatically opens this
+                  website with your specs pre-filled. No data is sent to any external server
+                  — everything stays local until you choose to check a game.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-base-content mb-1">Open source</h4>
                 <p>
-                  The scripts are fully open-source and can be inspected before running:
+                  The scanner app is fully open-source and can be inspected before running:
                 </p>
                 <div className="flex flex-wrap gap-2 mt-1">
                   <a
-                    href="/scripts/detect-specs.ps1"
+                    href="https://github.com/DaiYuAmbwororth/DoINeedAnUpgrade/tree/main/scanner"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="link link-primary text-xs"
                   >
-                    View Windows script (detect-specs.ps1)
-                  </a>
-                  <a
-                    href="/scripts/detect-specs.sh"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="link link-primary text-xs"
-                  >
-                    View macOS/Linux script (detect-specs.sh)
+                    View source code on GitHub
                   </a>
                 </div>
               </div>

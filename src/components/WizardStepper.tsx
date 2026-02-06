@@ -4,11 +4,12 @@ interface Props {
   currentStep: number;
   onStepClick: (step: number) => void;
   maxReached: number;
+  steps?: string[];
 }
 
-const steps = ["Pick a Game", "Your System", "Results"];
+const defaultSteps = ["Pick a Game", "Your System", "Results"];
 
-export default function WizardStepper({ currentStep, onStepClick, maxReached }: Props) {
+export default function WizardStepper({ currentStep, onStepClick, maxReached, steps = defaultSteps }: Props) {
   return (
     <ul className="steps steps-horizontal w-full max-w-xl mx-auto mb-6">
       {steps.map((label, i) => {

@@ -19,15 +19,11 @@ function detectClientPlatform(): ClientPlatform {
   return "windows";
 }
 
-const BASE_URL = process.env.NODE_ENV === "development"
-  ? "http://localhost:3000"
-  : "https://do-i-need-to-upgrade.vercel.app";
-
 type PlatformInfo = {
   label: string;
   appFiles: { label: string; file: string }[];
   appInstructions: string;
-  terminalCommand: string;
+  macosFixCommand?: string;
 };
 
 const platformInfo: Record<ClientPlatform, PlatformInfo> = {
@@ -35,7 +31,6 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
     label: "Windows",
     appFiles: [{ label: "Windows", file: "/downloads/DoINeedAnUpgrade.exe" }],
     appInstructions: "Double-click the downloaded file to run",
-    terminalCommand: `powershell -ExecutionPolicy Bypass -Command "irm ${BASE_URL}/scripts/detect-specs.ps1 -OutFile $env:TEMP\\detect-specs.ps1; & $env:TEMP\\detect-specs.ps1"`,
   },
   macos: {
     label: "macOS",
@@ -43,14 +38,13 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
       { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.zip" },
       { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.zip" },
     ],
-    appInstructions: "Right-click the file → Open → Click 'Open' in the popup (required first time only)",
-    terminalCommand: `curl -sL ${BASE_URL}/scripts/detect-specs.sh | sh`,
+    appInstructions: "Unzip the file, then run this command in Terminal to open the app:",
+    macosFixCommand: "xattr -cr ~/Downloads/DoINeedAnUpgrade-Mac-*.app && open ~/Downloads/DoINeedAnUpgrade-Mac-*.app",
   },
   linux: {
     label: "Linux",
     appFiles: [{ label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux" }],
     appInstructions: "Make executable (chmod +x) then double-click or run from terminal",
-    terminalCommand: `curl -sL ${BASE_URL}/scripts/detect-specs.sh | sh`,
   },
 };
 
@@ -60,7 +54,6 @@ export default function HardwareScanner({ onImport }: Props) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [clientPlatform, setClientPlatform] = useState<ClientPlatform>("windows");
   const [copied, setCopied] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     setClientPlatform(detectClientPlatform());
@@ -84,17 +77,6 @@ export default function HardwareScanner({ onImport }: Props) {
   function handlePasteChange(value: string) {
     setPasteValue(value);
     if (status !== "idle") setStatus("idle");
-  }
-
-  async function handleCopyCommand() {
-    const info = platformInfo[clientPlatform];
-    try {
-      await navigator.clipboard.writeText(info.terminalCommand);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback: select text
-    }
   }
 
   async function handlePasteFromClipboard() {
@@ -121,7 +103,7 @@ export default function HardwareScanner({ onImport }: Props) {
 
   return (
     <>
-    <div className="card bg-base-100 shadow-sm">
+    <div id="hardware-scanner" className="card bg-base-100 shadow-sm">
       <div
         className="card-body p-4 cursor-pointer select-none"
         onClick={() => setOpen(!open)}
@@ -165,6 +147,23 @@ export default function HardwareScanner({ onImport }: Props) {
               <p className="text-xs text-base-content/70">
                 {info.appInstructions}
               </p>
+              {info.macosFixCommand && (
+                <div className="flex gap-2 items-center">
+                  <code className="flex-1 bg-base-300 p-2 rounded font-mono text-xs overflow-x-auto whitespace-nowrap">
+                    {info.macosFixCommand}
+                  </code>
+                  <button
+                    className="btn btn-xs btn-outline"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(info.macosFixCommand!);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                  >
+                    {copied ? <HiCheckCircle className="w-3 h-3" /> : <HiClipboardCopy className="w-3 h-3" />}
+                  </button>
+                </div>
+              )}
               <p className="text-xs text-base-content/60">
                 The scanner will detect your specs and open this page with them imported automatically.
               </p>
@@ -225,34 +224,6 @@ export default function HardwareScanner({ onImport }: Props) {
               Invalid code. Make sure you copied the entire DINAU:... string.
             </p>
           )}
-
-          {/* Advanced: Terminal command method */}
-          <div>
-            <button
-              className="text-xs text-base-content/50 hover:text-base-content/70 flex items-center gap-1"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-            >
-              <HiChevronDown className={`w-3 h-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
-              {showAdvanced ? "Hide" : "Show"} alternative method (terminal command)
-            </button>
-
-            {showAdvanced && (
-              <div className="mt-2 p-3 bg-base-200 rounded-lg text-xs space-y-2">
-                <p className="font-medium">Run in terminal:</p>
-                <div className="flex gap-2">
-                  <code className="flex-1 bg-base-300 p-2 rounded font-mono overflow-x-auto whitespace-nowrap">
-                    {info.terminalCommand}
-                  </code>
-                  <button
-                    className={`btn btn-xs ${copied ? "btn-success" : "btn-outline"}`}
-                    onClick={handleCopyCommand}
-                  >
-                    {copied ? <HiCheckCircle className="w-3 h-3" /> : <HiClipboardCopy className="w-3 h-3" />}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       )}
     </div>

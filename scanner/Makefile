@@ -76,6 +76,8 @@ linux: $(OUTPUT_DIR)
 # Create zip files for distribution
 zip: mac
 	@echo "Creating zip files for macOS apps..."
+	@xattr -cr "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app"
+	@xattr -cr "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app"
 	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-Intel.zip $(APP_NAME)-Mac-Intel.app
 	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-AppleSilicon.zip $(APP_NAME)-Mac-AppleSilicon.app
 

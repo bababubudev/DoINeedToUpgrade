@@ -3,44 +3,68 @@
 package main
 
 import (
+	"encoding/json"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
+	"syscall"
 )
+
+// CREATE_NO_WINDOW prevents console window from appearing
+const CREATE_NO_WINDOW = 0x08000000
 
 func detectSpecs() Specs {
 	specs := Specs{}
 
-	// OS
-	osOutput := powershell(`(Get-CimInstance Win32_OperatingSystem).Caption -replace '^Microsoft\s+', ''`)
-	specs.OS = strings.TrimSpace(osOutput)
+	// Run all queries in a single PowerShell call to avoid multiple window flashes
+	script := `
+$os = (Get-CimInstance Win32_OperatingSystem).Caption -replace '^Microsoft\s+', ''
+$cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1).Name
+$cores = (Get-CimInstance Win32_Processor | Select-Object -First 1).NumberOfCores
+$gpu = (Get-CimInstance Win32_VideoController | Where-Object { $_.Name -notmatch 'Microsoft Basic Display' -and $_.Name -notmatch 'Microsoft Remote' } | Select-Object -First 1).Name
+$ram = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)
+$storage = [math]::Round((Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Measure-Object -Property FreeSpace -Sum).Sum / 1GB)
 
-	// CPU
-	cpuOutput := powershell(`(Get-CimInstance Win32_Processor | Select-Object -First 1).Name`)
-	specs.CPU = cleanCPUName(strings.TrimSpace(cpuOutput))
+@{
+    os = $os
+    cpu = $cpu
+    cores = $cores
+    gpu = $gpu
+    ram = $ram
+    storage = $storage
+} | ConvertTo-Json
+`
 
-	// CPU Cores
-	coresOutput := powershell(`(Get-CimInstance Win32_Processor | Select-Object -First 1).NumberOfCores`)
-	specs.CPUCores, _ = strconv.Atoi(strings.TrimSpace(coresOutput))
+	out := powershellHidden(script)
 
-	// GPU
-	gpuOutput := powershell(`(Get-CimInstance Win32_VideoController | Where-Object { $_.Name -notmatch 'Microsoft Basic Display' -and $_.Name -notmatch 'Microsoft Remote' } | Select-Object -First 1).Name`)
-	specs.GPU = strings.TrimSpace(gpuOutput)
+	// Parse JSON response
+	var result struct {
+		OS      string `json:"os"`
+		CPU     string `json:"cpu"`
+		Cores   int    `json:"cores"`
+		GPU     string `json:"gpu"`
+		RAM     int    `json:"ram"`
+		Storage int    `json:"storage"`
+	}
 
-	// RAM
-	ramOutput := powershell(`[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)`)
-	specs.RAMGB, _ = strconv.Atoi(strings.TrimSpace(ramOutput))
-
-	// Storage (free space on fixed drives)
-	storageOutput := powershell(`[math]::Round((Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Measure-Object -Property FreeSpace -Sum).Sum / 1GB)`)
-	specs.StorageGB, _ = strconv.Atoi(strings.TrimSpace(storageOutput))
+	if err := json.Unmarshal([]byte(out), &result); err == nil {
+		specs.OS = strings.TrimSpace(result.OS)
+		specs.CPU = cleanCPUName(strings.TrimSpace(result.CPU))
+		specs.CPUCores = result.Cores
+		specs.GPU = strings.TrimSpace(result.GPU)
+		specs.RAMGB = result.RAM
+		specs.StorageGB = result.Storage
+	}
 
 	return specs
 }
 
-func powershell(script string) string {
-	out, _ := exec.Command("powershell", "-NoProfile", "-Command", script).Output()
+func powershellHidden(script string) string {
+	cmd := exec.Command("powershell", "-NoProfile", "-Command", script)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		CreationFlags: CREATE_NO_WINDOW,
+	}
+	out, _ := cmd.Output()
 	return string(out)
 }
 

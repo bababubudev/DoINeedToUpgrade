@@ -22,6 +22,8 @@ interface Props {
   onClearSaved?: () => void;
   showStorageToast?: boolean;
   onToastShown?: () => void;
+  hideBack?: boolean;
+  confirmLabel?: string;
 }
 
 export default function StepSystemSpecs({
@@ -40,6 +42,8 @@ export default function StepSystemSpecs({
   onClearSaved,
   showStorageToast,
   onToastShown,
+  hideBack,
+  confirmLabel,
 }: Props) {
   const [toastVisible, setToastVisible] = useState(!!showStorageToast);
   const [toastExiting, setToastExiting] = useState(false);
@@ -111,12 +115,14 @@ export default function StepSystemSpecs({
           hideSubmit
         />
 
-        <div className="flex justify-between">
-          <button className="btn btn-ghost" onClick={onBack}>
-            &larr; Back
-          </button>
+        <div className={`flex ${hideBack ? "justify-end" : "justify-between"}`}>
+          {!hideBack && (
+            <button className="btn btn-ghost" onClick={onBack}>
+              &larr; Back
+            </button>
+          )}
           <button className="btn btn-primary" onClick={onConfirm}>
-            Check Compatibility &rarr;
+            {confirmLabel ?? "Check Compatibility"} &rarr;
           </button>
         </div>
       </div>

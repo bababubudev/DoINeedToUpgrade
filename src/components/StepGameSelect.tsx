@@ -45,15 +45,13 @@ export default function StepGameSelect({ onSelect, onManualMode, loading, error 
           <span>&#9679; Compares CPU, GPU, RAM &amp; storage</span>
           <span>&#9679; Supports Windows, Mac &amp; Linux</span>
         </div>
-        <h3 className="text-base font-semibold opacity-80 pt-3">About the detection script</h3>
+        <h3 className="text-base font-semibold opacity-80 pt-3">About the hardware scanner</h3>
         <p className="text-sm opacity-60 leading-relaxed">
-          For more accurate results, you can download and run a small detection
-          script. The script is fully open source and only reads basic system
-          info like your CPU model, GPU name, RAM size, and available storage
-          using standard OS commands (e.g. <code className="opacity-80">wmic</code> on
-          Windows, <code className="opacity-80">sysctl</code> on
-          Mac, <code className="opacity-80">lscpu</code> on Linux). It does not
-          collect, transmit, or store any personal data.
+          For more accurate results, you can download and run the scanner app.
+          It&apos;s fully open source and only reads basic system info like your
+          CPU model, GPU name, RAM size, and available storage. It does not
+          collect, transmit, or store any personal data — everything stays on
+          your machine.
         </p>
       </div>
     </div>
