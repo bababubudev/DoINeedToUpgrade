@@ -40,8 +40,8 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   macos: {
     label: "macOS",
     appFiles: [
-      { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon" },
-      { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel" },
+      { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.zip" },
+      { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.zip" },
     ],
     appInstructions: "Right-click the file → Open → Click 'Open' in the popup (required first time only)",
     terminalCommand: `curl -sL ${BASE_URL}/scripts/detect-specs.sh | sh`,

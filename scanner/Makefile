@@ -2,6 +2,7 @@
 
 OUTPUT_DIR = ../public/downloads
 APP_NAME = DoINeedAnUpgrade
+SWIFT_SRC = macos-gui/main.swift macos-gui/Scanner.swift
 
 all: windows mac linux
 
@@ -14,13 +15,13 @@ windows: $(OUTPUT_DIR)
 mac: mac-intel mac-arm
 
 mac-intel: $(OUTPUT_DIR)
-	@echo "Building macOS Intel .app bundle..."
+	@echo "Building macOS Intel .app bundle (Swift GUI)..."
 	@rm -rf "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app"
 	@mkdir -p "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/MacOS"
 	@mkdir -p "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/Resources"
-	@GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/Resources/scanner" .
-	@cp launcher.sh "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/MacOS/$(APP_NAME)"
-	@chmod +x "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/MacOS/$(APP_NAME)"
+	@swiftc -O -target x86_64-apple-macosx10.13 \
+		-o "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/MacOS/$(APP_NAME)" \
+		$(SWIFT_SRC)
 	@printf '%s\n' \
 		'<?xml version="1.0" encoding="UTF-8"?>' \
 		'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
@@ -38,19 +39,17 @@ mac-intel: $(OUTPUT_DIR)
 		'  <string>1.0</string>' \
 		'  <key>LSMinimumSystemVersion</key>' \
 		'  <string>10.13</string>' \
-		'  <key>LSUIElement</key>' \
-		'  <true/>' \
 		'</dict>' \
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/Info.plist"
 
 mac-arm: $(OUTPUT_DIR)
-	@echo "Building macOS Apple Silicon .app bundle..."
+	@echo "Building macOS Apple Silicon .app bundle (Swift GUI)..."
 	@rm -rf "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app"
 	@mkdir -p "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/MacOS"
 	@mkdir -p "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Resources"
-	@GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Resources/scanner" .
-	@cp launcher.sh "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/MacOS/$(APP_NAME)"
-	@chmod +x "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/MacOS/$(APP_NAME)"
+	@swiftc -O -target arm64-apple-macosx11.0 \
+		-o "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/MacOS/$(APP_NAME)" \
+		$(SWIFT_SRC)
 	@printf '%s\n' \
 		'<?xml version="1.0" encoding="UTF-8"?>' \
 		'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
@@ -68,8 +67,6 @@ mac-arm: $(OUTPUT_DIR)
 		'  <string>1.0</string>' \
 		'  <key>LSMinimumSystemVersion</key>' \
 		'  <string>11.0</string>' \
-		'  <key>LSUIElement</key>' \
-		'  <true/>' \
 		'</dict>' \
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Info.plist"
 
