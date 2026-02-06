@@ -12,12 +12,15 @@ export default function GameSearch({ onSelect }: Props) {
   const [results, setResults] = useState<GameSearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
   const search = useCallback(async (term: string) => {
     if (term.length < 2) {
       setResults([]);
+      setSelectedIndex(-1);
       return;
     }
 
@@ -26,6 +29,7 @@ export default function GameSearch({ onSelect }: Props) {
       const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`);
       const data = await res.json();
       setResults(data.items || []);
+      setSelectedIndex(-1);
       setIsOpen(true);
     } catch {
       setResults([]);
@@ -44,11 +48,58 @@ export default function GameSearch({ onSelect }: Props) {
     function handleClickOutside(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        setSelectedIndex(-1);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Scroll selected item into view
+  useEffect(() => {
+    if (selectedIndex >= 0 && listRef.current) {
+      const selectedItem = listRef.current.children[selectedIndex] as HTMLElement;
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [selectedIndex]);
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!isOpen || results.length === 0) {
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) =>
+          prev < results.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) =>
+          prev > 0 ? prev - 1 : results.length - 1
+        );
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedIndex >= 0 && results[selectedIndex]) {
+          const game = results[selectedIndex];
+          setQuery(game.name);
+          setIsOpen(false);
+          setSelectedIndex(-1);
+          onSelect(game.id);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  }
 
   return (
     <div className="card bg-base-100 shadow-sm">
@@ -62,22 +113,35 @@ export default function GameSearch({ onSelect }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => results.length > 0 && setIsOpen(true)}
+            onKeyDown={handleKeyDown}
+            role="combobox"
+            aria-expanded={isOpen}
+            aria-autocomplete="list"
+            aria-activedescendant={selectedIndex >= 0 ? `game-option-${selectedIndex}` : undefined}
           />
           {loading && (
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
           )}
 
           {isOpen && results.length > 0 && (
-            <ul className="flex flex-col bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-72 overflow-y-auto shadow-lg">
-              {results.map((game) => (
-                <li key={game.id}>
+            <ul
+              ref={listRef}
+              className="flex flex-col bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-72 overflow-y-auto shadow-lg"
+              role="listbox"
+            >
+              {results.map((game, index) => (
+                <li key={game.id} id={`game-option-${index}`} role="option" aria-selected={index === selectedIndex}>
                   <button
-                    className="flex items-center gap-3 w-full px-3 py-2 hover:bg-base-200 text-left"
+                    className={`flex items-center gap-3 w-full px-3 py-2 text-left transition-colors ${
+                      index === selectedIndex ? "bg-primary/20" : "hover:bg-base-200"
+                    }`}
                     onClick={() => {
                       setQuery(game.name);
                       setIsOpen(false);
+                      setSelectedIndex(-1);
                       onSelect(game.id);
                     }}
+                    onMouseEnter={() => setSelectedIndex(index)}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img

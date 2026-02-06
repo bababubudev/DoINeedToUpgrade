@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseRequirements } from "@/lib/parseRequirements";
-import { Platform, ParsedGameRequirements, PlatformRequirements } from "@/types";
+import { Platform, ParsedGameRequirements, PlatformRequirements, GameRequirements } from "@/types";
+
+function hasContent(reqs: GameRequirements | null): boolean {
+  if (!reqs) return false;
+  return Object.values(reqs).some((v) => v && v.trim() !== "");
+}
 
 export async function GET(request: NextRequest) {
   const appid = request.nextUrl.searchParams.get("appid");
@@ -39,7 +44,8 @@ export async function GET(request: NextRequest) {
     for (const [platform, reqs] of Object.entries(platformMap) as [Platform, Record<string, string>][]) {
       if (reqs.minimum || reqs.recommended) {
         const parsed: ParsedGameRequirements = parseRequirements(reqs.minimum, reqs.recommended);
-        if (parsed.minimum || parsed.recommended) {
+        // Only include platform if it has actual requirement content
+        if (hasContent(parsed.minimum) || hasContent(parsed.recommended)) {
           platformRequirements[platform] = parsed;
           availablePlatforms.push(platform);
         }

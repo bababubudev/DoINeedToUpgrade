@@ -147,26 +147,35 @@ export default function StepResults({
       {availablePlatforms.length > 1 ? (
         <div className="flex flex-col gap-1">
           <div role="tablist" className="tabs tabs-boxed w-fit">
-            {availablePlatforms.map((p) => (
-              <button
-                key={p}
-                role="tab"
-                className={`tab ${p === platform ? "tab-active" : ""}`}
-                onClick={() => onPlatformChange(p)}
-              >
-                {platformLabels[p]}
-              </button>
-            ))}
+            {availablePlatforms.map((p) => {
+              const isActive = p === platform;
+              const isUserPlatform = p === userPlatform;
+              return (
+                <button
+                  key={p}
+                  role="tab"
+                  className={`tab ${isActive ? (isUserPlatform ? "tab-active" : "bg-base-content/15 text-base-content/70") : ""}`}
+                  onClick={() => onPlatformChange(p)}
+                >
+                  {platformLabels[p]}
+                </button>
+              );
+            })}
           </div>
           {platform !== userPlatform && (
-            <p className="text-xs text-base-content/50">
-              Showing {platformLabels[platform]} requirements (your OS: {platformLabels[userPlatform]})
+            <p className="text-xs text-base-content/50 flex items-center gap-1">
+              <HiInformationCircle className="w-3.5 h-3.5 shrink-0" />
+              {availablePlatforms.includes(userPlatform)
+                ? `Showing ${platformLabels[platform]} requirements (your OS: ${platformLabels[userPlatform]})`
+                : `No ${platformLabels[userPlatform]} requirements found for this game. Showing ${platformLabels[platform]} requirements instead.`
+              }
             </p>
           )}
         </div>
       ) : availablePlatforms.length === 1 && platform !== userPlatform ? (
-        <p className="text-xs text-base-content/50">
-          This game only lists {platformLabels[platform]} requirements. Comparing other specs against those.
+        <p className="text-xs text-base-content/50 flex items-center gap-1">
+          <HiInformationCircle className="w-3.5 h-3.5 shrink-0" />
+          No {platformLabels[userPlatform]} requirements found. This game only lists {platformLabels[platform]} requirements.
         </p>
       ) : null}
 
