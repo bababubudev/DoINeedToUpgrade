@@ -1,21 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HiDownload, HiInformationCircle } from "react-icons/hi";
+
+type ClientPlatform = "windows" | "macos" | "linux";
+
+function detectClientPlatform(): ClientPlatform {
+  if (typeof navigator === "undefined") return "windows";
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("mac")) return "macos";
+  if (ua.includes("linux")) return "linux";
+  return "windows";
+}
+
+const downloadLinks = {
+  windows: { label: "Windows", file: "/downloads/DoINeedAnUpgrade.exe" },
+  macos: [
+    { label: "macOS (Apple Silicon)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.zip" },
+    { label: "macOS (Intel)", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.zip" },
+  ],
+  linux: { label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux" },
+};
 
 export default function NavButtons() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [clientPlatform, setClientPlatform] = useState<ClientPlatform>("windows");
 
-  function handleDownloadClick() {
-    const scannerSection = document.getElementById("hardware-scanner");
-    if (scannerSection) {
-      scannerSection.scrollIntoView({ behavior: "smooth" });
-    } else {
-      setShowTooltip(true);
-      setTimeout(() => setShowTooltip(false), 3000);
-    }
-  }
+  useEffect(() => {
+    setClientPlatform(detectClientPlatform());
+  }, []);
 
   return (
     <>
@@ -27,18 +41,71 @@ export default function NavButtons() {
         <span className="hidden sm:inline">How It Works</span>
       </button>
 
-      <div className="relative">
+      <div className="dropdown dropdown-end">
         <button
+          tabIndex={0}
           className="btn btn-ghost btn-sm"
-          onClick={handleDownloadClick}
+          onClick={() => setDropdownOpen(!dropdownOpen)}
         >
           <HiDownload className="w-4 h-4" />
           <span className="hidden sm:inline">Download Scanner</span>
         </button>
-        {showTooltip && (
-          <div className="absolute right-0 top-full mt-2 z-50 bg-base-200 text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
-            Select a game first to access the scanner
-          </div>
+        {dropdownOpen && (
+          <ul
+            tabIndex={0}
+            className="dropdown-content z-50 menu p-2 shadow-lg bg-base-200 rounded-box w-56 mt-2"
+          >
+            {clientPlatform === "macos" ? (
+              downloadLinks.macos.map((link) => (
+                <li key={link.file}>
+                  <a href={link.file} download onClick={() => setDropdownOpen(false)}>
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            ) : (
+              <li>
+                <a
+                  href={downloadLinks[clientPlatform].file}
+                  download
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  {downloadLinks[clientPlatform].label}
+                </a>
+              </li>
+            )}
+            <li className="menu-title mt-2">
+              <span className="text-xs">Other platforms</span>
+            </li>
+            {clientPlatform !== "windows" && (
+              <li>
+                <a href={downloadLinks.windows.file} download onClick={() => setDropdownOpen(false)}>
+                  Windows
+                </a>
+              </li>
+            )}
+            {clientPlatform !== "macos" && (
+              <>
+                <li>
+                  <a href={downloadLinks.macos[0].file} download onClick={() => setDropdownOpen(false)}>
+                    macOS (Apple Silicon)
+                  </a>
+                </li>
+                <li>
+                  <a href={downloadLinks.macos[1].file} download onClick={() => setDropdownOpen(false)}>
+                    macOS (Intel)
+                  </a>
+                </li>
+              </>
+            )}
+            {clientPlatform !== "linux" && (
+              <li>
+                <a href={downloadLinks.linux.file} download onClick={() => setDropdownOpen(false)}>
+                  Linux
+                </a>
+              </li>
+            )}
+          </ul>
         )}
       </div>
 
@@ -52,46 +119,46 @@ export default function NavButtons() {
               &times;
             </button>
 
-            <h3 className="text-xl font-bold">How the Hardware Scanner Works</h3>
+            <h3 className="text-xl font-bold">How It Works</h3>
 
             <div className="py-4 space-y-4 text-sm text-base-content/80">
               <div>
-                <h4 className="font-semibold text-base-content mb-1">What it detects</h4>
-                <ul className="list-disc list-inside space-y-0.5">
-                  <li>Operating system name &amp; version</li>
-                  <li>CPU model &amp; core count</li>
-                  <li>GPU model</li>
-                  <li>Total RAM</li>
-                  <li>Free storage space</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-base-content mb-1">How it detects them</h4>
+                <h4 className="font-semibold text-base-content mb-1">1. Enter your system specs</h4>
                 <p>
-                  The scanner app uses native system APIs to read your hardware information.
-                  On Windows, it queries WMI. On macOS, it uses system_profiler and sysctl.
-                  On Linux, it reads /proc and uses lspci.
+                  We auto-detect your hardware from your browser when possible. For more accurate
+                  results, download and run our scanner app which detects your exact CPU, GPU,
+                  RAM, and available storage.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-base-content mb-1">What happens when you run it</h4>
+                <h4 className="font-semibold text-base-content mb-1">2. Search for a game</h4>
                 <p>
-                  The scanner app detects your hardware specs and automatically opens this
-                  website with your specs pre-filled. No data is sent to any external server
-                  — everything stays local until you choose to check a game.
+                  Search for any Steam game by name. We fetch the official system requirements
+                  directly from Steam, including minimum and recommended specs for Windows,
+                  macOS, and Linux.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-base-content mb-1">Open source</h4>
+                <h4 className="font-semibold text-base-content mb-1">3. Get your results</h4>
                 <p>
-                  The scanner app is fully open-source and can be inspected before running:
+                  We compare your hardware against the game&apos;s requirements using benchmark
+                  data for CPUs and GPUs. You&apos;ll see a clear breakdown of which components
+                  meet, exceed, or fall short of the requirements.
                 </p>
-                <div className="flex flex-wrap gap-2 mt-1">
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-base-content mb-1">About the scanner app</h4>
+                <p>
+                  The optional scanner app reads your hardware info locally and opens this
+                  website with your specs pre-filled. It&apos;s fully open-source and doesn&apos;t
+                  send data anywhere.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
                   <a
-                    href="https://github.com/DaiYuAmbwororth/DoINeedAnUpgrade/tree/main/scanner"
+                    href="https://github.com/bababubudev/DoINeedToUpgrade/tree/main/scanner"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="link link-primary text-xs"

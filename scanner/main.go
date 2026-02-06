@@ -12,7 +12,7 @@ import (
 	"golang.design/x/clipboard"
 )
 
-const baseURL = "http://localhost:3000"
+const baseURL = "https://do-i-need-to-upgrade.vercel.app"
 
 type Specs struct {
 	OS        string `json:"os"`

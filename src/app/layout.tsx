@@ -3,6 +3,7 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import ThemeToggle from "@/components/ThemeToggle";
 import NavButtons from "@/components/NavButtons";
+import Logo from "@/components/Logo";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -61,7 +62,7 @@ export default function RootLayout({
       <body className={`${montserrat.className} min-h-screen bg-base-200`}>
         <div className="navbar bg-base-100 border-b border-base-300 px-4">
           <div className="flex-1">
-            <span className="text-xl font-extrabold tracking-tight">Do I Need An Upgrade?</span>
+            <Logo />
           </div>
           <div className="flex-none flex items-center gap-1">
             <NavButtons />

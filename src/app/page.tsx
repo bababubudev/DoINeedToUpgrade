@@ -377,6 +377,7 @@ function Home() {
           onToastShown={() => {}}
           hideBack
           confirmLabel="Continue"
+          showInfo
         />
       )}
 
@@ -387,6 +388,7 @@ function Home() {
           onManualMode={handleManualMode}
           loading={loading}
           error={error}
+          showInfo={false}
         />
       )}
 

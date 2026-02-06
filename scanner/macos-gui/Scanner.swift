@@ -76,9 +76,9 @@ class Scanner {
 
     static func getURL(_ specs: Specs) -> String {
         let encoder = JSONEncoder()
-        guard let jsonData = try? encoder.encode(specs) else { return "http://localhost:3000" }
+        guard let jsonData = try? encoder.encode(specs) else { return "https://do-i-need-to-upgrade.vercel.app" }
         let base64 = jsonData.base64EncodedString()
-        return "http://localhost:3000?specs=" + base64
+        return "https://do-i-need-to-upgrade.vercel.app?specs=" + base64
     }
 
     private static func execCmd(_ path: String, _ args: [String]) -> String {
