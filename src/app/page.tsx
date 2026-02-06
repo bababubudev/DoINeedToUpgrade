@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform } from "@/types";
+import { HiCheckCircle } from "react-icons/hi";
 import { compareSpecs } from "@/lib/compareSpecs";
 import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
 import { detectClientSpecs } from "@/lib/detectClientSpecs";
 import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
+import { decodeSpecsPayload } from "@/lib/decodeSpecsPayload";
 import WizardStepper from "@/components/WizardStepper";
 import StepGameSelect from "@/components/StepGameSelect";
 import StepSystemSpecs from "@/components/StepSystemSpecs";
@@ -43,7 +46,8 @@ function hasAnyField(reqs: GameRequirements): boolean {
   return Object.values(reqs).some((v) => v.trim() !== "");
 }
 
-export default function Home() {
+function Home() {
+  const searchParams = useSearchParams();
   const { cpuList, gpuList, cpuScores, gpuScores } = useBenchmarks();
   const [specs, setSpecs] = useState<UserSpecs>(defaultSpecs);
   const [detecting, setDetecting] = useState(true);
@@ -65,9 +69,44 @@ export default function Home() {
   const [platform, setPlatform] = useState<Platform>("windows");
   const [userPlatform, setUserPlatform] = useState<Platform>("windows");
   const [showStorageToast, setShowStorageToast] = useState(false);
+  const [showUrlImportToast, setShowUrlImportToast] = useState(false);
 
-  // Load saved specs from localStorage on mount, or detect automatically
+  // Auto-dismiss URL import toast
   useEffect(() => {
+    if (!showUrlImportToast) return;
+    const timer = setTimeout(() => setShowUrlImportToast(false), 5000);
+    return () => clearTimeout(timer);
+  }, [showUrlImportToast]);
+
+  // Load specs from URL params, localStorage, or detect automatically
+  useEffect(() => {
+    // Priority 1: Check URL params for specs (from hardware scanner script)
+    const urlSpecs = searchParams.get("specs");
+    if (urlSpecs) {
+      // Add DINAU: prefix since URL only contains the base64 part
+      const decoded = decodeSpecsPayload(`DINAU:${urlSpecs}`);
+      if (decoded) {
+        setSpecs(decoded);
+        const now = new Date().toISOString();
+        setSavedAt(now);
+        localStorage.setItem("savedSpecs", JSON.stringify({ specs: decoded, savedAt: now }));
+        const detected = detectPlatformFromOS(decoded.os || "");
+        setPlatform(detected);
+        setUserPlatform(detected);
+        setUnmatchedFields([]);
+        setDetecting(false);
+        setShowUrlImportToast(true);
+        // Clean up URL without reload
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("specs");
+          window.history.replaceState({}, "", url.pathname);
+        }
+        return;
+      }
+    }
+
+    // Priority 2: Check localStorage for saved specs
     let hasSaved = false;
     try {
       const raw = localStorage.getItem("savedSpecs");
@@ -89,6 +128,7 @@ export default function Home() {
       // ignore corrupt data
     }
 
+    // Priority 3: Auto-detect specs
     if (!hasSaved) {
       detectClientSpecs(gpuList)
         .then(async (data) => {
@@ -116,7 +156,7 @@ export default function Home() {
         .catch(() => {})
         .finally(() => setDetecting(false));
     }
-  }, [cpuList, gpuList]);
+  }, [cpuList, gpuList, searchParams]);
 
   const verdict = comparison ? computeVerdict(comparison) : null;
 
@@ -365,6 +405,30 @@ export default function Home() {
         />
       )}
 
+      {/* Toast for URL-imported specs */}
+      {showUrlImportToast && (
+        <div className="fixed right-4 top-20 z-50 animate-toast-in">
+          <div className="alert alert-success text-sm py-2 px-4 flex items-center gap-2 shadow-lg">
+            <HiCheckCircle className="w-5 h-5" />
+            <span>Hardware specs imported from scanner!</span>
+            <button
+              className="btn btn-ghost btn-xs"
+              onClick={() => setShowUrlImportToast(false)}
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
+      <Home />
+    </Suspense>
   );
 }

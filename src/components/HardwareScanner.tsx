@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { UserSpecs } from "@/types";
 import { decodeSpecsPayload } from "@/lib/decodeSpecsPayload";
-import { HiChevronDown, HiCheckCircle, HiExclamation, HiDownload } from "react-icons/hi";
+import { HiChevronDown, HiCheckCircle, HiExclamation, HiDownload, HiClipboardCopy, HiClipboard } from "react-icons/hi";
 
 interface Props {
   onImport: (specs: UserSpecs) => void;
@@ -19,21 +19,38 @@ function detectClientPlatform(): ClientPlatform {
   return "windows";
 }
 
-const platformInfo: Record<ClientPlatform, { label: string; file: string; instructions: string }> = {
+const BASE_URL = process.env.NODE_ENV === "development"
+  ? "http://localhost:3000"
+  : "https://do-i-need-to-upgrade.vercel.app";
+
+type PlatformInfo = {
+  label: string;
+  appFiles: { label: string; file: string }[];
+  appInstructions: string;
+  terminalCommand: string;
+};
+
+const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   windows: {
     label: "Windows",
-    file: "/scripts/detect-specs.ps1",
-    instructions: "Right-click the downloaded file and select \"Run with PowerShell\", or run in terminal: powershell -ExecutionPolicy Bypass -File detect-specs.ps1",
+    appFiles: [{ label: "Windows", file: "/downloads/DoINeedAnUpgrade.exe" }],
+    appInstructions: "Double-click the downloaded file to run",
+    terminalCommand: `powershell -ExecutionPolicy Bypass -Command "irm ${BASE_URL}/scripts/detect-specs.ps1 -OutFile $env:TEMP\\detect-specs.ps1; & $env:TEMP\\detect-specs.ps1"`,
   },
   macos: {
     label: "macOS",
-    file: "/scripts/detect-specs.sh",
-    instructions: "Open Terminal, then run: chmod +x ~/Downloads/detect-specs.sh && ~/Downloads/detect-specs.sh",
+    appFiles: [
+      { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon" },
+      { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel" },
+    ],
+    appInstructions: "Right-click the file → Open → Click 'Open' in the popup (required first time only)",
+    terminalCommand: `curl -sL ${BASE_URL}/scripts/detect-specs.sh | sh`,
   },
   linux: {
     label: "Linux",
-    file: "/scripts/detect-specs.sh",
-    instructions: "Open a terminal, then run: chmod +x ~/Downloads/detect-specs.sh && ~/Downloads/detect-specs.sh",
+    appFiles: [{ label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux" }],
+    appInstructions: "Make executable (chmod +x) then double-click or run from terminal",
+    terminalCommand: `curl -sL ${BASE_URL}/scripts/detect-specs.sh | sh`,
   },
 };
 
@@ -42,6 +59,8 @@ export default function HardwareScanner({ onImport }: Props) {
   const [pasteValue, setPasteValue] = useState("");
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [clientPlatform, setClientPlatform] = useState<ClientPlatform>("windows");
+  const [copied, setCopied] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     setClientPlatform(detectClientPlatform());
@@ -67,9 +86,38 @@ export default function HardwareScanner({ onImport }: Props) {
     if (status !== "idle") setStatus("idle");
   }
 
-  const platforms: ClientPlatform[] = ["windows", "macos", "linux"];
-  // Put user's platform first
-  const sorted = [clientPlatform, ...platforms.filter((p) => p !== clientPlatform)];
+  async function handleCopyCommand() {
+    const info = platformInfo[clientPlatform];
+    try {
+      await navigator.clipboard.writeText(info.terminalCommand);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: select text
+    }
+  }
+
+  async function handlePasteFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+      setPasteValue(text);
+      // Auto-import if valid
+      const result = decodeSpecsPayload(text);
+      if (result) {
+        setStatus("success");
+        onImport(result);
+        setOpen(false);
+        setToast(true);
+        setTimeout(() => setToast(false), 3000);
+      } else if (text.trim()) {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  const info = platformInfo[clientPlatform];
 
   return (
     <>
@@ -82,7 +130,7 @@ export default function HardwareScanner({ onImport }: Props) {
           <div>
             <h3 className="font-semibold text-sm">Need more accurate detection?</h3>
             <p className="text-xs text-base-content/60">
-              Download and run a script to detect your exact hardware specs
+              Run a quick scan to detect your exact hardware specs
             </p>
           </div>
           <HiChevronDown
@@ -95,80 +143,114 @@ export default function HardwareScanner({ onImport }: Props) {
         <div className="px-4 pb-4 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
           <div className="divider my-0" />
 
-          {/* Download buttons */}
-          <div>
-            <p className="text-sm font-medium mb-2">1. Download the script for your platform:</p>
-            <div className="flex flex-wrap gap-2">
-              {sorted.map((p) => {
-                const info = platformInfo[p];
-                const isUserPlatform = p === clientPlatform;
-                return (
+          {/* Easy method - download and run */}
+          <div className="bg-base-200 rounded-lg p-4">
+            <p className="text-sm font-medium mb-3">
+              Quick scan for {info.label}:
+            </p>
+            <div className="flex flex-col gap-3">
+              <div className={`flex gap-2 ${info.appFiles.length > 1 ? "flex-col sm:flex-row" : ""}`}>
+                {info.appFiles.map((app) => (
                   <a
-                    key={p}
-                    href={info.file}
+                    key={app.file}
+                    href={app.file}
                     download
-                    className={`btn btn-sm ${isUserPlatform ? "btn-primary" : "btn-outline"}`}
+                    className={`btn btn-primary btn-sm ${info.appFiles.length === 1 ? "w-full" : "flex-1"}`}
                   >
-                    {isUserPlatform && <HiDownload className="w-4 h-4" />}
-                    {info.label}
-                    {isUserPlatform && " (Your OS)"}
+                    <HiDownload className="w-4 h-4" />
+                    {info.appFiles.length > 1 ? app.label : "Download Scanner"}
                   </a>
-                );
-              })}
+                ))}
+              </div>
+              <p className="text-xs text-base-content/70">
+                {info.appInstructions}
+              </p>
+              <p className="text-xs text-base-content/60">
+                The scanner will detect your specs and open this page with them imported automatically.
+              </p>
             </div>
           </div>
 
-          {/* Instructions */}
+          {/* Paste from clipboard - fallback */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-base-300" />
+            <span className="text-xs text-base-content/50">or paste manually</span>
+            <div className="flex-1 h-px bg-base-300" />
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              className="btn btn-sm btn-outline flex-1"
+              onClick={handlePasteFromClipboard}
+            >
+              <HiClipboard className="w-4 h-4" />
+              Paste from Clipboard
+            </button>
+          </div>
+
+          {/* Manual paste input */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className={`input input-bordered input-sm flex-1 font-mono text-xs ${
+                status === "error" ? "input-error" : status === "success" ? "input-success" : ""
+              }`}
+              placeholder="DINAU:..."
+              value={pasteValue}
+              onChange={(e) => handlePasteChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleImport();
+                }
+              }}
+            />
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={handleImport}
+              disabled={!pasteValue.trim()}
+            >
+              Import
+            </button>
+          </div>
+          {status === "success" && (
+            <p className="text-xs text-success flex items-center gap-1">
+              <HiCheckCircle className="w-4 h-4" />
+              Hardware specs imported successfully!
+            </p>
+          )}
+          {status === "error" && (
+            <p className="text-xs text-error flex items-center gap-1">
+              <HiExclamation className="w-4 h-4" />
+              Invalid code. Make sure you copied the entire DINAU:... string.
+            </p>
+          )}
+
+          {/* Advanced: Terminal command method */}
           <div>
-            <p className="text-sm font-medium mb-1">2. Run the script:</p>
-            <div className="text-xs bg-base-200 rounded-lg p-3 space-y-1">
-              {sorted.map((p) => (
-                <div key={p}>
-                  <span className="font-semibold">{platformInfo[p].label}:</span>{" "}
-                  <code className="text-base-content/80">{platformInfo[p].instructions}</code>
+            <button
+              className="text-xs text-base-content/50 hover:text-base-content/70 flex items-center gap-1"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              <HiChevronDown className={`w-3 h-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
+              {showAdvanced ? "Hide" : "Show"} alternative method (terminal command)
+            </button>
+
+            {showAdvanced && (
+              <div className="mt-2 p-3 bg-base-200 rounded-lg text-xs space-y-2">
+                <p className="font-medium">Run in terminal:</p>
+                <div className="flex gap-2">
+                  <code className="flex-1 bg-base-300 p-2 rounded font-mono overflow-x-auto whitespace-nowrap">
+                    {info.terminalCommand}
+                  </code>
+                  <button
+                    className={`btn btn-xs ${copied ? "btn-success" : "btn-outline"}`}
+                    onClick={handleCopyCommand}
+                  >
+                    {copied ? <HiCheckCircle className="w-3 h-3" /> : <HiClipboardCopy className="w-3 h-3" />}
+                  </button>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Paste input */}
-          <div>
-            <p className="text-sm font-medium mb-1">3. Paste the output code here:</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className={`input input-bordered input-sm flex-1 font-mono text-xs ${
-                  status === "error" ? "input-error" : status === "success" ? "input-success" : ""
-                }`}
-                placeholder="DINAU:..."
-                value={pasteValue}
-                onChange={(e) => handlePasteChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleImport();
-                  }
-                }}
-              />
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={handleImport}
-                disabled={!pasteValue.trim()}
-              >
-                Import
-              </button>
-            </div>
-            {status === "success" && (
-              <p className="text-xs text-success mt-1 flex items-center gap-1">
-                <HiCheckCircle className="w-4 h-4" />
-                Hardware specs imported successfully!
-              </p>
-            )}
-            {status === "error" && (
-              <p className="text-xs text-error mt-1 flex items-center gap-1">
-                <HiExclamation className="w-4 h-4" />
-                Invalid code. Make sure you copied the entire DINAU:... string.
-              </p>
+              </div>
             )}
           </div>
         </div>
