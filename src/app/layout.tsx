@@ -4,6 +4,7 @@ import "./globals.css";
 import ThemeToggle from "@/components/ThemeToggle";
 import NavButtons from "@/components/NavButtons";
 import Logo from "@/components/Logo";
+import { StructuredData } from "@/components/StructuredData";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -62,6 +63,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" data-theme="dark">
+      <head>
+        <StructuredData />
+      </head>
       <body className={`${montserrat.className} min-h-screen bg-base-200`}>
         <div className="navbar bg-base-100 border-b border-base-300 px-4">
           <div className="flex-1">

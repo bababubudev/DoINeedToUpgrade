@@ -1,0 +1,20 @@
+# Allow search engines to crawl all public pages
+User-agent: *
+Allow: /
+Allow: /public/
+
+# Disallow crawling of internal API routes
+Disallow: /api/
+
+# Deny access to private/admin paths (add if you have any)
+# Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://do-i-need-to-upgrade.vercel.app/sitemap.xml
+
+# Crawl delay (optional - be friendly to servers)
+Crawl-delay: 1
+
+# Respect user preferences
+User-agent: *
+Request-rate: 30/60
