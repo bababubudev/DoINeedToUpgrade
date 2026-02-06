@@ -24,6 +24,15 @@ type Specs struct {
 }
 
 func main() {
+	// Use GUI mode by default (terminal mode available via --terminal flag)
+	if len(os.Args) > 1 && os.Args[1] == "--terminal" {
+		runTerminal()
+	} else {
+		runGUI()
+	}
+}
+
+func runTerminal() {
 	fmt.Println()
 	fmt.Println("=== DoINeedAnUpgrade Hardware Scanner ===")
 	fmt.Println()
@@ -36,16 +45,7 @@ func main() {
 	fmt.Printf("RAM:     %d GB\n", specs.RAMGB)
 	fmt.Printf("Storage: %d GB free\n", specs.StorageGB)
 
-	// Build JSON and encode
-	jsonData, err := json.Marshal(specs)
-	if err != nil {
-		fmt.Println("[!] Error encoding specs")
-		waitForEnter()
-		return
-	}
-
-	encoded := base64.StdEncoding.EncodeToString(jsonData)
-	code := "DINAU:" + encoded
+	code := encodeSpecs(specs)
 
 	fmt.Println()
 	fmt.Println("Your hardware specs:")
@@ -53,15 +53,10 @@ func main() {
 	fmt.Println()
 
 	// Copy to clipboard
-	if err := clipboard.Init(); err == nil {
-		clipboard.Write(clipboard.FmtText, []byte(code))
-		fmt.Println("[OK] Copied to clipboard!")
-	} else {
-		fmt.Println("[!] Could not copy to clipboard")
-	}
+	copyToClipboard(code)
 
 	// Open browser
-	url := baseURL + "?specs=" + encoded
+	url := getURL(specs)
 	fmt.Println()
 	fmt.Println("Opening browser...")
 	openBrowser(url)
@@ -72,6 +67,33 @@ func main() {
 	fmt.Println()
 
 	waitForEnter()
+}
+
+func encodeSpecs(specs Specs) string {
+	jsonData, err := json.Marshal(specs)
+	if err != nil {
+		return ""
+	}
+	encoded := base64.StdEncoding.EncodeToString(jsonData)
+	return "DINAU:" + encoded
+}
+
+func getURL(specs Specs) string {
+	jsonData, err := json.Marshal(specs)
+	if err != nil {
+		return baseURL
+	}
+	encoded := base64.StdEncoding.EncodeToString(jsonData)
+	return baseURL + "?specs=" + encoded
+}
+
+func copyToClipboard(code string) {
+	if err := clipboard.Init(); err == nil {
+		clipboard.Write(clipboard.FmtText, []byte(code))
+		fmt.Println("[OK] Copied to clipboard!")
+	} else {
+		fmt.Println("[!] Could not copy to clipboard")
+	}
 }
 
 func waitForEnter() {
