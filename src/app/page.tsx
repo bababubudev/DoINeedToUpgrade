@@ -10,6 +10,7 @@ import { useBenchmarks } from "@/lib/useBenchmarks";
 import { detectClientSpecs } from "@/lib/detectClientSpecs";
 import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
 import { decodeSpecsPayload } from "@/lib/decodeSpecsPayload";
+import { getPendingGame, clearPendingGame } from "@/lib/pendingGameCheck";
 import WizardStepper from "@/components/WizardStepper";
 import StepGameSelect from "@/components/StepGameSelect";
 import StepSystemSpecs from "@/components/StepSystemSpecs";
@@ -98,12 +99,60 @@ function Home() {
         setUnmatchedFields([]);
         setDetecting(false);
         setShowUrlImportToast(true);
-        setImportedFromScanner(true);
+
         // Clean up URL without reload
         if (typeof window !== "undefined") {
           const url = new URL(window.location.href);
           url.searchParams.delete("specs");
           window.history.replaceState({}, "", url.pathname);
+        }
+
+        // Check if there's a pending game to restore (downloaded scanner from "Your System" step)
+        const pendingGame = getPendingGame();
+        if (pendingGame) {
+          clearPendingGame();
+          // Fetch game and go directly to results
+          (async () => {
+            try {
+              const res = await fetch(`/api/game?appid=${pendingGame.appid}`);
+              if (!res.ok) throw new Error("Failed to load game details");
+              const data: GameDetails = await res.json();
+              setGame(data);
+
+              // Use pending platform or auto-select based on user's OS
+              const selectedPlatform = data.availablePlatforms.includes(detected)
+                ? detected
+                : data.availablePlatforms[0] ?? "windows";
+              setPlatform(selectedPlatform);
+
+              const platformReqs = data.platformRequirements[selectedPlatform] ?? data.requirements;
+              const newMin = platformReqs.minimum ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
+              const newRec = platformReqs.recommended ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
+              setMinReqs(newMin);
+              setRecReqs(newRec);
+
+              // Run comparison
+              const hasMin = Object.values(newMin).some((v) => v.trim() !== "");
+              const hasRec = Object.values(newRec).some((v) => v.trim() !== "");
+              const minArg = hasMin ? newMin : null;
+              const recArg = hasRec ? newRec : null;
+              const singlePlatform = (data.availablePlatforms.length ?? 0) <= 1;
+              const result = compareSpecs(decoded, minArg, recArg, cpuScores, gpuScores, singlePlatform);
+              setComparison(result);
+              setSpecsConfirmed(true);
+              setSpecsDirty(false);
+              setStep(3);
+              setMaxReached(3);
+              // Normal mode - not scanner mode
+              setImportedFromScanner(false);
+            } catch {
+              // Fall back to scanner mode if game fetch fails
+              setImportedFromScanner(true);
+            }
+          })();
+        } else {
+          // No pending game - use scanner mode
+          setImportedFromScanner(true);
         }
         return;
       }
@@ -445,6 +494,7 @@ function Home() {
           detecting={detecting}
           unmatchedFields={unmatchedFields}
           game={game}
+          platform={platform}
           onBack={() => goToStep(1)}
           onConfirm={handleSpecsConfirm}
           onScriptImport={handleScriptImport}

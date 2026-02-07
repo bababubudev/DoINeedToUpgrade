@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { HiArrowRight } from "react-icons/hi";
 import { GameSearchResult } from "@/types";
 
 interface Props {
@@ -28,8 +29,9 @@ export default function GameSearch({ onSelect }: Props) {
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`);
       const data = await res.json();
-      setResults(data.items || []);
-      setSelectedIndex(-1);
+      const items = data.items || [];
+      setResults(items);
+      setSelectedIndex(items.length > 0 ? 0 : -1);
       setIsOpen(true);
     } catch {
       setResults([]);
@@ -124,36 +126,43 @@ export default function GameSearch({ onSelect }: Props) {
           )}
 
           {isOpen && results.length > 0 && (
-            <ul
-              ref={listRef}
-              className="flex flex-col bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 max-h-72 overflow-y-auto shadow-lg"
-              role="listbox"
-            >
-              {results.map((game, index) => (
-                <li key={game.id} id={`game-option-${index}`} role="option" aria-selected={index === selectedIndex}>
-                  <button
-                    className={`flex items-center gap-3 w-full px-3 py-2 text-left transition-colors ${
-                      index === selectedIndex ? "bg-primary/20" : "hover:bg-base-200"
-                    }`}
-                    onClick={() => {
-                      setQuery(game.name);
-                      setIsOpen(false);
-                      setSelectedIndex(-1);
-                      onSelect(game.id);
-                    }}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={game.tiny_image}
-                      alt={game.name}
-                      className="w-12 h-auto rounded shrink-0"
-                    />
-                    <span className="truncate">{game.name}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="bg-base-100 border border-base-300 rounded-box absolute z-50 w-full mt-1 shadow-lg overflow-hidden">
+              <ul
+                ref={listRef}
+                className="flex flex-col max-h-64 overflow-y-auto"
+                role="listbox"
+              >
+                {results.map((game, index) => (
+                  <li key={game.id} id={`game-option-${index}`} role="option" aria-selected={index === selectedIndex}>
+                    <button
+                      className={`flex items-center gap-3 w-full px-3 py-2 text-left transition-colors ${
+                        index === selectedIndex ? "bg-primary/20" : "hover:bg-base-200"
+                      }`}
+                      onClick={() => {
+                        setQuery(game.name);
+                        setIsOpen(false);
+                        setSelectedIndex(-1);
+                        onSelect(game.id);
+                      }}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={game.tiny_image}
+                        alt={game.name}
+                        className="w-12 h-auto rounded shrink-0"
+                      />
+                      <span className="truncate">{game.name}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex items-center gap-1.5 px-3 py-2 text-xs text-base-content/50 border-t border-base-300 bg-base-200/50">
+                <kbd className="kbd kbd-xs">Enter</kbd>
+                <HiArrowRight className="w-3 h-3" />
+                <span>Select &amp; continue</span>
+              </div>
+            </div>
           )}
         </div>
       </div>

@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
     const requirements = platformRequirements.windows ?? platformRequirements[availablePlatforms[0]] ?? { minimum: null, recommended: null };
 
     return NextResponse.json({
+      appid: Number(appid),
       name: info.name,
       headerImage: info.header_image,
       requirements,

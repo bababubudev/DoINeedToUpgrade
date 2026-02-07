@@ -38,6 +38,7 @@ export interface GameSearchResult {
 }
 
 export interface GameDetails {
+  appid: number;
   name: string;
   headerImage: string;
   requirements: ParsedGameRequirements;

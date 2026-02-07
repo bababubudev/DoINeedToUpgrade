@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserSpecs, GameDetails } from "@/types";
+import { UserSpecs, GameDetails, Platform } from "@/types";
 import SystemSpecs from "@/components/SystemSpecs";
 import HardwareScanner from "@/components/HardwareScanner";
 import { HiX, HiCheckCircle } from "react-icons/hi";
+import { savePendingGame } from "@/lib/pendingGameCheck";
 
 interface Props {
   specs: UserSpecs;
@@ -15,6 +16,7 @@ interface Props {
   detecting: boolean;
   unmatchedFields: string[];
   game: GameDetails | null;
+  platform?: Platform;
   onBack: () => void;
   onConfirm: () => void;
   onScriptImport?: (specs: UserSpecs) => void;
@@ -36,6 +38,7 @@ export default function StepSystemSpecs({
   detecting,
   unmatchedFields,
   game,
+  platform,
   onBack,
   onConfirm,
   onScriptImport,
@@ -70,6 +73,29 @@ export default function StepSystemSpecs({
     return () => clearTimeout(removeTimer);
   }, [toastExiting]);
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Only trigger if Enter is pressed and no input/textarea is focused
+      if (e.key === "Enter") {
+        const activeEl = document.activeElement;
+        const isInput = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA";
+        if (!isInput) {
+          e.preventDefault();
+          onConfirm();
+        }
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onConfirm]);
+
+  function handleScannerDownload() {
+    // Save the current game context so we can restore it when returning from scanner
+    if (game?.appid && platform) {
+      savePendingGame(game.appid, platform, game.name);
+    }
+  }
+
   return (
     <>
       <div className="animate-fadeIn flex flex-col gap-4 mt-8 py-2">
@@ -103,7 +129,7 @@ export default function StepSystemSpecs({
           </div>
         )}
 
-        {onScriptImport && <HardwareScanner onImport={onScriptImport} />}
+        {onScriptImport && <HardwareScanner onImport={onScriptImport} onDownload={handleScannerDownload} />}
 
         <SystemSpecs
           specs={specs}
@@ -117,15 +143,21 @@ export default function StepSystemSpecs({
           hideSubmit
         />
 
-        <div className={`flex ${hideBack ? "justify-end" : "justify-between"}`}>
+        <div className={`flex ${hideBack ? "justify-end" : "justify-between"} items-center`}>
           {!hideBack && (
             <button className="btn btn-ghost" onClick={onBack}>
               &larr; Back
             </button>
           )}
-          <button className="btn btn-primary" onClick={onConfirm}>
-            {confirmLabel ?? "Check Compatibility"} &rarr;
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:flex items-center gap-1.5 text-xs text-base-content/40">
+              <kbd className="kbd kbd-xs">Enter</kbd>
+              <span>to continue</span>
+            </span>
+            <button className="btn btn-primary" onClick={onConfirm}>
+              {confirmLabel ?? "Check Compatibility"} &rarr;
+            </button>
+          </div>
         </div>
 
         {showInfo && (

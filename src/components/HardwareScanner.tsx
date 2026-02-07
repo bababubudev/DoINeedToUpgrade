@@ -7,6 +7,7 @@ import { HiChevronDown, HiCheckCircle, HiExclamation, HiDownload, HiClipboardCop
 
 interface Props {
   onImport: (specs: UserSpecs) => void;
+  onDownload?: () => void;
 }
 
 type ClientPlatform = "windows" | "macos" | "linux";
@@ -48,7 +49,7 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   },
 };
 
-export default function HardwareScanner({ onImport }: Props) {
+export default function HardwareScanner({ onImport, onDownload }: Props) {
   const [open, setOpen] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -138,6 +139,7 @@ export default function HardwareScanner({ onImport }: Props) {
                     href={app.file}
                     download
                     className={`btn btn-primary btn-sm ${info.appFiles.length === 1 ? "w-full" : "flex-1"}`}
+                    onClick={() => onDownload?.()}
                   >
                     <HiDownload className="w-4 h-4" />
                     {info.appFiles.length > 1 ? app.label : "Download Scanner"}
