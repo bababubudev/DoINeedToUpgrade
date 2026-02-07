@@ -24,7 +24,7 @@ type PlatformInfo = {
   label: string;
   appFiles: { label: string; file: string }[];
   appInstructions: string;
-  macosFixCommand?: string;
+  runCommand?: string;
 };
 
 const platformInfo: Record<ClientPlatform, PlatformInfo> = {
@@ -40,12 +40,13 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
       { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.zip" },
     ],
     appInstructions: "Unzip the file, then run this command in Terminal to open the app:",
-    macosFixCommand: "xattr -cr ~/Downloads/DoINeedAnUpgrade-Mac-*.app && open ~/Downloads/DoINeedAnUpgrade-Mac-*.app",
+    runCommand: "xattr -cr ~/Downloads/DoINeedAnUpgrade-Mac-*.app && open ~/Downloads/DoINeedAnUpgrade-Mac-*.app",
   },
   linux: {
     label: "Linux",
     appFiles: [{ label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux.AppImage" }],
-    appInstructions: "Make the file executable (chmod +x), then double-click to run",
+    appInstructions: "Run this command in a terminal after downloading:",
+    runCommand: "chmod +x ~/Downloads/DoINeedAnUpgrade-Linux.AppImage && ~/Downloads/DoINeedAnUpgrade-Linux.AppImage",
   },
 };
 
@@ -149,15 +150,15 @@ export default function HardwareScanner({ onImport, onDownload }: Props) {
               <p className="text-xs text-base-content/70">
                 {info.appInstructions}
               </p>
-              {info.macosFixCommand && (
+              {info.runCommand && (
                 <div className="flex gap-2 items-center">
                   <code className="flex-1 bg-base-300 p-2 rounded font-mono text-xs overflow-x-auto whitespace-nowrap">
-                    {info.macosFixCommand}
+                    {info.runCommand}
                   </code>
                   <button
                     className="btn btn-xs btn-outline"
                     onClick={async () => {
-                      await navigator.clipboard.writeText(info.macosFixCommand!);
+                      await navigator.clipboard.writeText(info.runCommand!);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
