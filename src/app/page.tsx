@@ -136,8 +136,7 @@ function Home() {
               const hasRec = Object.values(newRec).some((v) => v.trim() !== "");
               const minArg = hasMin ? newMin : null;
               const recArg = hasRec ? newRec : null;
-              const singlePlatform = (data.availablePlatforms.length ?? 0) <= 1;
-              const result = compareSpecs(decoded, minArg, recArg, cpuScores, gpuScores, singlePlatform);
+              const result = compareSpecs(decoded, minArg, recArg, cpuScores, gpuScores);
               setComparison(result);
               setSpecsConfirmed(true);
               setSpecsDirty(false);
@@ -212,8 +211,6 @@ function Home() {
 
   const verdict = comparison ? computeVerdict(comparison) : null;
 
-  const isSinglePlatformGame = (game?.availablePlatforms.length ?? 0) <= 1;
-
   const runComparison = useCallback(
     (min?: GameRequirements, rec?: GameRequirements) => {
       const minR = min ?? minReqs;
@@ -224,11 +221,11 @@ function Home() {
       }
       const minArg = hasAnyField(minR) ? minR : null;
       const recArg = hasAnyField(recR) ? recR : null;
-      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores, isSinglePlatformGame);
+      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
       setComparison(result);
       setSpecsDirty(false);
     },
-    [specs, minReqs, recReqs, cpuScores, gpuScores, isSinglePlatformGame]
+    [specs, minReqs, recReqs, cpuScores, gpuScores]
   );
 
   function goToStep(s: number) {
@@ -281,8 +278,7 @@ function Home() {
       if (importedFromScanner || specsConfirmed) {
         const minArg = hasAnyField(newMin) ? newMin : null;
         const recArg = hasAnyField(newRec) ? newRec : null;
-        const singlePlatform = (data.availablePlatforms.length ?? 0) <= 1;
-        const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores, singlePlatform);
+        const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
         setComparison(result);
         setSpecsDirty(false);
         goToStep(3);
@@ -387,7 +383,7 @@ function Home() {
     if (specsConfirmed) {
       const minArg = hasAnyField(newMin) ? newMin : null;
       const recArg = hasAnyField(newRec) ? newRec : null;
-      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores, isSinglePlatformGame);
+      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
       setComparison(result);
       setSpecsDirty(false);
     }
