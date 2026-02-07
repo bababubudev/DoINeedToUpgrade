@@ -38,6 +38,7 @@ export async function GET() {
       os,
       cpu: cpuName,
       cpuCores: cpu.cores,
+      cpuSpeedGHz: cpu.speedMax || cpu.speed || null,
       gpu: gpuName,
       ramGB,
       storageGB,

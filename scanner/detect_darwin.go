@@ -25,9 +25,22 @@ func detectSpecs() Specs {
 	coresStr, _ := execCmd("sysctl", "-n", "hw.physicalcpu")
 	specs.CPUCores, _ = strconv.Atoi(strings.TrimSpace(coresStr))
 
-	// GPU - Apple Silicon uses chip name as GPU
+	// CPU Speed
 	arch, _ := execCmd("uname", "-m")
-	if strings.TrimSpace(arch) == "arm64" {
+	isAppleSilicon := strings.TrimSpace(arch) == "arm64"
+	if isAppleSilicon {
+		// Apple Silicon - use known max performance core speeds
+		specs.CPUSpeedGHz = getAppleSiliconSpeed(specs.CPU)
+	} else {
+		// Intel Mac - get frequency from sysctl
+		freqStr, _ := execCmd("sysctl", "-n", "hw.cpufrequency_max")
+		if freqHz, err := strconv.ParseInt(strings.TrimSpace(freqStr), 10, 64); err == nil && freqHz > 0 {
+			specs.CPUSpeedGHz = float64(freqHz) / 1e9
+		}
+	}
+
+	// GPU - Apple Silicon uses chip name as GPU
+	if isAppleSilicon {
 		// Extract Apple chip name
 		re := regexp.MustCompile(`Apple M\d+\s*(Pro|Max|Ultra)?`)
 		match := re.FindString(specs.CPU)
@@ -81,4 +94,21 @@ func cleanCPUName(name string) string {
 	re := regexp.MustCompile(`\s+`)
 	name = re.ReplaceAllString(name, " ")
 	return strings.TrimSpace(name)
+}
+
+// getAppleSiliconSpeed returns known max performance core speeds for Apple Silicon chips
+func getAppleSiliconSpeed(cpuName string) float64 {
+	cpuLower := strings.ToLower(cpuName)
+	switch {
+	case strings.Contains(cpuLower, "m4"):
+		return 4.4
+	case strings.Contains(cpuLower, "m3"):
+		return 4.1
+	case strings.Contains(cpuLower, "m2"):
+		return 3.5
+	case strings.Contains(cpuLower, "m1"):
+		return 3.2
+	default:
+		return 3.0 // Fallback for unknown Apple Silicon
+	}
 }

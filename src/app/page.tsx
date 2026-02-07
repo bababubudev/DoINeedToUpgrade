@@ -22,6 +22,7 @@ const defaultSpecs: UserSpecs = {
   os: "",
   cpu: "",
   cpuCores: null,
+  cpuSpeedGHz: null,
   gpu: "",
   ramGB: null,
   storageGB: null,

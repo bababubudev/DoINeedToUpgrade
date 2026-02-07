@@ -15,12 +15,13 @@ import (
 const baseURL = "https://do-i-need-to-upgrade.vercel.app"
 
 type Specs struct {
-	OS        string `json:"os"`
-	CPU       string `json:"cpu"`
-	CPUCores  int    `json:"cpuCores"`
-	GPU       string `json:"gpu"`
-	RAMGB     int    `json:"ramGB"`
-	StorageGB int    `json:"storageGB"`
+	OS          string  `json:"os"`
+	CPU         string  `json:"cpu"`
+	CPUCores    int     `json:"cpuCores"`
+	CPUSpeedGHz float64 `json:"cpuSpeedGHz"`
+	GPU         string  `json:"gpu"`
+	RAMGB       int     `json:"ramGB"`
+	StorageGB   int     `json:"storageGB"`
 }
 
 func main() {
@@ -40,7 +41,7 @@ func runTerminal() {
 	specs := detectSpecs()
 
 	fmt.Printf("OS:      %s\n", specs.OS)
-	fmt.Printf("CPU:     %s (%d cores)\n", specs.CPU, specs.CPUCores)
+	fmt.Printf("CPU:     %s (%d cores @ %.1f GHz)\n", specs.CPU, specs.CPUCores, specs.CPUSpeedGHz)
 	fmt.Printf("GPU:     %s\n", specs.GPU)
 	fmt.Printf("RAM:     %d GB\n", specs.RAMGB)
 	fmt.Printf("Storage: %d GB free\n", specs.StorageGB)

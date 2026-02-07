@@ -4,6 +4,7 @@ export interface UserSpecs {
   os: string;
   cpu: string;
   cpuCores: number | null;
+  cpuSpeedGHz: number | null;
   gpu: string;
   ramGB: number | null;
   storageGB: number | null;

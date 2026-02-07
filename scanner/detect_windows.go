@@ -19,8 +19,10 @@ func detectSpecs() Specs {
 	// Run all queries in a single PowerShell call to avoid multiple window flashes
 	script := `
 $os = (Get-CimInstance Win32_OperatingSystem).Caption -replace '^Microsoft\s+', ''
-$cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1).Name
-$cores = (Get-CimInstance Win32_Processor | Select-Object -First 1).NumberOfCores
+$cpuInfo = Get-CimInstance Win32_Processor | Select-Object -First 1
+$cpu = $cpuInfo.Name
+$cores = $cpuInfo.NumberOfCores
+$speed = $cpuInfo.MaxClockSpeed
 $gpu = (Get-CimInstance Win32_VideoController | Where-Object { $_.Name -notmatch 'Microsoft Basic Display' -and $_.Name -notmatch 'Microsoft Remote' } | Select-Object -First 1).Name
 $ram = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)
 $storage = [math]::Round((Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Measure-Object -Property FreeSpace -Sum).Sum / 1GB)
@@ -29,6 +31,7 @@ $storage = [math]::Round((Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3
     os = $os
     cpu = $cpu
     cores = $cores
+    speed = $speed
     gpu = $gpu
     ram = $ram
     storage = $storage
@@ -42,6 +45,7 @@ $storage = [math]::Round((Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3
 		OS      string `json:"os"`
 		CPU     string `json:"cpu"`
 		Cores   int    `json:"cores"`
+		Speed   int    `json:"speed"` // MHz
 		GPU     string `json:"gpu"`
 		RAM     int    `json:"ram"`
 		Storage int    `json:"storage"`
@@ -51,6 +55,7 @@ $storage = [math]::Round((Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3
 		specs.OS = strings.TrimSpace(result.OS)
 		specs.CPU = cleanCPUName(strings.TrimSpace(result.CPU))
 		specs.CPUCores = result.Cores
+		specs.CPUSpeedGHz = float64(result.Speed) / 1000.0 // MHz to GHz
 		specs.GPU = strings.TrimSpace(result.GPU)
 		specs.RAMGB = result.RAM
 		specs.StorageGB = result.Storage

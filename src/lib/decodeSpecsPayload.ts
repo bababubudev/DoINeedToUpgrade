@@ -31,6 +31,7 @@ export function decodeSpecsPayload(input: string): UserSpecs | null {
   if (typeof obj.gpu !== "string" && obj.gpu !== null && obj.gpu !== undefined) return null;
 
   const cpuCores = typeof obj.cpuCores === "number" ? obj.cpuCores : null;
+  const cpuSpeedGHz = typeof obj.cpuSpeedGHz === "number" ? obj.cpuSpeedGHz : null;
   const ramGB = typeof obj.ramGB === "number" ? obj.ramGB : null;
   const storageGB = typeof obj.storageGB === "number" ? obj.storageGB : null;
 
@@ -38,6 +39,7 @@ export function decodeSpecsPayload(input: string): UserSpecs | null {
     os: obj.os,
     cpu: obj.cpu,
     cpuCores,
+    cpuSpeedGHz,
     gpu: typeof obj.gpu === "string" ? obj.gpu : "",
     ramGB,
     storageGB,

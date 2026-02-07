@@ -44,6 +44,29 @@ func detectSpecs() Specs {
 	out, _ := exec.Command("nproc").Output()
 	specs.CPUCores, _ = strconv.Atoi(strings.TrimSpace(string(out)))
 
+	// CPU Speed - try max frequency first, fall back to current
+	if data, err := os.ReadFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"); err == nil {
+		if kHz, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64); err == nil && kHz > 0 {
+			specs.CPUSpeedGHz = float64(kHz) / 1e6 // kHz to GHz
+		}
+	}
+	if specs.CPUSpeedGHz == 0 {
+		// Fallback: parse from /proc/cpuinfo
+		if data, err := os.ReadFile("/proc/cpuinfo"); err == nil {
+			for _, line := range strings.Split(string(data), "\n") {
+				if strings.HasPrefix(line, "cpu MHz") {
+					parts := strings.SplitN(line, ":", 2)
+					if len(parts) == 2 {
+						if mhz, err := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64); err == nil {
+							specs.CPUSpeedGHz = mhz / 1000.0
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// GPU
 	lspciOut, err := exec.Command("lspci").Output()
 	if err == nil {

@@ -347,6 +347,7 @@ export async function detectClientSpecs(gpuList?: string[]): Promise<UserSpecs> 
     os,
     cpu,
     cpuCores,
+    cpuSpeedGHz: null, // Not detectable via browser APIs
     gpu,
     ramGB,
     storageGB,

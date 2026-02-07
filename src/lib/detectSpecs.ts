@@ -80,6 +80,7 @@ export function detectSpecs(): UserSpecs {
     os: detectOS(),
     cpu: "",
     cpuCores: detectCores(),
+    cpuSpeedGHz: null,
     gpu: detectGPU(),
     ramGB: detectRAM(),
     storageGB: null,

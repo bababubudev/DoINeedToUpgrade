@@ -1,6 +1,7 @@
 import { UserSpecs, GameRequirements, ComparisonItem, ComparisonStatus } from "@/types";
 import { osList, osScores } from "@/lib/hardwareData";
 import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
+import { parseCPURequirement, ParsedCPUSpecs } from "@/lib/parseRequirements";
 
 function parseGB(text: string): number | null {
   if (!text) return null;
@@ -75,6 +76,94 @@ function splitAlternatives(text: string): string[] {
     .filter((s) => s.length > 0);
 }
 
+/**
+ * Compare CPU specs (clock speed and cores) when model matching isn't available.
+ * Returns a status based on whether user's specs meet the requirement.
+ */
+function compareSpecsOnly(
+  userSpeedGHz: number | null,
+  userCores: number | null,
+  reqSpecs: ParsedCPUSpecs
+): ComparisonStatus {
+  let speedPasses: boolean | null = null;
+  let coresPasses: boolean | null = null;
+
+  if (userSpeedGHz !== null && reqSpecs.speedGHz !== null) {
+    // Allow 10% tolerance for clock speed
+    speedPasses = userSpeedGHz >= reqSpecs.speedGHz * 0.9;
+  }
+
+  if (userCores !== null && reqSpecs.cores !== null) {
+    coresPasses = userCores >= reqSpecs.cores;
+  }
+
+  // If we have both comparisons, both must pass
+  if (speedPasses !== null && coresPasses !== null) {
+    if (speedPasses && coresPasses) return "pass";
+    if (!speedPasses && !coresPasses) return "fail";
+    return "warn"; // One passes, one fails
+  }
+
+  // If only one comparison is available
+  if (speedPasses !== null) return speedPasses ? "pass" : "fail";
+  if (coresPasses !== null) return coresPasses ? "pass" : "fail";
+
+  return "info"; // No specs to compare
+}
+
+/**
+ * Compare CPU with fallback to spec-based comparison.
+ * 1. Try model-based matching first (existing logic)
+ * 2. Fall back to spec-based comparison when model matching fails
+ */
+function compareCPU(
+  user: UserSpecs,
+  reqText: string,
+  candidates: string[],
+  scores: Record<string, number>
+): ComparisonStatus {
+  if (!reqText) return "info";
+
+  // Try each alternative in the requirement text
+  const alternatives = splitAlternatives(reqText);
+  let bestStatus: ComparisonStatus = "info";
+
+  for (const alt of alternatives) {
+    const parsed = parseCPURequirement(alt);
+
+    // Strategy 1: Try model-based matching if there's a model in the requirement
+    if (parsed.model && user.cpu) {
+      const userMatch = fuzzyMatchHardware(user.cpu, candidates);
+      const reqMatch = fuzzyMatchHardware(parsed.model, candidates);
+
+      if (userMatch && reqMatch && scores[userMatch] != null && scores[reqMatch] != null) {
+        const status = scores[userMatch] >= scores[reqMatch] ? "pass" : "fail";
+        if (status === "pass") return "pass"; // Found a passing alternative
+        if (bestStatus === "info" || bestStatus === "warn") bestStatus = status;
+        continue;
+      }
+    }
+
+    // Strategy 2: Fall back to spec-based comparison
+    if (parsed.speedGHz !== null || parsed.cores !== null) {
+      const specStatus = compareSpecsOnly(user.cpuSpeedGHz, user.cpuCores, parsed);
+      if (specStatus === "pass") return "pass"; // Found a passing alternative
+      if (specStatus !== "info") {
+        // Keep track of best non-info status
+        if (bestStatus === "info") bestStatus = specStatus;
+        else if (bestStatus === "fail" && specStatus === "warn") bestStatus = "warn";
+      }
+    }
+  }
+
+  // If we couldn't determine anything from alternatives, try the original hardware comparison
+  if (bestStatus === "info" && user.cpu) {
+    return compareHardware(user.cpu, reqText, candidates, scores);
+  }
+
+  return bestStatus;
+}
+
 function compareHardware(
   userText: string,
   reqText: string,
@@ -136,10 +225,12 @@ export function compareSpecs(
     recStatus: osRecStatus,
   });
 
-  // CPU — fuzzy match + score comparison
-  const cpuDisplay = user.cpu || "Unknown";
-  let cpuMinStatus = compareHardware(user.cpu, min.cpu, Object.keys(cpuScores), cpuScores);
-  let cpuRecStatus = compareHardware(user.cpu, rec.cpu, Object.keys(cpuScores), cpuScores);
+  // CPU — model match + spec-based fallback for clock speed/cores
+  const cpuDisplay = user.cpuSpeedGHz
+    ? `${user.cpu || "Unknown"} @ ${user.cpuSpeedGHz.toFixed(1)} GHz`
+    : user.cpu || "Unknown";
+  let cpuMinStatus = compareCPU(user, min.cpu, Object.keys(cpuScores), cpuScores);
+  let cpuRecStatus = compareCPU(user, rec.cpu, Object.keys(cpuScores), cpuScores);
   // If one column is unmatched but the other passes, promote info → pass
   if (cpuMinStatus === "info" && cpuRecStatus === "pass") cpuMinStatus = "pass";
   if (cpuRecStatus === "info" && cpuMinStatus === "pass") cpuRecStatus = "pass";
