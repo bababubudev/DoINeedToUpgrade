@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=DoINeedAnUpgrade
-Comment=Hardware Scanner - Check if your system can run a game
-Exec=DoINeedAnUpgrade
-Icon=DoINeedAnUpgrade
-Categories=Utility;System;

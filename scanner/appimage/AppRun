@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# AppRun - Entry point for DoINeedAnUpgrade AppImage
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$SCRIPT_DIR/DoINeedAnUpgrade-Linux-bin"
