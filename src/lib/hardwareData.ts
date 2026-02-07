@@ -1,10 +1,22 @@
 export const cpuList: string[] = [
+  // Intel 2nd Gen (Sandy Bridge)
+  "Intel Core i3-2100",
+  "Intel Core i5-2400",
+  "Intel Core i5-2500K",
+  "Intel Core i7-2600K",
   // Intel 3rd Gen
+  "Intel Core i3-3220",
+  "Intel Core i5-3470",
   "Intel Core i5-3570K",
+  "Intel Core i7-3770",
   "Intel Core i7-3770K",
   // Intel 4th Gen
+  "Intel Core i3-4130",
   "Intel Core i3-4170",
+  "Intel Core i3-4330",
   "Intel Core i5-4460",
+  "Intel Core i5-4570",
+  "Intel Core i7-4770",
   "Intel Core i5-4690K",
   "Intel Core i7-4770K",
   "Intel Core i7-4790K",
@@ -64,6 +76,11 @@ export const cpuList: string[] = [
   "Intel Core Ultra 7 255",
   "Intel Core Ultra 7 265K",
   "Intel Core Ultra 9 285K",
+  // AMD FX Series
+  "AMD FX-4300",
+  "AMD FX-6300",
+  "AMD FX-8320",
+  "AMD FX-8350",
   // AMD Ryzen 1000
   "AMD Ryzen 3 1200",
   "AMD Ryzen 5 1400",
@@ -113,6 +130,15 @@ export const cpuList: string[] = [
 ];
 
 export const gpuList: string[] = [
+  // NVIDIA GTX 500 series
+  "NVIDIA GeForce GTX 560",
+  "NVIDIA GeForce GTX 570",
+  // NVIDIA GTX 600 series
+  "NVIDIA GeForce GTX 650",
+  "NVIDIA GeForce GTX 650 Ti",
+  "NVIDIA GeForce GTX 660",
+  "NVIDIA GeForce GTX 670",
+  "NVIDIA GeForce GTX 680",
   // NVIDIA GTX 700 series
   "NVIDIA GeForce GTX 750 Ti",
   "NVIDIA GeForce GTX 760",
@@ -173,6 +199,26 @@ export const gpuList: string[] = [
   "NVIDIA GeForce RTX 5070 Ti",
   "NVIDIA GeForce RTX 5080",
   "NVIDIA GeForce RTX 5090",
+  // AMD Radeon HD series
+  "AMD Radeon HD 7750",
+  "AMD Radeon HD 7850",
+  "AMD Radeon HD 7870",
+  "AMD Radeon HD 7970",
+  // AMD Radeon R-series
+  "AMD Radeon R7 260X",
+  "AMD Radeon R9 270X",
+  "AMD Radeon R9 280X",
+  "AMD Radeon R9 290",
+  "AMD Radeon R9 290X",
+  "AMD Radeon R9 380",
+  // AMD Radeon RX 400/500 series
+  "AMD Radeon RX 460",
+  "AMD Radeon RX 470",
+  "AMD Radeon RX 480",
+  "AMD Radeon RX 560",
+  "AMD Radeon RX 570",
+  "AMD Radeon RX 580",
+  "AMD Radeon RX 590",
   // AMD RX 5000 series
   "AMD Radeon RX 5500 XT",
   "AMD Radeon RX 5600 XT",
@@ -194,6 +240,12 @@ export const gpuList: string[] = [
   // AMD RX 9000 series
   "AMD Radeon RX 9070",
   "AMD Radeon RX 9070 XT",
+  // Intel Integrated Graphics
+  "Intel HD Graphics 4000",
+  "Intel HD Graphics 4600",
+  "Intel HD Graphics 530",
+  "Intel HD Graphics 630",
+  "Intel UHD Graphics 630",
   // Intel Arc
   "Intel Arc A580",
   "Intel Arc A750",
@@ -217,12 +269,24 @@ export const gpuList: string[] = [
 
 // Relative performance scores (~10-100 scale, not real benchmarks)
 export const cpuScores: Record<string, number> = {
+  // Intel 2nd Gen (Sandy Bridge)
+  "Intel Core i3-2100": 10,
+  "Intel Core i5-2400": 12,
+  "Intel Core i5-2500K": 14,
+  "Intel Core i7-2600K": 16,
   // Intel 3rd Gen
+  "Intel Core i3-3220": 12,
+  "Intel Core i5-3470": 14,
   "Intel Core i5-3570K": 15,
+  "Intel Core i7-3770": 17,
   "Intel Core i7-3770K": 18,
   // Intel 4th Gen
+  "Intel Core i3-4130": 13,
   "Intel Core i3-4170": 14,
+  "Intel Core i3-4330": 14,
   "Intel Core i5-4460": 16,
+  "Intel Core i5-4570": 17,
+  "Intel Core i7-4770": 19,
   "Intel Core i5-4690K": 18,
   "Intel Core i7-4770K": 20,
   "Intel Core i7-4790K": 22,
@@ -282,6 +346,11 @@ export const cpuScores: Record<string, number> = {
   "Intel Core Ultra 7 255": 78,
   "Intel Core Ultra 7 265K": 85,
   "Intel Core Ultra 9 285K": 98,
+  // AMD FX Series
+  "AMD FX-4300": 10,
+  "AMD FX-6300": 15,
+  "AMD FX-8320": 18,
+  "AMD FX-8350": 20,
   // AMD Ryzen 1000
   "AMD Ryzen 3 1200": 18,
   "AMD Ryzen 5 1400": 22,
@@ -331,6 +400,15 @@ export const cpuScores: Record<string, number> = {
 };
 
 export const gpuScores: Record<string, number> = {
+  // NVIDIA GTX 500 series
+  "NVIDIA GeForce GTX 560": 4,
+  "NVIDIA GeForce GTX 570": 5,
+  // NVIDIA GTX 600 series
+  "NVIDIA GeForce GTX 650": 5,
+  "NVIDIA GeForce GTX 650 Ti": 6,
+  "NVIDIA GeForce GTX 660": 7,
+  "NVIDIA GeForce GTX 670": 9,
+  "NVIDIA GeForce GTX 680": 11,
   // NVIDIA GTX 700 series
   "NVIDIA GeForce GTX 750 Ti": 8,
   "NVIDIA GeForce GTX 760": 10,
@@ -391,6 +469,26 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA GeForce RTX 5070 Ti": 92,
   "NVIDIA GeForce RTX 5080": 105,
   "NVIDIA GeForce RTX 5090": 130,
+  // AMD Radeon HD series
+  "AMD Radeon HD 7750": 4,
+  "AMD Radeon HD 7850": 6,
+  "AMD Radeon HD 7870": 7,
+  "AMD Radeon HD 7970": 10,
+  // AMD Radeon R-series
+  "AMD Radeon R7 260X": 6,
+  "AMD Radeon R9 270X": 8,
+  "AMD Radeon R9 280X": 12,
+  "AMD Radeon R9 290": 14,
+  "AMD Radeon R9 290X": 16,
+  "AMD Radeon R9 380": 14,
+  // AMD Radeon RX 400/500 series
+  "AMD Radeon RX 460": 12,
+  "AMD Radeon RX 470": 18,
+  "AMD Radeon RX 480": 22,
+  "AMD Radeon RX 560": 14,
+  "AMD Radeon RX 570": 20,
+  "AMD Radeon RX 580": 24,
+  "AMD Radeon RX 590": 26,
   // AMD RX 5000 series
   "AMD Radeon RX 5500 XT": 22,
   "AMD Radeon RX 5600 XT": 32,
@@ -412,6 +510,12 @@ export const gpuScores: Record<string, number> = {
   // AMD RX 9000 series
   "AMD Radeon RX 9070": 78,
   "AMD Radeon RX 9070 XT": 85,
+  // Intel Integrated Graphics
+  "Intel HD Graphics 4000": 2,
+  "Intel HD Graphics 4600": 3,
+  "Intel HD Graphics 530": 3,
+  "Intel HD Graphics 630": 4,
+  "Intel UHD Graphics 630": 4,
   // Intel Arc
   "Intel Arc A580": 35,
   "Intel Arc A750": 42,

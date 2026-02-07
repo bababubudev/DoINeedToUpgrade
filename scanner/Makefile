@@ -1,24 +1,46 @@
-.PHONY: all clean windows mac linux mac-intel mac-arm zip appimage-cache
+.PHONY: all clean windows mac linux mac-intel mac-arm zip appimage-cache icon
 
 OUTPUT_DIR = ../public/downloads
 APP_NAME = DoINeedAnUpgrade
 SWIFT_SRC = macos-gui/main.swift macos-gui/Scanner.swift
+ICON_SRC = ../public/icon-512.png
+ICONSET_DIR = .icon-cache/$(APP_NAME).iconset
+ICNS_FILE = .icon-cache/$(APP_NAME).icns
 
 all: windows mac linux
 
 $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
 
+# Generate macOS .icns from source PNG
+icon:
+	@mkdir -p $(ICONSET_DIR)
+	@sips -z 16 16     $(ICON_SRC) --out $(ICONSET_DIR)/icon_16x16.png      > /dev/null
+	@sips -z 32 32     $(ICON_SRC) --out $(ICONSET_DIR)/icon_16x16@2x.png   > /dev/null
+	@sips -z 32 32     $(ICON_SRC) --out $(ICONSET_DIR)/icon_32x32.png      > /dev/null
+	@sips -z 64 64     $(ICON_SRC) --out $(ICONSET_DIR)/icon_32x32@2x.png   > /dev/null
+	@sips -z 128 128   $(ICON_SRC) --out $(ICONSET_DIR)/icon_128x128.png    > /dev/null
+	@sips -z 256 256   $(ICON_SRC) --out $(ICONSET_DIR)/icon_128x128@2x.png > /dev/null
+	@sips -z 256 256   $(ICON_SRC) --out $(ICONSET_DIR)/icon_256x256.png    > /dev/null
+	@sips -z 512 512   $(ICON_SRC) --out $(ICONSET_DIR)/icon_256x256@2x.png > /dev/null
+	@sips -z 512 512   $(ICON_SRC) --out $(ICONSET_DIR)/icon_512x512.png    > /dev/null
+	@iconutil -c icns $(ICONSET_DIR) -o $(ICNS_FILE)
+	@rm -rf $(ICONSET_DIR)
+
 windows: $(OUTPUT_DIR)
+	@echo "Generating Windows resources..."
+	@cd . && go run github.com/tc-hib/go-winres@latest make --in winres/winres.json
 	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H=windowsgui" -o $(OUTPUT_DIR)/$(APP_NAME).exe .
+	@rm -f rsrc_windows_*.syso
 
 mac: mac-intel mac-arm
 
-mac-intel: $(OUTPUT_DIR)
+mac-intel: $(OUTPUT_DIR) icon
 	@echo "Building macOS Intel .app bundle (Swift GUI)..."
 	@rm -rf "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app"
 	@mkdir -p "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/MacOS"
 	@mkdir -p "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/Resources"
+	@cp $(ICNS_FILE) "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/Resources/$(APP_NAME).icns"
 	@swiftc -O -target x86_64-apple-macosx10.13 \
 		-o "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/MacOS/$(APP_NAME)" \
 		$(SWIFT_SRC)
@@ -28,6 +50,8 @@ mac-intel: $(OUTPUT_DIR)
 		'<plist version="1.0">' \
 		'<dict>' \
 		'  <key>CFBundleExecutable</key>' \
+		'  <string>$(APP_NAME)</string>' \
+		'  <key>CFBundleIconFile</key>' \
 		'  <string>$(APP_NAME)</string>' \
 		'  <key>CFBundleIdentifier</key>' \
 		'  <string>com.doineedanupgrade.scanner</string>' \
@@ -42,11 +66,12 @@ mac-intel: $(OUTPUT_DIR)
 		'</dict>' \
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/Info.plist"
 
-mac-arm: $(OUTPUT_DIR)
+mac-arm: $(OUTPUT_DIR) icon
 	@echo "Building macOS Apple Silicon .app bundle (Swift GUI)..."
 	@rm -rf "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app"
 	@mkdir -p "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/MacOS"
 	@mkdir -p "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Resources"
+	@cp $(ICNS_FILE) "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Resources/$(APP_NAME).icns"
 	@swiftc -O -target arm64-apple-macosx11.0 \
 		-o "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/MacOS/$(APP_NAME)" \
 		$(SWIFT_SRC)
@@ -56,6 +81,8 @@ mac-arm: $(OUTPUT_DIR)
 		'<plist version="1.0">' \
 		'<dict>' \
 		'  <key>CFBundleExecutable</key>' \
+		'  <string>$(APP_NAME)</string>' \
+		'  <key>CFBundleIconFile</key>' \
 		'  <string>$(APP_NAME)</string>' \
 		'  <key>CFBundleIdentifier</key>' \
 		'  <string>com.doineedanupgrade.scanner</string>' \
@@ -115,3 +142,5 @@ zip: mac
 clean:
 	rm -rf $(OUTPUT_DIR)/$(APP_NAME)*
 	rm -rf $(APPIMAGE_CACHE)
+	rm -rf .icon-cache
+	rm -f rsrc_windows_*.syso

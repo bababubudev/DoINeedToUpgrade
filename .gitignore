@@ -29,5 +29,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# appimage build cache
+# scanner build cache
 .appimage-cache/
+.icon-cache/
+rsrc_windows_*.syso
