@@ -71,7 +71,25 @@ mac-arm: $(OUTPUT_DIR)
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Info.plist"
 
 linux: $(OUTPUT_DIR)
-	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(OUTPUT_DIR)/$(APP_NAME)-Linux .
+	@echo "Building Linux application..."
+	@GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin .
+	@echo "Creating self-extracting script..."
+	@{ \
+		echo '#!/bin/bash'; \
+		echo '# DoINeedAnUpgrade - Self-extracting hardware scanner'; \
+		echo ''; \
+		echo 'TEMP_DIR=$$(mktemp -d)'; \
+		echo 'trap "rm -rf $$TEMP_DIR" EXIT'; \
+		echo ''; \
+		echo 'BINARY="$$TEMP_DIR/DoINeedAnUpgrade-Linux-bin"'; \
+		echo 'tail -n +3 "$$0" | base64 -d > "$$BINARY"'; \
+		echo 'chmod +x "$$BINARY"'; \
+		echo 'exec "$$BINARY"'; \
+		echo '__BINARY_MARKER__'; \
+		base64 -w 80 $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin; \
+	} > $(OUTPUT_DIR)/$(APP_NAME)-Linux
+	@chmod +x $(OUTPUT_DIR)/$(APP_NAME)-Linux
+	@rm -f $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin
 
 # Create zip files for distribution
 zip: mac
