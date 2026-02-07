@@ -1,60 +1,31 @@
 # DoINeedAnUpgrade Hardware Scanner
 
-A simple cross-platform hardware detection tool written in Go.
+Cross-platform hardware detection tool written in Go that detects CPU, GPU, RAM, storage, and opens the browser with specs auto-imported.
 
-## Building
+## Quick Start
 
-### Prerequisites
-- Go 1.21 or later: https://go.dev/dl/
-
-### Install dependencies
 ```bash
 go mod download
+make all  # Builds for Windows, macOS, and Linux
 ```
 
-### Build for all platforms
-```bash
-make all
-```
-
-This creates executables in `../public/downloads/`:
-- `DoINeedAnUpgrade.exe` (Windows)
-- `DoINeedAnUpgrade-Mac-Intel.app` (macOS Intel - bundled app)
-- `DoINeedAnUpgrade-Mac-AppleSilicon.app` (macOS Apple Silicon - bundled app)
-- `DoINeedAnUpgrade-Linux` (Linux)
-
-### Create zip files for distribution
-```bash
-make zip
-```
-Creates `.zip` files for the macOS `.app` bundles.
-
-### Build for specific platform
-```bash
-make windows
-make mac
-make linux
-```
+Outputs go to `../public/downloads/`:
+- `DoINeedAnUpgrade.exe` — Windows
+- `DoINeedAnUpgrade-Mac-Intel.app` — macOS Intel
+- `DoINeedAnUpgrade-Mac-AppleSilicon.app` — macOS Apple Silicon (arm64)
+- `DoINeedAnUpgrade-Linux` — Linux (self-extracting script)
 
 ## Usage
 
-### Windows
-Download and run `DoINeedAnUpgrade.exe`.
+**Windows/macOS:** Download and double-click the executable.
 
-### macOS
-1. Download the `.zip` file for your Mac (Intel or Apple Silicon)
-2. Extract the zip file
-3. Right-click the `.app` file and select "Open"
-4. Click "Open" in the security dialog (first time only)
-5. Terminal will open and run the scanner
+**Linux:** Download and right-click → "Run as Program" (or `chmod +x` then double-click).
 
-### Linux
-```bash
-chmod +x DoINeedAnUpgrade-Linux
-./DoINeedAnUpgrade-Linux
-```
+## Build Commands
 
-## What it does
-1. Detects hardware specs (OS, CPU, GPU, RAM, Storage)
-2. Copies a code to clipboard
-3. Opens the browser with specs auto-imported
+- `make all` — Build all platforms
+- `make windows` — Windows only
+- `make mac` — macOS only (or `make mac-intel`/`make mac-arm`)
+- `make linux` — Linux only
+- `make zip` — Create distribution zips for macOS apps
+- `make clean` — Remove build artifacts
