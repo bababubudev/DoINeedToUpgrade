@@ -19,7 +19,7 @@ const downloadLinks = {
     { label: "macOS (Apple Silicon)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.zip" },
     { label: "macOS (Intel)", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.zip" },
   ],
-  linux: { label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux" },
+  linux: { label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux.AppImage" },
 };
 
 export default function NavButtons() {

@@ -5,8 +5,6 @@ package main
 import (
 	"syscall"
 	"unsafe"
-
-	"golang.design/x/clipboard"
 )
 
 var (
@@ -34,11 +32,9 @@ func runGUI() {
 	// Detect specs
 	specs := detectSpecs()
 
-	// Encode and copy to clipboard (GUI version - no console output)
+	// Encode and copy to clipboard
 	code := encodeSpecs(specs)
-	if err := clipboard.Init(); err == nil {
-		clipboard.Write(clipboard.FmtText, []byte(code))
-	}
+	copyToClipboard(code)
 
 	// Open browser
 	url := getURL(specs)

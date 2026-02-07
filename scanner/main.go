@@ -8,8 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-
-	"golang.design/x/clipboard"
 )
 
 const baseURL = "https://do-i-need-to-upgrade.vercel.app"
@@ -86,15 +84,6 @@ func getURL(specs Specs) string {
 	}
 	encoded := base64.StdEncoding.EncodeToString(jsonData)
 	return baseURL + "?specs=" + encoded
-}
-
-func copyToClipboard(code string) {
-	if err := clipboard.Init(); err == nil {
-		clipboard.Write(clipboard.FmtText, []byte(code))
-		fmt.Println("[OK] Copied to clipboard!")
-	} else {
-		fmt.Println("[!] Could not copy to clipboard")
-	}
 }
 
 func waitForEnter() {

@@ -1,4 +1,4 @@
-.PHONY: all clean windows mac linux mac-intel mac-arm zip
+.PHONY: all clean windows mac linux mac-intel mac-arm zip appimage-cache
 
 OUTPUT_DIR = ../public/downloads
 APP_NAME = DoINeedAnUpgrade
@@ -70,13 +70,39 @@ mac-arm: $(OUTPUT_DIR)
 		'</dict>' \
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Info.plist"
 
+APPIMAGE_CACHE = .appimage-cache
+
 linux: $(OUTPUT_DIR)
-	@echo "Building Linux application..."
-	@GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(OUTPUT_DIR)/$(APP_NAME)-Linux .
-	@chmod +x $(OUTPUT_DIR)/$(APP_NAME)-Linux
-	@echo "Creating tar.gz archive (preserves execute permissions)..."
-	@cd $(OUTPUT_DIR) && tar -czvf $(APP_NAME)-Linux.tar.gz $(APP_NAME)-Linux
-	@rm -f $(OUTPUT_DIR)/$(APP_NAME)-Linux
+	@echo "Building Linux AppImage..."
+	@# Cross-compile Go binary for Linux
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin .
+	@# Prepare AppDir structure
+	@rm -rf $(APPIMAGE_CACHE)/AppDir
+	@mkdir -p $(APPIMAGE_CACHE)/AppDir/usr/bin
+	@cp $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin $(APPIMAGE_CACHE)/AppDir/usr/bin/$(APP_NAME)
+	@cp linux-appimage/DoINeedAnUpgrade.desktop $(APPIMAGE_CACHE)/AppDir/$(APP_NAME).desktop
+	@cp ../public/icon-512.png $(APPIMAGE_CACHE)/AppDir/$(APP_NAME).png
+	@printf '#!/bin/sh\nHERE=$$(dirname "$$(readlink -f "$$0")")\nexec "$$HERE/usr/bin/$(APP_NAME)" "$$@"\n' \
+		> $(APPIMAGE_CACHE)/AppDir/AppRun
+	@chmod +x $(APPIMAGE_CACHE)/AppDir/AppRun
+	@# Build AppImage using Docker (works from macOS without FUSE)
+	@docker run --rm \
+		-v $(CURDIR)/$(APPIMAGE_CACHE):/work \
+		--platform linux/amd64 \
+		ubuntu:22.04 \
+		bash -c '\
+			apt-get update -qq && apt-get install -y -qq curl file > /dev/null 2>&1 && \
+			curl -fsSL -o /usr/local/bin/appimagetool \
+				https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage && \
+			chmod +x /usr/local/bin/appimagetool && \
+			sed -i "s|AI\x02|\x00\x00\x00|" /usr/local/bin/appimagetool && \
+			ARCH=x86_64 appimagetool --appimage-extract-and-run /work/AppDir /work/$(APP_NAME)-Linux.AppImage \
+		'
+	@mv $(APPIMAGE_CACHE)/$(APP_NAME)-Linux.AppImage $(OUTPUT_DIR)/$(APP_NAME)-Linux.AppImage
+	@# Clean up intermediates
+	@rm -f $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin
+	@rm -rf $(APPIMAGE_CACHE)/AppDir
+	@echo "Built $(OUTPUT_DIR)/$(APP_NAME)-Linux.AppImage"
 
 # Create zip files for distribution
 zip: mac
@@ -88,3 +114,4 @@ zip: mac
 
 clean:
 	rm -rf $(OUTPUT_DIR)/$(APP_NAME)*
+	rm -rf $(APPIMAGE_CACHE)

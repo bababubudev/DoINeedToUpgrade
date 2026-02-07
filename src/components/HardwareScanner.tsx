@@ -44,8 +44,8 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   },
   linux: {
     label: "Linux",
-    appFiles: [{ label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux.tar.gz" }],
-    appInstructions: "Extract the archive, then double-click the executable to run",
+    appFiles: [{ label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux.AppImage" }],
+    appInstructions: "Make the file executable (chmod +x), then double-click to run",
   },
 };
 

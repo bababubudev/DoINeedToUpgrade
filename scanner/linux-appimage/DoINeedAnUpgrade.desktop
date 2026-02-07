@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=DoINeedAnUpgrade
+Exec=DoINeedAnUpgrade
+Icon=DoINeedAnUpgrade
+Categories=Utility;
+Terminal=false
