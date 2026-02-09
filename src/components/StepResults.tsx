@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { GameDetails, GameRequirements, VerdictResult, ComparisonItem, Platform } from "@/types";
 import ComparisonResult from "@/components/ComparisonResult";
 import RequirementsEditor from "@/components/RequirementsEditor";
-import { HiCheckCircle, HiXCircle, HiQuestionMarkCircle, HiInformationCircle, HiChevronDown } from "react-icons/hi";
+import { HiCheckCircle, HiXCircle, HiQuestionMarkCircle, HiInformationCircle, HiChevronDown, HiExclamation, HiEmojiSad } from "react-icons/hi";
 
 const platformLabels: Record<Platform, string> = {
   windows: "Windows",
@@ -130,7 +130,13 @@ export default function StepResults({
     <div className="animate-fadeIn flex flex-col gap-4">
       {game && (
         <div className="relative flex items-center gap-4 p-4 rounded-lg bg-base-200/50 overflow-hidden">
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl font-bold text-base-content/5 select-none pointer-events-none">?</span>
+          {(() => {
+            const iconClass = "absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 text-base-content/5 select-none pointer-events-none";
+            if (!verdict || verdict.verdict === "unknown") return <HiQuestionMarkCircle className={iconClass} />;
+            if (verdict.verdict === "pass") return <HiCheckCircle className={iconClass} />;
+            if (verdict.verdict === "minimum") return <HiExclamation className={iconClass} />;
+            return <HiEmojiSad className={iconClass} />;
+          })()}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={game.headerImage}
