@@ -114,9 +114,46 @@ function compareSpecsOnly(
 }
 
 /**
+ * CPU family patterns — when a requirement says e.g. "Intel i5" without a
+ * specific model number, match all i5 variants and use their average score.
+ */
+const CPU_FAMILY_PATTERNS: { pattern: RegExp; filter: (c: string) => boolean }[] = [
+  { pattern: /\bi3\b/i, filter: (c) => /\bi3[-\s]/i.test(c) },
+  { pattern: /\bi5\b/i, filter: (c) => /\bi5[-\s]/i.test(c) },
+  { pattern: /\bi7\b/i, filter: (c) => /\bi7[-\s]/i.test(c) },
+  { pattern: /\bi9\b/i, filter: (c) => /\bi9[-\s]/i.test(c) },
+  { pattern: /\bryzen\s*3\b/i, filter: (c) => /\bryzen\s*3\b/i.test(c) },
+  { pattern: /\bryzen\s*5\b/i, filter: (c) => /\bryzen\s*5\b/i.test(c) },
+  { pattern: /\bryzen\s*7\b/i, filter: (c) => /\bryzen\s*7\b/i.test(c) },
+  { pattern: /\bryzen\s*9\b/i, filter: (c) => /\bryzen\s*9\b/i.test(c) },
+];
+
+/**
+ * When a requirement specifies a CPU family (e.g. "Intel i5") without a
+ * specific model, return the average score across all members of that family.
+ */
+function familyAverageScore(
+  reqText: string,
+  candidates: string[],
+  scores: Record<string, number>
+): number | null {
+  for (const { pattern, filter } of CPU_FAMILY_PATTERNS) {
+    if (!pattern.test(reqText)) continue;
+    const members = candidates.filter(
+      (c) => filter(c) && scores[c] != null
+    );
+    if (members.length === 0) continue;
+    const total = members.reduce((sum, m) => sum + scores[m], 0);
+    return total / members.length;
+  }
+  return null;
+}
+
+/**
  * Compare CPU with fallback to spec-based comparison.
  * 1. Try model-based matching first (existing logic)
- * 2. Fall back to spec-based comparison when model matching fails
+ * 2. Try family-average matching for broad requirements like "Intel i5"
+ * 3. Fall back to spec-based comparison when model matching fails
  */
 function compareCPU(
   user: UserSpecs,
@@ -143,6 +180,17 @@ function compareCPU(
         if (status === "pass") return "pass"; // Found a passing alternative
         if (bestStatus === "info" || bestStatus === "warn") bestStatus = status;
         continue;
+      }
+
+      // Strategy 1b: Exact model match failed — try family-average comparison
+      if (userMatch && scores[userMatch] != null) {
+        const familyScore = familyAverageScore(parsed.model, candidates, scores);
+        if (familyScore !== null) {
+          const status = scores[userMatch] >= familyScore ? "pass" : "fail";
+          if (status === "pass") return "pass";
+          if (bestStatus === "info" || bestStatus === "warn") bestStatus = status;
+          continue;
+        }
       }
     }
 
