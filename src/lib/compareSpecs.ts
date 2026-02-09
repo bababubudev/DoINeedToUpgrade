@@ -153,6 +153,16 @@ function compareCPU(
         if (bestStatus === "info") bestStatus = specStatus;
         else if (bestStatus === "fail" && specStatus === "warn") bestStatus = "warn";
       }
+
+      // Strategy 2b: Requirement is speed/cores only (no model) but user's CPU is
+      // a known model in our database — any tracked CPU can handle generic speed
+      // requirements (all CPUs in our DB are modern enough to meet them).
+      if (specStatus === "info" && !parsed.model && user.cpu) {
+        const userMatch = fuzzyMatchHardware(user.cpu, candidates);
+        if (userMatch && scores[userMatch] != null) {
+          return "pass";
+        }
+      }
     }
   }
 
@@ -162,6 +172,18 @@ function compareCPU(
   }
 
   return bestStatus;
+}
+
+/**
+ * Detect if a requirement string describes a graphics API capability
+ * (e.g. "Support for OpenGL 3.3", "DirectX 11 compatible") rather than
+ * a specific GPU model.
+ */
+function isGpuCapabilityRequirement(text: string): boolean {
+  if (!text) return false;
+  const hasCapability = /\b(opengl|directx|direct3d|dx\s*\d+|vulkan|metal|shader\s*model|opencl)\b/i.test(text);
+  const hasModel = /\b(nvidia|geforce|radeon|gtx|rtx|rx\s*\d{3,4}|intel\s*(hd|uhd|iris|arc)|apple\s*m\d)\b/i.test(text);
+  return hasCapability && !hasModel;
 }
 
 function compareHardware(
@@ -238,9 +260,20 @@ export function compareSpecs(
     recStatus: cpuRecStatus,
   });
 
-  // GPU — fuzzy match + score comparison
+  // GPU — fuzzy match + score comparison, with capability requirement fallback
   let gpuMinStatus = compareHardware(user.gpu, min.gpu, Object.keys(gpuScores), gpuScores);
   let gpuRecStatus = compareHardware(user.gpu, rec.gpu, Object.keys(gpuScores), gpuScores);
+
+  // When requirement is a capability (e.g. "OpenGL 3.3") rather than a GPU model
+  // and user's GPU is a known model, treat as pass — any tracked GPU supports these APIs.
+  if (gpuMinStatus === "info" && isGpuCapabilityRequirement(min.gpu) && user.gpu) {
+    const userMatch = fuzzyMatchHardware(user.gpu, Object.keys(gpuScores));
+    if (userMatch && gpuScores[userMatch] != null) gpuMinStatus = "pass";
+  }
+  if (gpuRecStatus === "info" && isGpuCapabilityRequirement(rec.gpu) && user.gpu) {
+    const userMatch = fuzzyMatchHardware(user.gpu, Object.keys(gpuScores));
+    if (userMatch && gpuScores[userMatch] != null) gpuRecStatus = "pass";
+  }
   if (gpuMinStatus === "info" && gpuRecStatus === "pass") gpuMinStatus = "pass";
   if (gpuRecStatus === "info" && gpuMinStatus === "pass") gpuRecStatus = "pass";
 
