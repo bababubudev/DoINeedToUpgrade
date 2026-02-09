@@ -8,11 +8,17 @@ function formatList(items: string[]): string {
 }
 
 export function computeVerdict(items: ComparisonItem[]): VerdictResult {
+  // Filter out components where the game doesn't specify any requirement
+  // (both min and rec are "—") — these shouldn't affect the verdict
+  const relevantItems = items.filter(
+    (item) => item.minValue !== "—" || item.recValue !== "—"
+  );
+
   const failedComponents: string[] = [];
   const warnComponents: string[] = [];
   const upgradeItems: UpgradeItem[] = [];
 
-  for (const item of items) {
+  for (const item of relevantItems) {
     if (item.minStatus === "fail") {
       failedComponents.push(item.label);
       upgradeItems.push({
@@ -47,15 +53,15 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
     };
   }
 
-  const allMinPass = items.every((i) => i.minStatus === "pass");
-  const allMinPassOrInfo = items.every(
+  const allMinPass = relevantItems.every((i) => i.minStatus === "pass");
+  const allMinPassOrInfo = relevantItems.every(
     (i) => i.minStatus === "pass" || i.minStatus === "info"
   );
-  const allRecPass = items.every((i) => i.recStatus === "pass");
-  const allRecPassOrInfo = items.every(
+  const allRecPass = relevantItems.every((i) => i.recStatus === "pass");
+  const allRecPassOrInfo = relevantItems.every(
     (i) => i.recStatus === "pass" || i.recStatus === "info"
   );
-  const hasInfo = items.some(
+  const hasInfo = relevantItems.some(
     (i) => i.minStatus === "info" || i.recStatus === "info"
   );
 
