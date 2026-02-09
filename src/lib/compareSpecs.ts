@@ -22,7 +22,8 @@ function compareNumeric(
   userVal: number | null,
   reqText: string
 ): ComparisonStatus {
-  if (userVal === null || !reqText) return "info";
+  if (!reqText) return "pass";
+  if (userVal === null) return "info";
   const reqVal = parseGB(reqText);
   if (reqVal === null) return "info";
   return userVal >= reqVal ? "pass" : "fail";
@@ -37,7 +38,8 @@ function extractPlatform(text: string): "windows" | "macos" | "linux" | null {
 }
 
 function compareOS(userOS: string, reqOS: string): ComparisonStatus {
-  if (!userOS || !reqOS) return "info";
+  if (!reqOS) return "pass";
+  if (!userOS) return "info";
 
   // Always check platform first — cross-platform is always "warn"
   const userPlatform = extractPlatform(userOS);
@@ -122,7 +124,7 @@ function compareCPU(
   candidates: string[],
   scores: Record<string, number>
 ): ComparisonStatus {
-  if (!reqText) return "info";
+  if (!reqText) return "pass";
 
   // Try each alternative in the requirement text
   const alternatives = splitAlternatives(reqText);
@@ -192,7 +194,8 @@ function compareHardware(
   candidates: string[],
   scores: Record<string, number>
 ): ComparisonStatus {
-  if (!userText || !reqText) return "info";
+  if (!reqText) return "pass";
+  if (!userText) return "info";
 
   const userMatch = fuzzyMatchHardware(userText, candidates);
   if (!userMatch) return "info";
