@@ -15,6 +15,7 @@ interface Props {
   detecting?: boolean;
   unmatchedFields?: string[];
   hideSubmit?: boolean;
+  highlightEmpty?: boolean;
 }
 
 const sourceLabels: Record<DetectionSource, string> = {
@@ -22,11 +23,13 @@ const sourceLabels: Record<DetectionSource, string> = {
   script: "Detected via hardware scan",
 };
 
-export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList, detecting, unmatchedFields = [], hideSubmit = false }: Props) {
+export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList, detecting, unmatchedFields = [], hideSubmit = false, highlightEmpty = false }: Props) {
   const isAuto = specs.detectionSource === "auto";
   const isScript = specs.detectionSource === "script";
   const manual = specs.manualFields ?? [];
   const isEstimated = (field: string) => isAuto && !manual.includes(field);
+  const emptyClass = (isEmpty: boolean) =>
+    highlightEmpty && isEmpty ? "!border-error animate-shake" : "";
 
   const update = (field: keyof UserSpecs, value: string | number | null) => {
     const updated = manual.includes(field) ? manual : [...manual, field];
@@ -103,6 +106,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
                 options={osList}
                 placeholder={detecting ? "Detecting..." : "e.g., Windows 10"}
                 disabled={detecting}
+                className={emptyClass(!specs.os.trim())}
               />
               {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}
             </div>
@@ -123,6 +127,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
                 options={cpuList}
                 placeholder={detecting ? "Detecting..." : (specs.cpu ? "e.g., Intel Core i7-12700K" : "Not detectable — enter your CPU model")}
                 disabled={detecting}
+                className={emptyClass(!specs.cpu.trim())}
               />
               {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}
             </div>
@@ -143,6 +148,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
                 options={gpuList}
                 placeholder={detecting ? "Detecting..." : "e.g., NVIDIA RTX 4070"}
                 disabled={detecting}
+                className={emptyClass(!specs.gpu.trim())}
               />
               {detecting && <span className="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40" />}
             </div>
@@ -163,7 +169,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
             <div className="relative">
               <input
                 type="number"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${emptyClass(specs.ramGB == null)}`}
                 value={specs.ramGB ?? ""}
                 onChange={(e) =>
                   update("ramGB", e.target.value ? parseFloat(e.target.value) : null)
@@ -186,7 +192,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
             <div className="relative">
               <input
                 type="number"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${emptyClass(specs.storageGB == null)}`}
                 value={specs.storageGB ?? ""}
                 onChange={(e) =>
                   update("storageGB", e.target.value ? parseFloat(e.target.value) : null)

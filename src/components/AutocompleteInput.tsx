@@ -9,6 +9,7 @@ interface Props {
   options: string[];
   placeholder?: string;
   disabled?: boolean;
+  className?: string;
 }
 
 export default function AutocompleteInput({
@@ -18,6 +19,7 @@ export default function AutocompleteInput({
   options,
   placeholder,
   disabled,
+  className,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -50,7 +52,7 @@ export default function AutocompleteInput({
     <div ref={wrapperRef} className="relative">
       <input
         type="text"
-        className="input input-bordered w-full"
+        className={`input input-bordered w-full ${className ?? ""}`}
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
