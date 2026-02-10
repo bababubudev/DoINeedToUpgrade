@@ -20,6 +20,9 @@ export const cpuList: string[] = [
   "Intel Core i5-4690K",
   "Intel Core i7-4770K",
   "Intel Core i7-4790K",
+  // Intel 5th Gen (Broadwell)
+  "Intel Core i5-5675C",
+  "Intel Core i7-5775C",
   // Intel 6th Gen
   "Intel Core i3-6100",
   "Intel Core i5-6400",
@@ -41,11 +44,15 @@ export const cpuList: string[] = [
   "Intel Core i7-8700",
   "Intel Core i7-8700K",
   // Intel 9th Gen
+  "Intel Core i3-9100",
+  "Intel Core i3-9100F",
   "Intel Core i5-9400F",
   "Intel Core i5-9600K",
   "Intel Core i7-9700K",
   "Intel Core i9-9900K",
   // Intel 10th Gen
+  "Intel Core i3-10100",
+  "Intel Core i3-10100F",
   "Intel Core i5-10400",
   "Intel Core i5-10600K",
   "Intel Core i7-10700K",
@@ -56,6 +63,8 @@ export const cpuList: string[] = [
   "Intel Core i7-11700K",
   "Intel Core i9-11900K",
   // Intel 12th Gen
+  "Intel Core i3-12100",
+  "Intel Core i3-12100F",
   "Intel Core i5-12400",
   "Intel Core i5-12600K",
   "Intel Core i7-12700K",
@@ -83,18 +92,36 @@ export const cpuList: string[] = [
   "Intel Core Ultra 7 255",
   "Intel Core Ultra 7 265K",
   "Intel Core Ultra 9 285K",
+  // Intel Core Ultra 200V (Lunar Lake mobile)
+  "Intel Core Ultra 5 228V",
+  "Intel Core Ultra 7 256V",
+  "Intel Core Ultra 7 258V",
   // Intel Xeon (workstation)
   "Intel Xeon E5-2680 v4",
   "Intel Xeon W-2140B",
   // Intel Pentium / Celeron (budget)
   "Intel Pentium G4560",
+  "Intel Pentium Gold G5400",
+  "Intel Pentium Gold G6400",
+  "Intel Pentium Gold G7400",
   "Intel Celeron N4020",
   // Intel Mobile
   "Intel Core i5-8250U",
   "Intel Core i7-9750H",
   "Intel Core i7-1165G7",
+  "Intel Core i5-1240P",
+  "Intel Core i7-1260P",
+  "Intel Core i5-12500H",
+  "Intel Core i7-12700H",
+  "Intel Core i5-1340P",
+  "Intel Core i7-1360P",
+  "Intel Core i5-14400H",
+  "Intel Core i7-14700H",
   // Intel Core Ultra mobile
   "Intel Core Ultra 7 155H",
+  // AMD Athlon (budget)
+  "AMD Athlon 200GE",
+  "AMD Athlon 3000G",
   // AMD FX Series
   "AMD FX-4300",
   "AMD FX-6300",
@@ -102,10 +129,18 @@ export const cpuList: string[] = [
   "AMD FX-8350",
   // AMD APU (Steam Deck)
   "AMD Custom APU 0405",
-  // AMD Ryzen APGs (with integrated graphics)
+  // AMD Ryzen APUs (with integrated graphics)
   "AMD Ryzen 3 2200G",
+  "AMD Ryzen 3 3200G",
+  "AMD Ryzen 5 3400G",
+  "AMD Ryzen 3 4300G",
+  "AMD Ryzen 5 5600G",
+  "AMD Ryzen 7 5700G",
+  "AMD Ryzen 5 8600G",
+  "AMD Ryzen 7 8700G",
   // AMD Ryzen 1000
   "AMD Ryzen 3 1200",
+  "AMD Ryzen 3 1300X",
   "AMD Ryzen 5 1400",
   "AMD Ryzen 5 1600",
   "AMD Ryzen 7 1700",
@@ -114,27 +149,49 @@ export const cpuList: string[] = [
   "AMD Ryzen 5 2600",
   "AMD Ryzen 7 2700X",
   // AMD Ryzen 3000
+  "AMD Ryzen 3 3100",
+  "AMD Ryzen 3 3300X",
   "AMD Ryzen 5 3600",
+  "AMD Ryzen 5 3600X",
   "AMD Ryzen 7 3700X",
   "AMD Ryzen 9 3900X",
   // AMD Ryzen 5000
+  "AMD Ryzen 5 5500",
+  "AMD Ryzen 5 5600",
   "AMD Ryzen 5 5600X",
+  "AMD Ryzen 7 5700X",
   "AMD Ryzen 7 5800X",
+  "AMD Ryzen 7 5800X3D",
   "AMD Ryzen 9 5900X",
   "AMD Ryzen 9 5950X",
   // AMD Ryzen 4000 desktop
   "AMD Ryzen 5 4500",
   "AMD Ryzen 5 4600G",
   // AMD Ryzen mobile
+  "AMD Ryzen 5 5500U",
+  "AMD Ryzen 5 5600U",
+  "AMD Ryzen 7 5800U",
+  "AMD Ryzen 5 6600U",
+  "AMD Ryzen 7 6800U",
+  "AMD Ryzen 5 7530U",
+  "AMD Ryzen 7 7730U",
+  "AMD Ryzen 5 7640U",
   "AMD Ryzen 7 7840U",
+  "AMD Ryzen 9 7940HS",
+  "AMD Ryzen AI 9 HX 370",
   // AMD Ryzen 7000
+  "AMD Ryzen 5 7600",
   "AMD Ryzen 5 7600X",
   "AMD Ryzen 7 7700X",
+  "AMD Ryzen 7 7800X3D",
   "AMD Ryzen 9 7900X",
+  "AMD Ryzen 9 7900X3D",
   "AMD Ryzen 9 7950X",
+  "AMD Ryzen 9 7950X3D",
   // AMD Ryzen 9000
   "AMD Ryzen 5 9600X",
   "AMD Ryzen 7 9700X",
+  "AMD Ryzen 7 9800X3D",
   "AMD Ryzen 9 9900X",
   "AMD Ryzen 9 9950X",
   // Apple Silicon
@@ -155,8 +212,14 @@ export const cpuList: string[] = [
 ];
 
 export const gpuList: string[] = [
+  // NVIDIA GT series (budget)
+  "NVIDIA GeForce GT 710",
+  "NVIDIA GeForce GT 730",
+  "NVIDIA GeForce GT 1030",
   // NVIDIA GTX 500 series
+  "NVIDIA GeForce GTX 550 Ti",
   "NVIDIA GeForce GTX 560",
+  "NVIDIA GeForce GTX 560 Ti",
   "NVIDIA GeForce GTX 570",
   // NVIDIA GTX 600 series
   "NVIDIA GeForce GTX 650",
@@ -165,12 +228,14 @@ export const gpuList: string[] = [
   "NVIDIA GeForce GTX 670",
   "NVIDIA GeForce GTX 680",
   // NVIDIA GTX 700 series
+  "NVIDIA GeForce GTX 750",
   "NVIDIA GeForce GTX 750 Ti",
   "NVIDIA GeForce GTX 760",
   "NVIDIA GeForce GTX 770",
   "NVIDIA GeForce GTX 780",
   "NVIDIA GeForce GTX 780 Ti",
   // NVIDIA GTX 900 series
+  "NVIDIA GeForce GTX 950",
   "NVIDIA GeForce GTX 960",
   "NVIDIA GeForce GTX 970",
   "NVIDIA GeForce GTX 980",
@@ -200,6 +265,7 @@ export const gpuList: string[] = [
   "NVIDIA GeForce RTX 2080 Ti",
   // NVIDIA RTX 3000 series
   "NVIDIA GeForce RTX 3050",
+  "NVIDIA GeForce RTX 3050 Ti Laptop",
   "NVIDIA GeForce RTX 3060",
   "NVIDIA GeForce RTX 3060 Ti",
   "NVIDIA GeForce RTX 3070",
@@ -209,6 +275,7 @@ export const gpuList: string[] = [
   "NVIDIA GeForce RTX 3090",
   "NVIDIA GeForce RTX 3090 Ti",
   // NVIDIA RTX 4000 series
+  "NVIDIA GeForce RTX 4050 Laptop",
   "NVIDIA GeForce RTX 4060",
   "NVIDIA GeForce RTX 4060 Ti",
   "NVIDIA GeForce RTX 4070",
@@ -219,6 +286,7 @@ export const gpuList: string[] = [
   "NVIDIA GeForce RTX 4080 Super",
   "NVIDIA GeForce RTX 4090",
   // NVIDIA RTX 5000 series
+  "NVIDIA GeForce RTX 5060",
   "NVIDIA GeForce RTX 5060 Ti",
   "NVIDIA GeForce RTX 5070",
   "NVIDIA GeForce RTX 5070 Ti",
@@ -235,11 +303,20 @@ export const gpuList: string[] = [
   "AMD Radeon HD 7970",
   // AMD Radeon R-series
   "AMD Radeon R7 260X",
+  "AMD Radeon R7 360",
+  "AMD Radeon R7 370",
   "AMD Radeon R9 270X",
   "AMD Radeon R9 280X",
+  "AMD Radeon R9 285",
   "AMD Radeon R9 290",
   "AMD Radeon R9 290X",
   "AMD Radeon R9 380",
+  "AMD Radeon R9 380X",
+  "AMD Radeon R9 390",
+  "AMD Radeon R9 390X",
+  "AMD Radeon R9 Fury",
+  "AMD Radeon R9 Fury X",
+  "AMD Radeon R9 Nano",
   // AMD Radeon RX 400/500 series
   "AMD Radeon RX 460",
   "AMD Radeon RX 470",
@@ -248,22 +325,32 @@ export const gpuList: string[] = [
   "AMD Radeon RX 570",
   "AMD Radeon RX 580",
   "AMD Radeon RX 590",
+  // AMD RX Vega series
+  "AMD Radeon RX Vega 56",
+  "AMD Radeon RX Vega 64",
   // AMD RX 5000 series
   "AMD Radeon RX 5500 XT",
   "AMD Radeon RX 5600 XT",
   "AMD Radeon RX 5700",
   "AMD Radeon RX 5700 XT",
   // AMD RX 6000 series
+  "AMD Radeon RX 6400",
+  "AMD Radeon RX 6500 XT",
   "AMD Radeon RX 6600",
   "AMD Radeon RX 6600 XT",
+  "AMD Radeon RX 6650 XT",
   "AMD Radeon RX 6700 XT",
+  "AMD Radeon RX 6750 XT",
   "AMD Radeon RX 6800",
   "AMD Radeon RX 6800 XT",
   "AMD Radeon RX 6900 XT",
+  "AMD Radeon RX 6950 XT",
   // AMD RX 7000 series
   "AMD Radeon RX 7600",
+  "AMD Radeon RX 7600 XT",
   "AMD Radeon RX 7700 XT",
   "AMD Radeon RX 7800 XT",
+  "AMD Radeon RX 7900 GRE",
   "AMD Radeon RX 7900 XT",
   "AMD Radeon RX 7900 XTX",
   // AMD RX 9000 series
@@ -310,6 +397,7 @@ export const gpuList: string[] = [
   "Intel Arc A580",
   "Intel Arc A750",
   "Intel Arc A770",
+  "Intel Arc B580",
   // Apple Silicon (integrated GPU)
   "Apple M1 GPU",
   "Apple M1 Pro GPU",
@@ -350,6 +438,9 @@ export const cpuScores: Record<string, number> = {
   "Intel Core i5-4690K": 18,
   "Intel Core i7-4770K": 20,
   "Intel Core i7-4790K": 22,
+  // Intel 5th Gen (Broadwell)
+  "Intel Core i5-5675C": 19,
+  "Intel Core i7-5775C": 21,
   // Intel 6th Gen
   "Intel Core i3-6100": 20,
   "Intel Core i5-6400": 25,
@@ -371,11 +462,15 @@ export const cpuScores: Record<string, number> = {
   "Intel Core i7-8700": 43,
   "Intel Core i7-8700K": 46,
   // Intel 9th Gen
+  "Intel Core i3-9100": 30,
+  "Intel Core i3-9100F": 30,
   "Intel Core i5-9400F": 37,
   "Intel Core i5-9600K": 42,
   "Intel Core i7-9700K": 50,
   "Intel Core i9-9900K": 55,
   // Intel 10th Gen
+  "Intel Core i3-10100": 35,
+  "Intel Core i3-10100F": 35,
   "Intel Core i5-10400": 42,
   "Intel Core i5-10600K": 48,
   "Intel Core i7-10700K": 55,
@@ -386,6 +481,8 @@ export const cpuScores: Record<string, number> = {
   "Intel Core i7-11700K": 58,
   "Intel Core i9-11900K": 60,
   // Intel 12th Gen
+  "Intel Core i3-12100": 48,
+  "Intel Core i3-12100F": 48,
   "Intel Core i5-12400": 55,
   "Intel Core i5-12600K": 65,
   "Intel Core i7-12700K": 75,
@@ -413,18 +510,36 @@ export const cpuScores: Record<string, number> = {
   "Intel Core Ultra 7 255": 78,
   "Intel Core Ultra 7 265K": 85,
   "Intel Core Ultra 9 285K": 98,
+  // Intel Core Ultra 200V (Lunar Lake mobile)
+  "Intel Core Ultra 5 228V": 55,
+  "Intel Core Ultra 7 256V": 62,
+  "Intel Core Ultra 7 258V": 62,
   // Intel Xeon (workstation)
   "Intel Xeon E5-2680 v4": 30,
   "Intel Xeon W-2140B": 42,
   // Intel Pentium / Celeron (budget)
   "Intel Pentium G4560": 15,
+  "Intel Pentium Gold G5400": 12,
+  "Intel Pentium Gold G6400": 14,
+  "Intel Pentium Gold G7400": 18,
   "Intel Celeron N4020": 5,
   // Intel Mobile
   "Intel Core i5-8250U": 30,
   "Intel Core i7-9750H": 42,
   "Intel Core i7-1165G7": 45,
+  "Intel Core i5-1240P": 48,
+  "Intel Core i7-1260P": 52,
+  "Intel Core i5-12500H": 52,
+  "Intel Core i7-12700H": 62,
+  "Intel Core i5-1340P": 50,
+  "Intel Core i7-1360P": 55,
+  "Intel Core i5-14400H": 52,
+  "Intel Core i7-14700H": 65,
   // Intel Core Ultra mobile
   "Intel Core Ultra 7 155H": 72,
+  // AMD Athlon (budget)
+  "AMD Athlon 200GE": 8,
+  "AMD Athlon 3000G": 10,
   // AMD FX Series
   "AMD FX-4300": 10,
   "AMD FX-6300": 15,
@@ -432,10 +547,18 @@ export const cpuScores: Record<string, number> = {
   "AMD FX-8350": 20,
   // AMD APU (Steam Deck)
   "AMD Custom APU 0405": 28,
-  // AMD Ryzen APGs
+  // AMD Ryzen APUs
   "AMD Ryzen 3 2200G": 20,
+  "AMD Ryzen 3 3200G": 22,
+  "AMD Ryzen 5 3400G": 30,
+  "AMD Ryzen 3 4300G": 32,
+  "AMD Ryzen 5 5600G": 55,
+  "AMD Ryzen 7 5700G": 60,
+  "AMD Ryzen 5 8600G": 62,
+  "AMD Ryzen 7 8700G": 68,
   // AMD Ryzen 1000
   "AMD Ryzen 3 1200": 18,
+  "AMD Ryzen 3 1300X": 20,
   "AMD Ryzen 5 1400": 22,
   "AMD Ryzen 5 1600": 28,
   "AMD Ryzen 7 1700": 32,
@@ -444,27 +567,49 @@ export const cpuScores: Record<string, number> = {
   "AMD Ryzen 5 2600": 33,
   "AMD Ryzen 7 2700X": 40,
   // AMD Ryzen 3000
+  "AMD Ryzen 3 3100": 35,
+  "AMD Ryzen 3 3300X": 40,
   "AMD Ryzen 5 3600": 45,
+  "AMD Ryzen 5 3600X": 47,
   "AMD Ryzen 7 3700X": 52,
   "AMD Ryzen 9 3900X": 60,
   // AMD Ryzen 5000
+  "AMD Ryzen 5 5500": 48,
+  "AMD Ryzen 5 5600": 58,
   "AMD Ryzen 5 5600X": 62,
+  "AMD Ryzen 7 5700X": 65,
   "AMD Ryzen 7 5800X": 70,
+  "AMD Ryzen 7 5800X3D": 78,
   "AMD Ryzen 9 5900X": 80,
   "AMD Ryzen 9 5950X": 85,
   // AMD Ryzen 4000 desktop
   "AMD Ryzen 5 4500": 40,
   "AMD Ryzen 5 4600G": 42,
   // AMD Ryzen mobile
+  "AMD Ryzen 5 5500U": 38,
+  "AMD Ryzen 5 5600U": 42,
+  "AMD Ryzen 7 5800U": 48,
+  "AMD Ryzen 5 6600U": 50,
+  "AMD Ryzen 7 6800U": 58,
+  "AMD Ryzen 5 7530U": 42,
+  "AMD Ryzen 7 7730U": 48,
+  "AMD Ryzen 5 7640U": 60,
   "AMD Ryzen 7 7840U": 65,
+  "AMD Ryzen 9 7940HS": 72,
+  "AMD Ryzen AI 9 HX 370": 75,
   // AMD Ryzen 7000
+  "AMD Ryzen 5 7600": 72,
   "AMD Ryzen 5 7600X": 75,
   "AMD Ryzen 7 7700X": 82,
+  "AMD Ryzen 7 7800X3D": 88,
   "AMD Ryzen 9 7900X": 90,
+  "AMD Ryzen 9 7900X3D": 92,
   "AMD Ryzen 9 7950X": 100,
+  "AMD Ryzen 9 7950X3D": 98,
   // AMD Ryzen 9000
   "AMD Ryzen 5 9600X": 80,
   "AMD Ryzen 7 9700X": 88,
+  "AMD Ryzen 7 9800X3D": 95,
   "AMD Ryzen 9 9900X": 95,
   "AMD Ryzen 9 9950X": 100,
   // Apple Silicon
@@ -485,8 +630,14 @@ export const cpuScores: Record<string, number> = {
 };
 
 export const gpuScores: Record<string, number> = {
+  // NVIDIA GT series (budget)
+  "NVIDIA GeForce GT 710": 1,
+  "NVIDIA GeForce GT 730": 2,
+  "NVIDIA GeForce GT 1030": 6,
   // NVIDIA GTX 500 series
+  "NVIDIA GeForce GTX 550 Ti": 3,
   "NVIDIA GeForce GTX 560": 4,
+  "NVIDIA GeForce GTX 560 Ti": 5,
   "NVIDIA GeForce GTX 570": 5,
   // NVIDIA GTX 600 series
   "NVIDIA GeForce GTX 650": 5,
@@ -495,12 +646,14 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA GeForce GTX 670": 9,
   "NVIDIA GeForce GTX 680": 11,
   // NVIDIA GTX 700 series
+  "NVIDIA GeForce GTX 750": 6,
   "NVIDIA GeForce GTX 750 Ti": 8,
   "NVIDIA GeForce GTX 760": 10,
   "NVIDIA GeForce GTX 770": 12,
   "NVIDIA GeForce GTX 780": 15,
   "NVIDIA GeForce GTX 780 Ti": 18,
   // NVIDIA GTX 900 series
+  "NVIDIA GeForce GTX 950": 12,
   "NVIDIA GeForce GTX 960": 14,
   "NVIDIA GeForce GTX 970": 20,
   "NVIDIA GeForce GTX 980": 25,
@@ -530,6 +683,7 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA GeForce RTX 2080 Ti": 60,
   // NVIDIA RTX 3000 series
   "NVIDIA GeForce RTX 3050": 32,
+  "NVIDIA GeForce RTX 3050 Ti Laptop": 28,
   "NVIDIA GeForce RTX 3060": 42,
   "NVIDIA GeForce RTX 3060 Ti": 50,
   "NVIDIA GeForce RTX 3070": 55,
@@ -539,6 +693,7 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA GeForce RTX 3090": 75,
   "NVIDIA GeForce RTX 3090 Ti": 78,
   // NVIDIA RTX 4000 series
+  "NVIDIA GeForce RTX 4050 Laptop": 38,
   "NVIDIA GeForce RTX 4060": 52,
   "NVIDIA GeForce RTX 4060 Ti": 58,
   "NVIDIA GeForce RTX 4070": 65,
@@ -549,6 +704,7 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA GeForce RTX 4080 Super": 85,
   "NVIDIA GeForce RTX 4090": 100,
   // NVIDIA RTX 5000 series
+  "NVIDIA GeForce RTX 5060": 62,
   "NVIDIA GeForce RTX 5060 Ti": 75,
   "NVIDIA GeForce RTX 5070": 85,
   "NVIDIA GeForce RTX 5070 Ti": 92,
@@ -565,11 +721,20 @@ export const gpuScores: Record<string, number> = {
   "AMD Radeon HD 7970": 10,
   // AMD Radeon R-series
   "AMD Radeon R7 260X": 6,
+  "AMD Radeon R7 360": 5,
+  "AMD Radeon R7 370": 7,
   "AMD Radeon R9 270X": 8,
   "AMD Radeon R9 280X": 12,
+  "AMD Radeon R9 285": 10,
   "AMD Radeon R9 290": 14,
   "AMD Radeon R9 290X": 16,
   "AMD Radeon R9 380": 14,
+  "AMD Radeon R9 380X": 16,
+  "AMD Radeon R9 390": 18,
+  "AMD Radeon R9 390X": 20,
+  "AMD Radeon R9 Fury": 22,
+  "AMD Radeon R9 Fury X": 25,
+  "AMD Radeon R9 Nano": 20,
   // AMD Radeon RX 400/500 series
   "AMD Radeon RX 460": 12,
   "AMD Radeon RX 470": 18,
@@ -578,22 +743,32 @@ export const gpuScores: Record<string, number> = {
   "AMD Radeon RX 570": 20,
   "AMD Radeon RX 580": 24,
   "AMD Radeon RX 590": 26,
+  // AMD RX Vega series
+  "AMD Radeon RX Vega 56": 28,
+  "AMD Radeon RX Vega 64": 32,
   // AMD RX 5000 series
   "AMD Radeon RX 5500 XT": 22,
   "AMD Radeon RX 5600 XT": 32,
   "AMD Radeon RX 5700": 38,
   "AMD Radeon RX 5700 XT": 42,
   // AMD RX 6000 series
+  "AMD Radeon RX 6400": 18,
+  "AMD Radeon RX 6500 XT": 22,
   "AMD Radeon RX 6600": 38,
   "AMD Radeon RX 6600 XT": 42,
+  "AMD Radeon RX 6650 XT": 45,
   "AMD Radeon RX 6700 XT": 50,
+  "AMD Radeon RX 6750 XT": 55,
   "AMD Radeon RX 6800": 58,
   "AMD Radeon RX 6800 XT": 65,
   "AMD Radeon RX 6900 XT": 72,
+  "AMD Radeon RX 6950 XT": 75,
   // AMD RX 7000 series
   "AMD Radeon RX 7600": 45,
+  "AMD Radeon RX 7600 XT": 50,
   "AMD Radeon RX 7700 XT": 58,
   "AMD Radeon RX 7800 XT": 65,
+  "AMD Radeon RX 7900 GRE": 72,
   "AMD Radeon RX 7900 XT": 80,
   "AMD Radeon RX 7900 XTX": 88,
   // AMD RX 9000 series
@@ -640,6 +815,7 @@ export const gpuScores: Record<string, number> = {
   "Intel Arc A580": 35,
   "Intel Arc A750": 42,
   "Intel Arc A770": 48,
+  "Intel Arc B580": 52,
   // Apple Silicon (integrated GPU)
   "Apple M1 GPU": 25,
   "Apple M1 Pro GPU": 35,
@@ -659,6 +835,8 @@ export const gpuScores: Record<string, number> = {
 
 // OS version ordering for comparison (higher = newer)
 export const osScores: Record<string, number> = {
+  "Windows XP": 2,
+  "Windows Vista": 5,
   "Windows 7": 10,
   "Windows 8": 20,
   "Windows 8.1": 25,
@@ -689,15 +867,21 @@ export const osScores: Record<string, number> = {
   "OS X 10.11": 20,
   "OS X 10.12": 22,
   // Linux
+  "Ubuntu 18.04": 25,
+  "Ubuntu 20.04": 28,
   "Ubuntu 22.04": 30,
   "Ubuntu 24.04": 35,
   "Linux Mint": 30,
   "Fedora": 32,
+  "Debian": 28,
   "Arch Linux": 35,
   "SteamOS": 30,
+  "SteamOS 3.0": 32,
 };
 
 export const osList: string[] = [
+  "Windows XP",
+  "Windows Vista",
   "Windows 7",
   "Windows 8",
   "Windows 8.1",
@@ -728,10 +912,14 @@ export const osList: string[] = [
   "OS X 10.11",
   "OS X 10.12",
   // Linux
+  "Ubuntu 18.04",
+  "Ubuntu 20.04",
   "Ubuntu 22.04",
   "Ubuntu 24.04",
   "Linux Mint",
   "Fedora",
+  "Debian",
   "Arch Linux",
   "SteamOS",
+  "SteamOS 3.0",
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HiArrowRight } from "react-icons/hi";
 import { GameSearchResult } from "@/types";
 
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export default function GameSearch({ onSelect }: Props) {
+  const isMac = useMemo(() => typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform), []);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GameSearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -125,7 +126,11 @@ export default function GameSearch({ onSelect }: Props) {
           {loading ? (
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
           ) : !query && (
-            <kbd className="kbd kbd-sm absolute right-3 top-2.5 text-base-content/30 pointer-events-none">⌘K</kbd>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/30 pointer-events-none flex items-center gap-0.5 text-xs">
+              <kbd className="kbd kbd-xs">{isMac ? "⌘" : "Ctrl"}</kbd>
+              <span>+</span>
+              <kbd className="kbd kbd-xs">k</kbd>
+            </span>
           )}
 
           {isOpen && results.length > 0 && (
@@ -138,9 +143,8 @@ export default function GameSearch({ onSelect }: Props) {
                 {results.map((game, index) => (
                   <li key={game.id} id={`game-option-${index}`} role="option" aria-selected={index === selectedIndex}>
                     <button
-                      className={`flex items-center gap-3 w-full px-3 py-2 text-left transition-colors ${
-                        index === selectedIndex ? "bg-primary/20" : "hover:bg-base-200"
-                      }`}
+                      className={`flex items-center gap-3 w-full px-3 py-2 text-left transition-colors ${index === selectedIndex ? "bg-primary/20" : "hover:bg-base-200"
+                        }`}
                       onClick={() => {
                         setQuery(game.name);
                         setIsOpen(false);

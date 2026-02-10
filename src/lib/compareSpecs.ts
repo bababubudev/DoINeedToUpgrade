@@ -32,7 +32,8 @@ function compareNumeric(
 function extractPlatform(text: string): "windows" | "macos" | "linux" | null {
   const lower = text.toLowerCase();
   if (lower.includes("windows") || lower.includes("win")) return "windows";
-  if (lower.includes("macos") || lower.includes("mac os") || lower.includes("os x")) return "macos";
+  if (lower.includes("macos") || lower.includes("mac os") || lower.includes("os x") || lower.includes("osx") ||
+      /\b(big sur|monterey|ventura|sonoma|sequoia|catalina|mojave|high sierra|sierra|el capitan|yosemite|mavericks)\b/.test(lower)) return "macos";
   if (lower.includes("linux") || lower.includes("ubuntu") || lower.includes("steamos")) return "linux";
   return null;
 }
@@ -43,6 +44,31 @@ function extractPlatform(text: string): "windows" | "macos" | "linux" | null {
  */
 function isVagueOSRequirement(text: string): boolean {
   return /\bany\b/i.test(text) && !/\b(windows|mac|linux|ubuntu|steamos)\b/i.test(text);
+}
+
+/**
+ * Normalize an OS string for better matching:
+ * - Handle range formats: "OSX 10.9.5 - 10.11.6" → take the lower bound
+ * - Normalize "OSX" → "OS X" for consistent matching
+ * - Strip patch versions: "10.9.5" → "10.9", "10.11.6" → "10.11"
+ */
+function normalizeOSString(text: string): string {
+  let normalized = text;
+
+  // Handle range formats: "OSX 10.9.5 - 10.11.6" → take the lower bound
+  const rangeMatch = normalized.match(/^(.+?)\s*[-–—]\s*[\d.]+\s*$/);
+  if (rangeMatch) {
+    normalized = rangeMatch[1].trim();
+  }
+
+  // Normalize "OSX" to "OS X" (without space is common in Steam requirements)
+  normalized = normalized.replace(/\bOSX\b/g, "OS X");
+
+  // Strip patch versions for macOS: "10.9.5" → "10.9", "10.11.6" → "10.11"
+  // Only strip the third component of dotted versions (keep major.minor)
+  normalized = normalized.replace(/(\d+\.\d+)\.\d+/g, "$1");
+
+  return normalized.trim();
 }
 
 function compareOS(userOS: string, reqOS: string): ComparisonStatus {
@@ -65,8 +91,11 @@ function compareOS(userOS: string, reqOS: string): ComparisonStatus {
     (os) => extractPlatform(os) === userPlatform
   );
 
-  const userMatch = fuzzyMatchHardware(userOS, samePlatformList);
-  const reqMatch = fuzzyMatchHardware(reqOS, samePlatformList);
+  const normalizedUser = normalizeOSString(userOS);
+  const normalizedReq = normalizeOSString(reqOS);
+
+  const userMatch = fuzzyMatchHardware(normalizedUser, samePlatformList);
+  const reqMatch = fuzzyMatchHardware(normalizedReq, samePlatformList);
 
   if (userMatch && reqMatch) {
     const userScore = osScores[userMatch];
@@ -233,18 +262,6 @@ function compareCPU(
   }
 
   return bestStatus;
-}
-
-/**
- * Detect if a requirement string describes a graphics API capability
- * (e.g. "Support for OpenGL 3.3", "DirectX 11 compatible") rather than
- * a specific GPU model.
- */
-function isGpuCapabilityRequirement(text: string): boolean {
-  if (!text) return false;
-  const hasCapability = /\b(opengl|directx|direct3d|dx\s*\d+|vulkan|metal|shader\s*model|opencl)\b/i.test(text);
-  const hasModel = /\b(nvidia|geforce|radeon|gtx|rtx|rx\s*\d{3,4}|intel\s*(hd|uhd|iris|arc)|apple\s*m\d)\b/i.test(text);
-  return hasCapability && !hasModel;
 }
 
 /**
@@ -443,13 +460,15 @@ export function compareSpecs(
   let gpuMinStatus = compareHardware(cleanedGPU, min.gpu, Object.keys(gpuScores), gpuScores);
   let gpuRecStatus = compareHardware(cleanedGPU, rec.gpu, Object.keys(gpuScores), gpuScores);
 
-  // When requirement is a capability (e.g. "OpenGL 3.3") rather than a GPU model
-  // and user's GPU is a known model, treat as pass — any tracked GPU supports these APIs.
-  if (gpuMinStatus === "info" && isGpuCapabilityRequirement(min.gpu) && cleanedGPU) {
+  // When the user's GPU is a known modern model but the requirement couldn't be matched,
+  // the requirement is likely too old/obscure to be in our database (e.g. "32MB Radeon",
+  // "GeForce 2") or is a capability requirement (e.g. "OpenGL 3.3").
+  // Any tracked GPU exceeds these ancient/generic requirements.
+  if (gpuMinStatus === "info" && min.gpu && cleanedGPU) {
     const userMatch = fuzzyMatchHardware(cleanedGPU, Object.keys(gpuScores));
     if (userMatch && gpuScores[userMatch] != null) gpuMinStatus = "pass";
   }
-  if (gpuRecStatus === "info" && isGpuCapabilityRequirement(rec.gpu) && cleanedGPU) {
+  if (gpuRecStatus === "info" && rec.gpu && cleanedGPU) {
     const userMatch = fuzzyMatchHardware(cleanedGPU, Object.keys(gpuScores));
     if (userMatch && gpuScores[userMatch] != null) gpuRecStatus = "pass";
   }
