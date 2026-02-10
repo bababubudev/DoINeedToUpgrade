@@ -125,7 +125,7 @@ export default function GameSearch({ onSelect }: Props) {
           {loading ? (
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
           ) : !query && (
-            <kbd className="kbd kbd-sm absolute right-3 top-2.5 text-base-content/30 pointer-events-none">/</kbd>
+            <kbd className="kbd kbd-sm absolute right-3 top-2.5 text-base-content/30 pointer-events-none">⌘K</kbd>
           )}
 
           {isOpen && results.length > 0 && (

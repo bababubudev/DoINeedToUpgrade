@@ -212,11 +212,7 @@ function Home() {
   // Global "/" shortcut to focus game search input (or navigate there from results)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // Don't trigger when typing in inputs, textareas, or contenteditable
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement).isContentEditable) return;
-
-      if (e.key === "/") {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         const gameSearchStep = importedFromScanner ? 2 : 1;
 

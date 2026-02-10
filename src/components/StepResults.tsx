@@ -212,9 +212,8 @@ export default function StepResults({
       </div>
 
       <div className="flex gap-3 justify-center pt-2">
-        <button className="btn btn-primary gap-2" onClick={onCheckAnother}>
+        <button className="btn btn-primary" onClick={onCheckAnother}>
           Check Another Game
-          <kbd className="kbd kbd-sm text-primary-content/50">/</kbd>
         </button>
         <button className="btn btn-outline" onClick={onEditSpecs}>
           Edit My Specs
