@@ -73,9 +73,11 @@ func detectSpecs() Specs {
 		for _, line := range strings.Split(string(lspciOut), "\n") {
 			lower := strings.ToLower(line)
 			if strings.Contains(lower, "vga") || strings.Contains(lower, "3d") || strings.Contains(lower, "display") {
-				parts := strings.SplitN(line, ":", 2)
+				// lspci format: "SLOT CLASS: VENDOR DEVICE (rev XX)"
+				// Split on ": " to skip the slot+class prefix (slot uses ":" without space)
+				parts := strings.SplitN(line, ": ", 2)
 				if len(parts) == 2 {
-					specs.GPU = strings.TrimSpace(parts[1])
+					specs.GPU = cleanGPUName(strings.TrimSpace(parts[1]))
 					break
 				}
 			}
@@ -108,6 +110,49 @@ func detectSpecs() Specs {
 	}
 
 	return specs
+}
+
+// cleanGPUName normalises lspci GPU output into a form that matches our database.
+// Input example: "Intel Corporation Raptor Lake-P [UHD Graphics] (rev 04)"
+// Output:        "Intel UHD Graphics"
+func cleanGPUName(name string) string {
+	// Strip "(rev XX)" suffix
+	name = regexp.MustCompile(`\(rev\s+[0-9a-fA-F]+\)`).ReplaceAllString(name, "")
+
+	// If there's a bracket portion like [UHD Graphics], use it as the device name
+	// combined with the vendor prefix
+	if bracketRe := regexp.MustCompile(`\[(.+?)\]`); bracketRe.MatchString(name) {
+		deviceName := bracketRe.FindStringSubmatch(name)[1]
+		vendor := ""
+		lower := strings.ToLower(name)
+		switch {
+		case strings.Contains(lower, "intel"):
+			vendor = "Intel"
+		case strings.Contains(lower, "nvidia"):
+			vendor = "NVIDIA"
+		case strings.Contains(lower, "amd") || strings.Contains(lower, "advanced micro"):
+			vendor = "AMD"
+		}
+		if vendor != "" {
+			// Avoid "Intel Intel HD Graphics" if bracket already contains vendor
+			if !strings.Contains(strings.ToLower(deviceName), strings.ToLower(vendor)) {
+				name = vendor + " " + deviceName
+			} else {
+				name = deviceName
+			}
+		} else {
+			name = deviceName
+		}
+	} else {
+		// No bracket — strip common noise words
+		name = strings.ReplaceAll(name, "Corporation", "")
+		name = strings.ReplaceAll(name, "Advanced Micro Devices, Inc.", "AMD")
+		name = strings.ReplaceAll(name, "Advanced Micro Devices", "AMD")
+	}
+
+	// Collapse whitespace
+	name = regexp.MustCompile(`\s+`).ReplaceAllString(name, " ")
+	return strings.TrimSpace(name)
 }
 
 func cleanCPUName(name string) string {

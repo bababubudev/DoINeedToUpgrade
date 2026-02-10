@@ -37,9 +37,20 @@ function extractPlatform(text: string): "windows" | "macos" | "linux" | null {
   return null;
 }
 
+/**
+ * Detect vague OS requirements that don't specify a real platform
+ * (e.g. "Any up to date version", "Any modern OS", "Any 64-bit OS").
+ */
+function isVagueOSRequirement(text: string): boolean {
+  return /\bany\b/i.test(text) && !/\b(windows|mac|linux|ubuntu|steamos)\b/i.test(text);
+}
+
 function compareOS(userOS: string, reqOS: string): ComparisonStatus {
   if (!reqOS) return "pass";
   if (!userOS) return "info";
+
+  // "Any up to date version" or similar vague requirements → pass
+  if (isVagueOSRequirement(reqOS)) return "pass";
 
   // Always check platform first — cross-platform is always "warn"
   const userPlatform = extractPlatform(userOS);
@@ -236,6 +247,121 @@ function isGpuCapabilityRequirement(text: string): boolean {
   return hasCapability && !hasModel;
 }
 
+/**
+ * Map lspci GPU codenames to recognizable product names.
+ * Keys are lowercase for case-insensitive lookup.
+ */
+const GPU_CODENAME_MAP: Record<string, string> = {
+  // AMD codenames
+  "navi 10": "AMD Radeon RX 5600 XT",
+  "navi 14": "AMD Radeon RX 5500 XT",
+  "navi 21": "AMD Radeon RX 6800 XT",
+  "navi 22": "AMD Radeon RX 6700 XT",
+  "navi 23": "AMD Radeon RX 6600",
+  "navi 24": "AMD Radeon RX 6500 XT",
+  "navi 31": "AMD Radeon RX 7900 XTX",
+  "navi 32": "AMD Radeon RX 7800 XT",
+  "navi 33": "AMD Radeon RX 7600",
+  "vangogh": "AMD Radeon Vega 8",
+  "tahiti pro": "AMD Radeon HD 7950",
+  "tahiti xt": "AMD Radeon HD 7970",
+  "hawaii pro": "AMD Radeon R9 290",
+  "hawaii xt": "AMD Radeon R9 290X",
+  "ellesmere": "AMD Radeon RX 480",
+  "polaris": "AMD Radeon RX 580",
+  "vega 10": "AMD Radeon RX Vega 56",
+  "vega 20": "AMD Radeon VII",
+  "renoir": "AMD Radeon Vega 8",
+  "cezanne": "AMD Radeon Vega 8",
+  "rembrandt": "AMD Radeon 680M",
+  "phoenix": "AMD Radeon 780M",
+  "raphael": "AMD Radeon 780M",
+  // Intel codenames
+  "alderlake-s gt1": "Intel UHD Graphics 770",
+  "alderlake-p gt2": "Intel Iris Xe Graphics",
+  "raptorlake-s gt1": "Intel UHD Graphics 770",
+  "raptorlake-p gt2": "Intel Iris Xe Graphics",
+  "tigerlake gt2": "Intel Iris Xe Graphics",
+  "coffeelake gt2": "Intel UHD Graphics 630",
+  "kabylake gt2": "Intel HD Graphics 630",
+  "skylake gt2": "Intel HD Graphics 530",
+  // NVIDIA codenames
+  "ga104": "NVIDIA GeForce RTX 3070",
+  "ga106": "NVIDIA GeForce RTX 3060",
+  "ga102": "NVIDIA GeForce RTX 3090",
+  "ad104": "NVIDIA GeForce RTX 4070 Ti",
+  "ad103": "NVIDIA GeForce RTX 4080",
+  "ad102": "NVIDIA GeForce RTX 4090",
+  "tu106": "NVIDIA GeForce RTX 2070",
+  "tu104": "NVIDIA GeForce RTX 2080",
+  "tu102": "NVIDIA GeForce RTX 2080 Ti",
+  "gp106": "NVIDIA GeForce GTX 1060 6GB",
+  "gp104": "NVIDIA GeForce GTX 1080",
+  "gp102": "NVIDIA GeForce GTX 1080 Ti",
+};
+
+/**
+ * Try to resolve an lspci codename to a known product name.
+ * Returns the mapped name or null if no match.
+ */
+function resolveGPUCodename(text: string): string | null {
+  const lower = text.toLowerCase();
+  for (const [codename, product] of Object.entries(GPU_CODENAME_MAP)) {
+    if (lower.includes(codename)) return product;
+  }
+  return null;
+}
+
+/**
+ * Clean raw lspci GPU strings that may have been stored from older scanner versions.
+ * e.g. "00:02.0 VGA compatible controller: Intel Corporation Raptor Lake-P [UHD Graphics] (rev 04)"
+ * → "Intel UHD Graphics"
+ */
+function cleanLspciGPU(text: string): string {
+  if (!text) return text;
+  // Strip slot address prefix and device class if present
+  let cleaned = text.replace(/^\d{2}:\d{2}\.\d\s+.*?:\s*/, "");
+  // Strip "(rev XX)"
+  cleaned = cleaned.replace(/\(rev\s+[0-9a-fA-F]+\)/gi, "");
+
+  // Detect vendor
+  const lower = cleaned.toLowerCase();
+  let vendor = "";
+  if (lower.includes("intel")) vendor = "Intel";
+  else if (lower.includes("nvidia")) vendor = "NVIDIA";
+  else if (lower.includes("amd") || lower.includes("advanced micro")) vendor = "AMD";
+
+  // Strip "[AMD/ATI]" tag before bracket extraction (it's a vendor tag, not a device name)
+  cleaned = cleaned.replace(/\[AMD\/ATI\]\s*/gi, "");
+
+  // Extract bracket content as device name (e.g. [GeForce RTX 3070], [UHD Graphics])
+  const bracketMatch = cleaned.match(/\[(.+?)\]/);
+  if (bracketMatch) {
+    const deviceName = bracketMatch[1];
+    if (vendor && !deviceName.toLowerCase().includes(vendor.toLowerCase())) {
+      cleaned = (vendor + " " + deviceName).replace(/\s+/g, " ").trim();
+    } else {
+      cleaned = deviceName.replace(/\s+/g, " ").trim();
+    }
+  } else {
+    // No brackets — strip common noise words
+    cleaned = cleaned.replace(/\bCorporation\b/gi, "");
+    cleaned = cleaned.replace(/\bAdvanced Micro Devices,?\s*Inc\.?\s*/gi, "AMD ");
+    cleaned = cleaned.replace(/\s+/g, " ").trim();
+  }
+
+  // Try codename resolution on the original text (before cleaning may have lost info)
+  // and on the cleaned text — use codename match if the cleaned name doesn't look
+  // like a recognizable product (i.e. no model number pattern)
+  const hasModelNumber = /\b(geforce|radeon\s*(rx|hd|r[79]|pro)|gtx|rtx|arc\s*a\d|uhd|iris|hd\s+graphics)\b/i.test(cleaned);
+  if (!hasModelNumber) {
+    const resolved = resolveGPUCodename(text) ?? resolveGPUCodename(cleaned);
+    if (resolved) return resolved;
+  }
+
+  return cleaned;
+}
+
 function compareHardware(
   userText: string,
   reqText: string,
@@ -312,17 +438,19 @@ export function compareSpecs(
   });
 
   // GPU — fuzzy match + score comparison, with capability requirement fallback
-  let gpuMinStatus = compareHardware(user.gpu, min.gpu, Object.keys(gpuScores), gpuScores);
-  let gpuRecStatus = compareHardware(user.gpu, rec.gpu, Object.keys(gpuScores), gpuScores);
+  // Clean raw lspci strings from older scanner versions
+  const cleanedGPU = cleanLspciGPU(user.gpu);
+  let gpuMinStatus = compareHardware(cleanedGPU, min.gpu, Object.keys(gpuScores), gpuScores);
+  let gpuRecStatus = compareHardware(cleanedGPU, rec.gpu, Object.keys(gpuScores), gpuScores);
 
   // When requirement is a capability (e.g. "OpenGL 3.3") rather than a GPU model
   // and user's GPU is a known model, treat as pass — any tracked GPU supports these APIs.
-  if (gpuMinStatus === "info" && isGpuCapabilityRequirement(min.gpu) && user.gpu) {
-    const userMatch = fuzzyMatchHardware(user.gpu, Object.keys(gpuScores));
+  if (gpuMinStatus === "info" && isGpuCapabilityRequirement(min.gpu) && cleanedGPU) {
+    const userMatch = fuzzyMatchHardware(cleanedGPU, Object.keys(gpuScores));
     if (userMatch && gpuScores[userMatch] != null) gpuMinStatus = "pass";
   }
-  if (gpuRecStatus === "info" && isGpuCapabilityRequirement(rec.gpu) && user.gpu) {
-    const userMatch = fuzzyMatchHardware(user.gpu, Object.keys(gpuScores));
+  if (gpuRecStatus === "info" && isGpuCapabilityRequirement(rec.gpu) && cleanedGPU) {
+    const userMatch = fuzzyMatchHardware(cleanedGPU, Object.keys(gpuScores));
     if (userMatch && gpuScores[userMatch] != null) gpuRecStatus = "pass";
   }
   if (gpuMinStatus === "info" && gpuRecStatus === "pass") gpuMinStatus = "pass";
@@ -330,7 +458,7 @@ export function compareSpecs(
 
   items.push({
     label: "Graphics",
-    userValue: user.gpu || "Unknown",
+    userValue: cleanedGPU || "Unknown",
     minValue: min.gpu || "—",
     recValue: rec.gpu || "—",
     minStatus: gpuMinStatus,

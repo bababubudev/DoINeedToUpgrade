@@ -62,13 +62,20 @@ export const cpuList: string[] = [
   "Intel Core i9-12900K",
   // Intel 13th Gen
   "Intel Core i5-13400",
+  "Intel Core i5-13500H",
   "Intel Core i5-13600K",
+  "Intel Core i7-13620H",
+  "Intel Core i7-13700H",
   "Intel Core i7-13700K",
+  "Intel Core i9-13900H",
   "Intel Core i9-13900K",
   // Intel 14th Gen
   "Intel Core i5-14400",
+  "Intel Core i5-14500HX",
   "Intel Core i5-14600K",
+  "Intel Core i7-14700HX",
   "Intel Core i7-14700K",
+  "Intel Core i9-14900HX",
   "Intel Core i9-14900K",
   // Intel Core Ultra 200 series
   "Intel Core Ultra 5 225",
@@ -76,11 +83,27 @@ export const cpuList: string[] = [
   "Intel Core Ultra 7 255",
   "Intel Core Ultra 7 265K",
   "Intel Core Ultra 9 285K",
+  // Intel Xeon (workstation)
+  "Intel Xeon E5-2680 v4",
+  "Intel Xeon W-2140B",
+  // Intel Pentium / Celeron (budget)
+  "Intel Pentium G4560",
+  "Intel Celeron N4020",
+  // Intel Mobile
+  "Intel Core i5-8250U",
+  "Intel Core i7-9750H",
+  "Intel Core i7-1165G7",
+  // Intel Core Ultra mobile
+  "Intel Core Ultra 7 155H",
   // AMD FX Series
   "AMD FX-4300",
   "AMD FX-6300",
   "AMD FX-8320",
   "AMD FX-8350",
+  // AMD APU (Steam Deck)
+  "AMD Custom APU 0405",
+  // AMD Ryzen APGs (with integrated graphics)
+  "AMD Ryzen 3 2200G",
   // AMD Ryzen 1000
   "AMD Ryzen 3 1200",
   "AMD Ryzen 5 1400",
@@ -102,6 +125,8 @@ export const cpuList: string[] = [
   // AMD Ryzen 4000 desktop
   "AMD Ryzen 5 4500",
   "AMD Ryzen 5 4600G",
+  // AMD Ryzen mobile
+  "AMD Ryzen 7 7840U",
   // AMD Ryzen 7000
   "AMD Ryzen 5 7600X",
   "AMD Ryzen 7 7700X",
@@ -199,10 +224,14 @@ export const gpuList: string[] = [
   "NVIDIA GeForce RTX 5070 Ti",
   "NVIDIA GeForce RTX 5080",
   "NVIDIA GeForce RTX 5090",
+  // NVIDIA Quadro (workstation)
+  "NVIDIA Quadro P2000",
+  "NVIDIA Quadro P4000",
   // AMD Radeon HD series
   "AMD Radeon HD 7750",
   "AMD Radeon HD 7850",
   "AMD Radeon HD 7870",
+  "AMD Radeon HD 7950",
   "AMD Radeon HD 7970",
   // AMD Radeon R-series
   "AMD Radeon R7 260X",
@@ -240,13 +269,44 @@ export const gpuList: string[] = [
   // AMD RX 9000 series
   "AMD Radeon RX 9070",
   "AMD Radeon RX 9070 XT",
+  // AMD Radeon Pro (MacBook Pro / workstation)
+  "AMD Radeon Pro 450",
+  "AMD Radeon Pro 455",
+  "AMD Radeon Pro 460",
+  "AMD Radeon Pro 555",
+  "AMD Radeon Pro 555X",
+  "AMD Radeon Pro 560",
+  "AMD Radeon Pro 560X",
+  "AMD Radeon Pro 5300M",
+  "AMD Radeon Pro 5500M",
+  "AMD Radeon Pro Vega 20",
+  "AMD Radeon Pro Vega 48",
+  "AMD Radeon Pro Vega 56",
+  // AMD Integrated Graphics
+  "AMD Radeon Vega 3",
+  "AMD Radeon Vega 8",
+  "AMD Radeon Vega 11",
+  "AMD Radeon 680M",
+  "AMD Radeon 780M",
   // Intel Integrated Graphics
   "Intel HD Graphics 4000",
   "Intel HD Graphics 4600",
+  "Intel HD Graphics 510",
   "Intel HD Graphics 530",
+  "Intel HD Graphics 610",
   "Intel HD Graphics 630",
+  "Intel UHD Graphics 620",
+  "Intel UHD Graphics 600",
   "Intel UHD Graphics 630",
+  "Intel UHD Graphics 730",
+  "Intel UHD Graphics 770",
+  "Intel UHD Graphics",
+  "Intel Iris Plus Graphics 640",
+  "Intel Iris Plus Graphics 655",
+  "Intel Iris Plus Graphics",
+  "Intel Iris Xe Graphics",
   // Intel Arc
+  "Intel Arc Graphics",
   "Intel Arc A580",
   "Intel Arc A750",
   "Intel Arc A770",
@@ -332,13 +392,20 @@ export const cpuScores: Record<string, number> = {
   "Intel Core i9-12900K": 82,
   // Intel 13th Gen
   "Intel Core i5-13400": 58,
+  "Intel Core i5-13500H": 52,
   "Intel Core i5-13600K": 72,
+  "Intel Core i7-13620H": 60,
+  "Intel Core i7-13700H": 65,
   "Intel Core i7-13700K": 82,
+  "Intel Core i9-13900H": 72,
   "Intel Core i9-13900K": 90,
   // Intel 14th Gen
   "Intel Core i5-14400": 60,
+  "Intel Core i5-14500HX": 58,
   "Intel Core i5-14600K": 74,
+  "Intel Core i7-14700HX": 72,
   "Intel Core i7-14700K": 85,
+  "Intel Core i9-14900HX": 82,
   "Intel Core i9-14900K": 95,
   // Intel Core Ultra 200 series
   "Intel Core Ultra 5 225": 62,
@@ -346,11 +413,27 @@ export const cpuScores: Record<string, number> = {
   "Intel Core Ultra 7 255": 78,
   "Intel Core Ultra 7 265K": 85,
   "Intel Core Ultra 9 285K": 98,
+  // Intel Xeon (workstation)
+  "Intel Xeon E5-2680 v4": 30,
+  "Intel Xeon W-2140B": 42,
+  // Intel Pentium / Celeron (budget)
+  "Intel Pentium G4560": 15,
+  "Intel Celeron N4020": 5,
+  // Intel Mobile
+  "Intel Core i5-8250U": 30,
+  "Intel Core i7-9750H": 42,
+  "Intel Core i7-1165G7": 45,
+  // Intel Core Ultra mobile
+  "Intel Core Ultra 7 155H": 72,
   // AMD FX Series
   "AMD FX-4300": 10,
   "AMD FX-6300": 15,
   "AMD FX-8320": 18,
   "AMD FX-8350": 20,
+  // AMD APU (Steam Deck)
+  "AMD Custom APU 0405": 28,
+  // AMD Ryzen APGs
+  "AMD Ryzen 3 2200G": 20,
   // AMD Ryzen 1000
   "AMD Ryzen 3 1200": 18,
   "AMD Ryzen 5 1400": 22,
@@ -372,6 +455,8 @@ export const cpuScores: Record<string, number> = {
   // AMD Ryzen 4000 desktop
   "AMD Ryzen 5 4500": 40,
   "AMD Ryzen 5 4600G": 42,
+  // AMD Ryzen mobile
+  "AMD Ryzen 7 7840U": 65,
   // AMD Ryzen 7000
   "AMD Ryzen 5 7600X": 75,
   "AMD Ryzen 7 7700X": 82,
@@ -469,10 +554,14 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA GeForce RTX 5070 Ti": 92,
   "NVIDIA GeForce RTX 5080": 105,
   "NVIDIA GeForce RTX 5090": 130,
+  // NVIDIA Quadro (workstation)
+  "NVIDIA Quadro P2000": 15,
+  "NVIDIA Quadro P4000": 22,
   // AMD Radeon HD series
   "AMD Radeon HD 7750": 4,
   "AMD Radeon HD 7850": 6,
   "AMD Radeon HD 7870": 7,
+  "AMD Radeon HD 7950": 9,
   "AMD Radeon HD 7970": 10,
   // AMD Radeon R-series
   "AMD Radeon R7 260X": 6,
@@ -510,13 +599,44 @@ export const gpuScores: Record<string, number> = {
   // AMD RX 9000 series
   "AMD Radeon RX 9070": 78,
   "AMD Radeon RX 9070 XT": 85,
+  // AMD Radeon Pro (MacBook Pro / workstation)
+  "AMD Radeon Pro 450": 8,
+  "AMD Radeon Pro 455": 9,
+  "AMD Radeon Pro 460": 10,
+  "AMD Radeon Pro 555": 10,
+  "AMD Radeon Pro 555X": 11,
+  "AMD Radeon Pro 560": 13,
+  "AMD Radeon Pro 560X": 14,
+  "AMD Radeon Pro 5300M": 22,
+  "AMD Radeon Pro 5500M": 28,
+  "AMD Radeon Pro Vega 20": 25,
+  "AMD Radeon Pro Vega 48": 28,
+  "AMD Radeon Pro Vega 56": 30,
+  // AMD Integrated Graphics
+  "AMD Radeon Vega 3": 3,
+  "AMD Radeon Vega 8": 5,
+  "AMD Radeon Vega 11": 6,
+  "AMD Radeon 680M": 10,
+  "AMD Radeon 780M": 12,
   // Intel Integrated Graphics
   "Intel HD Graphics 4000": 2,
   "Intel HD Graphics 4600": 3,
+  "Intel HD Graphics 510": 3,
   "Intel HD Graphics 530": 3,
+  "Intel HD Graphics 610": 3,
   "Intel HD Graphics 630": 4,
+  "Intel UHD Graphics 620": 4,
+  "Intel UHD Graphics 600": 3,
   "Intel UHD Graphics 630": 4,
+  "Intel UHD Graphics 730": 5,
+  "Intel UHD Graphics 770": 6,
+  "Intel UHD Graphics": 5,
+  "Intel Iris Plus Graphics 640": 5,
+  "Intel Iris Plus Graphics 655": 6,
+  "Intel Iris Plus Graphics": 5,
+  "Intel Iris Xe Graphics": 8,
   // Intel Arc
+  "Intel Arc Graphics": 10,
   "Intel Arc A580": 35,
   "Intel Arc A750": 42,
   "Intel Arc A770": 48,
