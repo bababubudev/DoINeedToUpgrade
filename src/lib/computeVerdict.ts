@@ -89,15 +89,29 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
     };
   }
 
-  // All min confirmed pass but some rec fail → minimum
+  // All min confirmed pass but some rec fail or warn → minimum or unknown
   if (allMinPass) {
     const recFailed = upgradeItems.map((u) => u.component.toLowerCase());
+    const hasRecFail = relevantItems.some((i) => i.recStatus === "fail");
+
+    if (hasRecFail) {
+      return {
+        verdict: "minimum",
+        title: "It'll run, but an upgrade would make it smoother",
+        description: recFailed.length > 0
+          ? `Your system can handle this game, but upgrading your ${formatList(recFailed)} would give you a better experience.`
+          : "You meet the minimum specs, but you might need to turn down some settings for smoother performance.",
+        failedComponents,
+        warnComponents,
+        upgradeItems,
+      };
+    }
+
+    // Min passes but rec is only warn (couldn't verify) — no confirmed shortfall
     return {
       verdict: "minimum",
-      title: "It'll run, but an upgrade would make it smoother",
-      description: recFailed.length > 0
-        ? `Your system can handle this game, but upgrading your ${formatList(recFailed)} would give you a better experience.`
-        : "You meet the minimum specs, but you might need to turn down some settings for smoother performance.",
+      title: "It'll run, but we couldn't fully verify the recommended specs",
+      description: `Your system meets the minimum requirements. We couldn't automatically verify your ${formatList(warnComponents.map((c) => c.toLowerCase()))} against the recommended specs.`,
       failedComponents,
       warnComponents,
       upgradeItems,

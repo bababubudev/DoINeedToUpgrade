@@ -393,6 +393,7 @@ function Home() {
   function handleRequirementsChange(min: GameRequirements, rec: GameRequirements) {
     setMinReqs(min);
     setRecReqs(rec);
+    runComparison(min, rec);
   }
 
   function handlePlatformChange(newPlatform: Platform) {
