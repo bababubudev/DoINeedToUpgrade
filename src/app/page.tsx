@@ -209,6 +209,33 @@ function Home() {
     }
   }, [cpuList, gpuList, searchParams]);
 
+  // Global "/" shortcut to focus game search input (or navigate there from results)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Don't trigger when typing in inputs, textareas, or contenteditable
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement).isContentEditable) return;
+
+      if (e.key === "/") {
+        e.preventDefault();
+        const gameSearchStep = importedFromScanner ? 2 : 1;
+
+        if (step === 3) {
+          // Navigate back to game search (same as "Check Another Game")
+          handleCheckAnother();
+          // Focus input after component mounts
+          requestAnimationFrame(() => {
+            document.getElementById("game-search-input")?.focus();
+          });
+        } else if (step === gameSearchStep && !manualMode) {
+          document.getElementById("game-search-input")?.focus();
+        }
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [step, importedFromScanner, manualMode]);
+
   const verdict = comparison ? computeVerdict(comparison) : null;
 
   const runComparison = useCallback(

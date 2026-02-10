@@ -109,6 +109,7 @@ export default function GameSearch({ onSelect }: Props) {
         <h2 className="card-title">Search for a Game</h2>
         <div ref={wrapperRef} className="relative">
           <input
+            id="game-search-input"
             type="text"
             className="input input-bordered w-full"
             placeholder="Type a game name (e.g., Cyberpunk 2077)"
@@ -121,8 +122,10 @@ export default function GameSearch({ onSelect }: Props) {
             aria-autocomplete="list"
             aria-activedescendant={selectedIndex >= 0 ? `game-option-${selectedIndex}` : undefined}
           />
-          {loading && (
+          {loading ? (
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
+          ) : !query && (
+            <kbd className="kbd kbd-sm absolute right-3 top-2.5 text-base-content/30 pointer-events-none">/</kbd>
           )}
 
           {isOpen && results.length > 0 && (
