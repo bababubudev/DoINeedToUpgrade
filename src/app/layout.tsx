@@ -69,7 +69,7 @@ export default function RootLayout({
       </head>
       <body className={`${montserrat.className} min-h-screen bg-base-200`}>
         <GeometricBackground />
-        <div className="navbar bg-base-100/80 backdrop-blur-sm border-b border-base-300 px-4 relative z-10">
+        <div className="navbar bg-base-100/80 backdrop-blur-sm border-b border-base-300 px-4 relative z-20">
           <div className="flex-1">
             <Logo />
           </div>

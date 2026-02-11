@@ -238,10 +238,6 @@ function Home() {
     (min?: GameRequirements, rec?: GameRequirements) => {
       const minR = min ?? minReqs;
       const recR = rec ?? recReqs;
-      if (!hasAnyField(minR) && !hasAnyField(recR)) {
-        setComparison(null);
-        return;
-      }
       const minArg = hasAnyField(minR) ? minR : null;
       const recArg = hasAnyField(recR) ? recR : null;
       const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
@@ -577,7 +573,7 @@ function Home() {
 
       {/* Toast for URL-imported specs */}
       {showUrlImportToast && (
-        <div className="fixed right-4 top-20 z-50 animate-toast-in">
+        <div className="fixed right-2 sm:right-4 top-20 z-50 animate-toast-in max-w-[calc(100vw-1rem)] sm:max-w-sm">
           <div className="alert alert-success text-sm py-2 px-4 flex items-center gap-2 shadow-lg">
             <HiCheckCircle className="w-5 h-5" />
             <span>Hardware specs imported from scanner!</span>

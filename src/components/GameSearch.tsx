@@ -126,7 +126,7 @@ export default function GameSearch({ onSelect }: Props) {
           {loading ? (
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
           ) : !query && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/30 pointer-events-none flex items-center gap-0.5 text-xs">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none flex items-center gap-0.5 text-xs">
               <kbd className="kbd kbd-xs">{isMac ? "⌘" : "Ctrl"}</kbd>
               <span>+</span>
               <kbd className="kbd kbd-xs">k</kbd>
@@ -164,7 +164,7 @@ export default function GameSearch({ onSelect }: Props) {
                   </li>
                 ))}
               </ul>
-              <div className="flex items-center gap-1.5 px-3 py-2 text-xs text-base-content/50 border-t border-base-300 bg-base-200/50">
+              <div className="flex items-center gap-1.5 px-3 py-2 text-xs text-base-content/60 border-t border-base-300 bg-base-200/50">
                 <kbd className="kbd kbd-xs">Enter</kbd>
                 <HiArrowRight className="w-3 h-3" />
                 <span>Select &amp; continue</span>

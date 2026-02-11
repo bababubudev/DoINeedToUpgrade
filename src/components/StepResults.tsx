@@ -129,7 +129,7 @@ export default function StepResults({
   return (
     <div className="animate-fadeIn flex flex-col gap-4">
       {game && (
-        <div className="relative flex items-center gap-4 p-4 rounded-lg bg-base-200/50 overflow-hidden">
+        <div className="relative flex flex-col sm:flex-row items-center gap-4 p-4 rounded-lg bg-base-200/50 overflow-hidden">
           {(() => {
             const iconClass = "absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 text-base-content/5 select-none pointer-events-none";
             if (!verdict || verdict.verdict === "unknown") return <HiQuestionMarkCircle className={iconClass} />;
@@ -141,11 +141,11 @@ export default function StepResults({
           <img
             src={game.headerImage}
             alt={game.name}
-            className="w-36 rounded shadow-md relative z-10"
+            className="w-36 sm:w-36 rounded shadow-md relative z-10"
           />
-          <div className="relative z-10">
+          <div className="relative z-10 text-center sm:text-left">
             <p className="text-base text-base-content/60">Do I need an upgrade for</p>
-            <h3 className="font-bold text-2xl">{game.name}</h3>
+            <h3 className="font-bold text-xl sm:text-2xl">{game.name}</h3>
           </div>
         </div>
       )}

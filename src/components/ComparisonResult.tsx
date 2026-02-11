@@ -35,14 +35,14 @@ export default function ComparisonResult({ items }: Props) {
                 <tr key={item.label}>
                   <td className="font-semibold">{item.label}</td>
                   <td className="whitespace-normal break-words">{item.userValue}</td>
-                  <td className={`text-sm max-w-[200px] truncate ${cellColor(item.minStatus)}`} title={item.minValue}>{item.minValue}</td>
-                  <td className={`text-sm max-w-[200px] truncate ${cellColor(item.recStatus)}`} title={item.recValue}>{item.recValue}</td>
+                  <td className={`text-sm max-w-[120px] sm:max-w-[200px] truncate ${cellColor(item.minStatus)}`} title={item.minValue}>{item.minValue}</td>
+                  <td className={`text-sm max-w-[120px] sm:max-w-[200px] truncate ${cellColor(item.recStatus)}`} title={item.recValue}>{item.recValue}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="flex gap-4 text-xs text-base-content/60 pt-2 justify-end">
+        <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-base-content/60 pt-2 justify-end">
           <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-success/30 border border-success/50" /> Pass — meets or exceeds</span>
           <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-warning/30 border border-warning/50" /> Check — verify manually</span>
           <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-error/30 border border-error/50" /> Fail — below requirement</span>

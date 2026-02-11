@@ -236,7 +236,7 @@ export default function StepSystemSpecs({
       </div>
 
       {(toastVisible || errorToastVisible) && (
-        <div className="fixed right-4 top-20 z-50 flex flex-col gap-3">
+        <div className="fixed right-2 sm:right-4 top-20 z-50 flex flex-col gap-3 max-w-[calc(100vw-1rem)] sm:max-w-sm">
           {toastVisible && (
             <div className={toastExiting ? "animate-toast-out" : "animate-toast-in"}>
               <div className="alert alert-info text-sm py-2 px-4 flex items-center gap-2">

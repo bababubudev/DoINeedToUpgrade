@@ -13,11 +13,16 @@ export default function GeometricBackground() {
     if (!ctx) return;
 
     let animationId: number;
-    let time = 0;
+    let waveAngle = Math.random() * Math.PI * 2;
+    let waveProgress = 0;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     const getColors = () => {
@@ -63,31 +68,37 @@ export default function GeometricBackground() {
         ctx.stroke();
       }
 
-      // Diagonal wave that wraps smoothly
-      const maxDiag = cols + rows;
+      // Wave direction from current angle
+      const dx = Math.cos(waveAngle);
+      const dy = Math.sin(waveAngle);
+
+      // Compute projection range for current angle
+      const projections = [0, (cols - 1) * dx, (rows - 1) * dy, (cols - 1) * dx + (rows - 1) * dy];
+      const minProj = Math.min(...projections);
+      const maxProj = Math.max(...projections);
       const padding = 10;
-      const totalRange = maxDiag + padding * 2;
-      const wavePos = ((time * 0.25) % totalRange) - padding;
+      const totalRange = maxProj - minProj + padding * 2;
+
+      const wavePos = minProj - padding + waveProgress * totalRange;
 
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
-          const diag = i + j;
+          const proj = i * dx + j * dy;
 
           // Per-node offset for irregularity (deterministic hash from grid position)
           const hash = Math.sin(i * 127.1 + j * 311.7) * 43758.5453;
           const offset = (hash - Math.floor(hash)) * 3 - 1.5;
 
-          // Check distance to wave, also considering the wrapped position
-          const adjustedDiag = diag + offset;
+          const adjustedProj = proj + offset;
           const dist = Math.min(
-            Math.abs(adjustedDiag - wavePos),
-            Math.abs(adjustedDiag - (wavePos + totalRange)),
-            Math.abs(adjustedDiag - (wavePos - totalRange))
+            Math.abs(adjustedProj - wavePos),
+            Math.abs(adjustedProj - (wavePos + totalRange)),
+            Math.abs(adjustedProj - (wavePos - totalRange))
           );
           const intensity = Math.max(0, 1 - dist / 10);
 
           // Subtle ambient flicker independent of wave
-          const flicker = Math.sin(time * 0.3 + i * 3.7 + j * 5.3) * 0.5 + 0.5;
+          const flicker = Math.sin(waveProgress * 40 + i * 3.7 + j * 5.3) * 0.5 + 0.5;
           const flickerIntensity = flicker * flickerMult;
 
           const x = i * spacing;
@@ -119,7 +130,12 @@ export default function GeometricBackground() {
         }
       }
 
-      time += 0.15;
+      // Advance wave; speed normalized so wave crosses at consistent pace
+      waveProgress += 0.0015 / (totalRange / 30);
+      if (waveProgress >= 1) {
+        waveProgress -= 1;
+        waveAngle = Math.random() * Math.PI * 2;
+      }
       animationId = requestAnimationFrame(draw);
     };
 

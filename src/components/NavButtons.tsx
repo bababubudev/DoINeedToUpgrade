@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { HiDownload, HiInformationCircle } from "react-icons/hi";
 
 type ClientPlatform = "windows" | "macos" | "linux";
@@ -53,7 +54,7 @@ export default function NavButtons() {
         {dropdownOpen && (
           <ul
             tabIndex={0}
-            className="dropdown-content z-50 menu p-2 shadow-lg bg-base-200 rounded-box w-56 mt-2"
+            className="dropdown-content z-50 menu p-2 shadow-lg bg-base-200 rounded-box w-[calc(100vw-2rem)] sm:w-56 mt-2 right-0"
           >
             {clientPlatform === "macos" ? (
               downloadLinks.macos.map((link) => (
@@ -109,8 +110,8 @@ export default function NavButtons() {
         )}
       </div>
 
-      {modalOpen && (
-        <div className="modal modal-open">
+      {modalOpen && createPortal(
+        <div className="modal modal-open z-50">
           <div className="modal-box max-w-2xl">
             <button
               className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -176,7 +177,8 @@ export default function NavButtons() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setModalOpen(false)} />
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
