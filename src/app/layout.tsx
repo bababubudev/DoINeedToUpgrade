@@ -5,6 +5,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import NavButtons from "@/components/NavButtons";
 import Logo from "@/components/Logo";
 import { StructuredData } from "@/components/StructuredData";
+import GeometricBackground from "@/components/GeometricBackground";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -67,7 +68,8 @@ export default function RootLayout({
         <StructuredData />
       </head>
       <body className={`${montserrat.className} min-h-screen bg-base-200`}>
-        <div className="navbar bg-base-100 border-b border-base-300 px-4">
+        <GeometricBackground />
+        <div className="navbar bg-base-100/80 backdrop-blur-sm border-b border-base-300 px-4 relative z-10">
           <div className="flex-1">
             <Logo />
           </div>
@@ -76,7 +78,7 @@ export default function RootLayout({
             <ThemeToggle />
           </div>
         </div>
-        <div className="container mx-auto px-4 py-6 max-w-5xl">
+        <div className="container mx-auto px-4 py-6 max-w-5xl relative z-10">
           {children}
         </div>
       </body>
