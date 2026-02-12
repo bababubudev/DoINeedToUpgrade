@@ -1,23 +1,31 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { HiArrowRight } from "react-icons/hi";
-import { GameSearchResult } from "@/types";
+import { HiArrowRight, HiGlobe } from "react-icons/hi";
+import { FaSteam } from "react-icons/fa";
+import { GameSearchResult, GameSource } from "@/types";
 
 interface Props {
-  onSelect: (appid: number) => void;
+  onSelect: (id: number, source: GameSource) => void;
+  igdbRemaining: number;
+  igdbLimit: number;
+  initialSource?: GameSource;
 }
 
-export default function GameSearch({ onSelect }: Props) {
+export default function GameSearch({ onSelect, igdbRemaining, igdbLimit, initialSource = "steam" }: Props) {
   const isMac = useMemo(() => typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform), []);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GameSearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [source, setSource] = useState<GameSource>(initialSource);
+  const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
+
+  const igdbExhausted = igdbRemaining <= 0;
 
   const search = useCallback(async (term: string) => {
     if (term.length < 2) {
@@ -28,7 +36,7 @@ export default function GameSearch({ onSelect }: Props) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(term)}&source=${source}`);
       const data = await res.json();
       const items = data.items || [];
       setResults(items);
@@ -39,13 +47,13 @@ export default function GameSearch({ onSelect }: Props) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [source]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => search(query), 350);
     return () => clearTimeout(debounceRef.current);
-  }, [query, search]);
+  }, [query, search, source]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -93,7 +101,7 @@ export default function GameSearch({ onSelect }: Props) {
           setQuery(game.name);
           setIsOpen(false);
           setSelectedIndex(-1);
-          onSelect(game.id);
+          onSelect(game.id, game.source || source);
         }
         break;
       case "Escape":
@@ -107,7 +115,31 @@ export default function GameSearch({ onSelect }: Props) {
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
-        <h2 className="card-title">Search for a Game</h2>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="card-title">Search for a Game</h2>
+          <div className="join join-horizontal">
+            <button
+              className={`join-item btn btn-xs ${source === "steam" ? "text-white border-[#2a475e] bg-[#2a475e] hover:bg-[#1b2838]" : "btn-ghost border border-base-300"}`}
+              onClick={() => { setSource("steam"); setResults([]); }}
+            >
+              <FaSteam className="w-3.5 h-3.5" /> Steam
+            </button>
+            <div className={igdbRemaining < igdbLimit && source === "igdb" ? "indicator" : ""}>
+              {igdbRemaining < igdbLimit && source === "igdb" && (
+                <span className={`indicator-item badge badge-sm aspect-square rounded-full p-0 text-xs font-bold ring-2 ring-base-100 text-white ${igdbExhausted ? "badge-error" : "bg-[#9146FF] border-[#9146FF]"}`}>
+                  {igdbRemaining}
+                </span>
+              )}
+              <button
+                className={`join-item btn btn-xs ${source === "igdb" ? "text-white border-[#9146FF] bg-[#9146FF] hover:bg-[#7c3ae6]" : "btn-ghost border border-base-300"}`}
+                onClick={() => { if (!igdbExhausted) { setSource("igdb"); setResults([]); } }}
+                disabled={igdbExhausted}
+              >
+                <HiGlobe className="w-3.5 h-3.5" /> All Games
+              </button>
+            </div>
+          </div>
+        </div>
         <div ref={wrapperRef} className="relative">
           <input
             id="game-search-input"
@@ -116,7 +148,8 @@ export default function GameSearch({ onSelect }: Props) {
             placeholder="Type a game name (e.g., Cyberpunk 2077)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => results.length > 0 && setIsOpen(true)}
+            onFocus={() => { setIsFocused(true); results.length > 0 && setIsOpen(true); }}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyDown}
             role="combobox"
             aria-expanded={isOpen}
@@ -125,7 +158,7 @@ export default function GameSearch({ onSelect }: Props) {
           />
           {loading ? (
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
-          ) : !query && (
+          ) : !query && !isFocused && (
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none flex items-center gap-0.5 text-xs">
               <kbd className="kbd kbd-xs">{isMac ? "⌘" : "Ctrl"}</kbd>
               <span>+</span>
@@ -149,16 +182,20 @@ export default function GameSearch({ onSelect }: Props) {
                         setQuery(game.name);
                         setIsOpen(false);
                         setSelectedIndex(-1);
-                        onSelect(game.id);
+                        onSelect(game.id, game.source || source);
                       }}
                       onMouseEnter={() => setSelectedIndex(index)}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={game.tiny_image}
-                        alt={game.name}
-                        className="w-12 h-auto rounded shrink-0"
-                      />
+                      {game.tiny_image ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={game.tiny_image}
+                          alt={game.name}
+                          className="w-12 h-8 object-contain rounded shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-8 rounded shrink-0 bg-base-300 flex items-center justify-center text-base-content/30 text-xs">?</div>
+                      )}
                       <span className="truncate">{game.name}</span>
                     </button>
                   </li>

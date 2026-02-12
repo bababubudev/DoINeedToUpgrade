@@ -6,6 +6,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.akamai.steamstatic.com",
       },
+      {
+        protocol: "https",
+        hostname: "images.igdb.com",
+      },
     ],
   },
 };

@@ -31,10 +31,13 @@ export type Platform = "windows" | "macos" | "linux";
 
 export type PlatformRequirements = Partial<Record<Platform, ParsedGameRequirements>>;
 
+export type GameSource = "steam" | "igdb";
+
 export interface GameSearchResult {
   id: number;
   name: string;
   tiny_image: string;
+  source: GameSource;
 }
 
 export interface GameDetails {
@@ -44,6 +47,7 @@ export interface GameDetails {
   requirements: ParsedGameRequirements;
   platformRequirements: PlatformRequirements;
   availablePlatforms: Platform[];
+  source?: GameSource;
 }
 
 export type ComparisonStatus = "pass" | "warn" | "fail" | "info";

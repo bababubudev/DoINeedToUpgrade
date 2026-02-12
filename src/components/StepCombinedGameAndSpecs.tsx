@@ -16,6 +16,8 @@ interface Props {
   onCheckCompatibility: () => void;
   loading: boolean;
   error: string | null;
+  igdbRemaining: number;
+  igdbLimit: number;
 }
 
 export default function StepCombinedGameAndSpecs({
@@ -28,6 +30,8 @@ export default function StepCombinedGameAndSpecs({
   onCheckCompatibility,
   loading,
   error,
+  igdbRemaining,
+  igdbLimit,
 }: Props) {
   const [editingSpecs, setEditingSpecs] = useState(false);
 
@@ -88,7 +92,7 @@ export default function StepCombinedGameAndSpecs({
 
       {/* Game search */}
       <div className="w-full">
-        <GameSearch onSelect={onGameSelect} />
+        <GameSearch onSelect={onGameSelect} igdbRemaining={igdbRemaining} igdbLimit={igdbLimit} />
       </div>
 
       {loading && (

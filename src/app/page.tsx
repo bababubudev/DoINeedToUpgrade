@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform } from "@/types";
+import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform, GameSource } from "@/types";
 import { HiCheckCircle } from "react-icons/hi";
 import { compareSpecs } from "@/lib/compareSpecs";
 import { computeVerdict } from "@/lib/computeVerdict";
@@ -73,6 +73,20 @@ function Home() {
   const [showStorageToast, setShowStorageToast] = useState(false);
   const [showUrlImportToast, setShowUrlImportToast] = useState(false);
   const [importedFromScanner, setImportedFromScanner] = useState(false);
+  const [lastGameSource, setLastGameSource] = useState<GameSource>("steam");
+  const [igdbRemaining, setIgdbRemaining] = useState(5);
+  const [igdbLimit, setIgdbLimit] = useState(5);
+
+  // Fetch IGDB usage from server on mount
+  useEffect(() => {
+    fetch("/api/igdb-usage")
+      .then((res) => res.json())
+      .then((data: { remaining: number; limit: number }) => {
+        setIgdbRemaining(data.remaining);
+        setIgdbLimit(data.limit);
+      })
+      .catch(() => {});
+  }, []);
 
   // Auto-dismiss URL import toast
   useEffect(() => {
@@ -267,19 +281,30 @@ function Home() {
     evaluateUnmatched(newSpecs);
   }
 
-  async function handleGameSelect(appid: number) {
+  async function handleGameSelect(id: number, source: GameSource = "steam") {
     setLoading(true);
     setError(null);
     setGame(null);
     setComparison(null);
     setManualMode(false);
+    setLastGameSource(source);
 
     try {
-      const res = await fetch(`/api/game?appid=${appid}`);
+      const params = new URLSearchParams({ appid: String(id), source });
+      const res = await fetch(`/api/game?${params}`);
+      if (res.status === 429) {
+        setIgdbRemaining(0);
+        setError("IGDB lookup limit reached. Try again in 24 hours.");
+        return;
+      }
       if (!res.ok) throw new Error("Failed to load game details");
 
-      const data: GameDetails = await res.json();
-      setGame(data);
+      const data = await res.json();
+      // Update remaining count from server response
+      if (source === "igdb" && typeof data.igdbRemaining === "number") {
+        setIgdbRemaining(data.igdbRemaining);
+      }
+      setGame(data as GameDetails);
 
       // Auto-select platform: prefer user's OS, fall back to first available
       const selectedPlatform = data.availablePlatforms.includes(userPlatform)
@@ -455,6 +480,9 @@ function Home() {
           loading={loading}
           error={error}
           showInfo={false}
+          igdbRemaining={igdbRemaining}
+          igdbLimit={igdbLimit}
+          initialSource={lastGameSource}
         />
       )}
 
@@ -496,6 +524,9 @@ function Home() {
           onManualMode={handleManualMode}
           loading={loading}
           error={error}
+          igdbRemaining={igdbRemaining}
+          igdbLimit={igdbLimit}
+          initialSource={lastGameSource}
         />
       )}
 

@@ -53,15 +53,6 @@ function VerdictCard({ result }: { result: VerdictResult }) {
     unknown: "bg-warning/20 text-warning",
   } as const;
 
-  if (!hasUpgrades) {
-    return (
-      <div className={`${cardColors[result.verdict]} rounded-box flex items-center gap-3 py-5 px-4`}>
-        <Icon className="w-6 h-6 shrink-0" />
-        <h3 className="text-base font-bold">{result.title}</h3>
-      </div>
-    );
-  }
-
   const contentColors = {
     pass: "bg-success/10",
     minimum: "bg-info/10",
@@ -83,27 +74,29 @@ function VerdictCard({ result }: { result: VerdictResult }) {
         </div>
       </div>
       <div className={`collapse-content px-4 ${contentColors[result.verdict]} rounded-b-box text-base-content`}>
-        <p className="text-sm text-base-content/70 mb-3 pt-3">{result.description}</p>
-        <div className="overflow-x-auto">
-          <table className="table table-sm w-full [&_tr]:border-base-content/10">
-            <thead>
-              <tr className="text-base-content/40">
-                <th>Component</th>
-                <th>Your Current</th>
-                <th>{isFail ? "Required" : "Recommended"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.upgradeItems.map((item) => (
-                <tr key={item.component} className="text-base-content/70">
-                  <td className="font-semibold">{item.component}</td>
-                  <td>{item.current}</td>
-                  <td>{item.required}</td>
+        <p className="text-sm text-base-content/70 pt-3">{result.description}</p>
+        {hasUpgrades && (
+          <div className="overflow-x-auto mt-3">
+            <table className="table table-sm w-full [&_tr]:border-base-content/10">
+              <thead>
+                <tr className="text-base-content/40">
+                  <th>Component</th>
+                  <th>Your Current</th>
+                  <th>{isFail ? "Required" : "Recommended"}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {result.upgradeItems.map((item) => (
+                  <tr key={item.component} className="text-base-content/70">
+                    <td className="font-semibold">{item.component}</td>
+                    <td>{item.current}</td>
+                    <td>{item.required}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -141,7 +134,7 @@ export default function StepResults({
           <img
             src={game.headerImage}
             alt={game.name}
-            className="w-36 sm:w-36 rounded shadow-md relative z-10"
+            className="w-28 sm:w-28 rounded shadow-md relative z-10"
           />
           <div className="relative z-10 text-center sm:text-left">
             <p className="text-base text-base-content/60">Do I need an upgrade for</p>

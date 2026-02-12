@@ -1,20 +1,24 @@
 "use client";
 
 import GameSearch from "@/components/GameSearch";
+import { GameSource } from "@/types";
 
 interface Props {
-  onSelect: (appid: number) => void;
+  onSelect: (id: number, source: GameSource) => void;
   onManualMode: () => void;
   loading: boolean;
   error: string | null;
   showInfo?: boolean;
+  igdbRemaining: number;
+  igdbLimit: number;
+  initialSource?: GameSource;
 }
 
-export default function StepGameSelect({ onSelect, onManualMode, loading, error, showInfo = true }: Props) {
+export default function StepGameSelect({ onSelect, onManualMode, loading, error, showInfo = true, igdbRemaining, igdbLimit, initialSource }: Props) {
   return (
     <div className="animate-fadeIn flex flex-col items-center gap-3 mt-8 py-2">
       <div className="w-full max-w-2xl">
-        <GameSearch onSelect={onSelect} />
+        <GameSearch onSelect={onSelect} igdbRemaining={igdbRemaining} igdbLimit={igdbLimit} initialSource={initialSource} />
       </div>
 
       {loading && (
@@ -39,7 +43,7 @@ export default function StepGameSelect({ onSelect, onManualMode, loading, error,
           <p className="text-sm text-base-content/70 leading-relaxed">
             <strong>Do I Need An Upgrade?</strong> checks whether your PC can run a
             game by comparing your hardware against its system requirements. Search
-            for any Steam game above, and we&apos;ll auto-detect your specs and tell
+            for any game above, and we&apos;ll auto-detect your specs and tell
             you if you&apos;re good to go or what you might need to upgrade.
           </p>
           <div className="flex flex-col gap-1 text-sm text-base-content/70 pt-1">
