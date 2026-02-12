@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseRequirements } from "@/lib/parseRequirements";
 import { igdbFetch } from "@/lib/igdb";
+import { getIgdbUsage, incrementIgdbUsage } from "@/lib/igdbRateLimit";
 import { Platform, ParsedGameRequirements, PlatformRequirements, GameRequirements, GameSource } from "@/types";
 
 function hasContent(reqs: GameRequirements | null): boolean {
@@ -17,7 +18,17 @@ export async function GET(request: NextRequest) {
   }
 
   if (source === "igdb") {
-    return fetchIGDBGame(id);
+    // Enforce rate limit in production
+    if (process.env.NODE_ENV !== "development") {
+      const usage = getIgdbUsage(request);
+      if (usage.exhausted) {
+        return NextResponse.json(
+          { error: "IGDB lookup limit reached. Try again in 24 hours.", remaining: 0 },
+          { status: 429 }
+        );
+      }
+    }
+    return fetchIGDBGame(id, request);
   }
 
   return fetchSteamGame(id);
@@ -97,7 +108,7 @@ const RAWG_PLATFORM_MAP: Record<string, Platform> = {
   linux: "linux",
 };
 
-async function fetchIGDBGame(id: string) {
+async function fetchIGDBGame(id: string, request: NextRequest) {
   try {
     // 1. Get game details from IGDB
     const igdbRes = await igdbFetch(
@@ -183,15 +194,27 @@ async function fetchIGDBGame(id: string) {
       ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${igdbGame.cover.image_id}.png`
       : rawgDetail.background_image ?? "";
 
-    return NextResponse.json({
+    const responseData = {
       appid: igdbGame.id,
       name: igdbGame.name,
       headerImage,
       requirements,
       platformRequirements,
       availablePlatforms,
-      source: "igdb",
-    });
+      source: "igdb" as const,
+      igdbRemaining: undefined as number | undefined,
+    };
+
+    // Increment usage in production
+    if (process.env.NODE_ENV !== "development") {
+      const { usage, cookieHeader } = incrementIgdbUsage(request);
+      responseData.igdbRemaining = usage.remaining;
+      const res = NextResponse.json(responseData);
+      res.headers.set("Set-Cookie", cookieHeader);
+      return res;
+    }
+
+    return NextResponse.json(responseData);
   } catch {
     return NextResponse.json({ error: "Failed to fetch game" }, { status: 500 });
   }

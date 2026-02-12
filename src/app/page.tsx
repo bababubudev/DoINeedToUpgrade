@@ -74,25 +74,19 @@ function Home() {
   const [showUrlImportToast, setShowUrlImportToast] = useState(false);
   const [importedFromScanner, setImportedFromScanner] = useState(false);
   const [lastGameSource, setLastGameSource] = useState<GameSource>("steam");
-  const [igdbUseCount, setIgdbUseCount] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    return parseInt(localStorage.getItem("igdbUseCount") || "0", 10);
-  });
+  const [igdbRemaining, setIgdbRemaining] = useState(5);
+  const [igdbLimit, setIgdbLimit] = useState(5);
 
-  const IGDB_USE_LIMIT = 5;
-  const isDev = process.env.NODE_ENV === "development";
-  const igdbRemaining = IGDB_USE_LIMIT - igdbUseCount;
-
+  // Fetch IGDB usage from server on mount
   useEffect(() => {
-    localStorage.setItem("igdbUseCount", String(igdbUseCount));
-  }, [igdbUseCount]);
-
-  // In dev, auto-reset when limit is reached
-  useEffect(() => {
-    if (isDev && igdbUseCount >= IGDB_USE_LIMIT) {
-      setIgdbUseCount(0);
-    }
-  }, [isDev, igdbUseCount]);
+    fetch("/api/igdb-usage")
+      .then((res) => res.json())
+      .then((data: { remaining: number; limit: number }) => {
+        setIgdbRemaining(data.remaining);
+        setIgdbLimit(data.limit);
+      })
+      .catch(() => {});
+  }, []);
 
   // Auto-dismiss URL import toast
   useEffect(() => {
@@ -270,9 +264,6 @@ function Home() {
   function goToStep(s: number) {
     setStep(s);
     setMaxReached((prev) => Math.max(prev, s));
-    if (s === 3 && lastGameSource === "igdb") {
-      setIgdbUseCount((c) => c + 1);
-    }
   }
 
   function evaluateUnmatched(s: UserSpecs) {
@@ -301,10 +292,19 @@ function Home() {
     try {
       const params = new URLSearchParams({ appid: String(id), source });
       const res = await fetch(`/api/game?${params}`);
+      if (res.status === 429) {
+        setIgdbRemaining(0);
+        setError("IGDB lookup limit reached. Try again in 24 hours.");
+        return;
+      }
       if (!res.ok) throw new Error("Failed to load game details");
 
-      const data: GameDetails = await res.json();
-      setGame(data);
+      const data = await res.json();
+      // Update remaining count from server response
+      if (source === "igdb" && typeof data.igdbRemaining === "number") {
+        setIgdbRemaining(data.igdbRemaining);
+      }
+      setGame(data as GameDetails);
 
       // Auto-select platform: prefer user's OS, fall back to first available
       const selectedPlatform = data.availablePlatforms.includes(userPlatform)
@@ -481,7 +481,7 @@ function Home() {
           error={error}
           showInfo={false}
           igdbRemaining={igdbRemaining}
-          igdbLimit={IGDB_USE_LIMIT}
+          igdbLimit={igdbLimit}
           initialSource={lastGameSource}
         />
       )}
@@ -525,7 +525,7 @@ function Home() {
           loading={loading}
           error={error}
           igdbRemaining={igdbRemaining}
-          igdbLimit={IGDB_USE_LIMIT}
+          igdbLimit={igdbLimit}
           initialSource={lastGameSource}
         />
       )}
