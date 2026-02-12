@@ -108,7 +108,7 @@ function parseSection(text: string): GameRequirements {
       result.cpu = value;
     } else if (key.includes("graphics") || key.includes("video") || key.includes("gpu")) {
       result.gpu = value;
-    } else if (key.includes("memory") || key.includes("ram")) {
+    } else if (key.includes("memory") || (key.includes("ram") && !key.includes("vram"))) {
       result.ram = value;
     } else if (key.includes("storage") || key.includes("hard") || key.includes("disk") || key.includes("space")) {
       result.storage = value;

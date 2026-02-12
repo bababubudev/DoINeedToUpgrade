@@ -80,7 +80,7 @@ async function fetchSteamGame(appid: string) {
 
 interface RAWGPlatformReq {
   platform: { id: number; name: string; slug: string };
-  requirements_en?: { minimum?: string; recommended?: string } | null;
+  requirements?: { minimum?: string; recommended?: string } | null;
 }
 
 interface RAWGGameDetail {
@@ -164,9 +164,9 @@ async function fetchIGDBGame(id: string) {
         const platformKey = RAWG_PLATFORM_MAP[p.platform.slug];
         if (!platformKey) continue;
 
-        const reqsEn = p.requirements_en;
-        if (reqsEn && (reqsEn.minimum || reqsEn.recommended)) {
-          const parsed = parseRequirements(reqsEn.minimum, reqsEn.recommended);
+        const reqs = p.requirements;
+        if (reqs && (reqs.minimum || reqs.recommended)) {
+          const parsed = parseRequirements(reqs.minimum, reqs.recommended);
           if (hasContent(parsed.minimum) || hasContent(parsed.recommended)) {
             platformRequirements[platformKey] = parsed;
             availablePlatforms.push(platformKey);

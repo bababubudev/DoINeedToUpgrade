@@ -175,10 +175,10 @@ export default function GameSearch({ onSelect }: Props) {
                         <img
                           src={game.tiny_image}
                           alt={game.name}
-                          className="w-12 h-auto rounded shrink-0"
+                          className="w-12 h-8 object-contain rounded shrink-0"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded shrink-0 bg-base-300 flex items-center justify-center text-base-content/30 text-lg">?</div>
+                        <div className="w-12 h-8 rounded shrink-0 bg-base-300 flex items-center justify-center text-base-content/30 text-xs">?</div>
                       )}
                       <span className="truncate">{game.name}</span>
                     </button>
