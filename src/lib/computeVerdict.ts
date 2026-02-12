@@ -14,6 +14,19 @@ export function computeVerdict(items: ComparisonItem[]): VerdictResult {
     (item) => item.minValue !== "—" || item.recValue !== "—"
   );
 
+  // No requirements were provided at all — let the user know
+  if (relevantItems.length === 0) {
+    return {
+      verdict: "pass",
+      title: "No system requirements were provided for this game",
+      description:
+        "We couldn't find any system requirements to compare against. This game may not have published its requirements yet.",
+      failedComponents: [],
+      warnComponents: [],
+      upgradeItems: [],
+    };
+  }
+
   const failedComponents: string[] = [];
   const warnComponents: string[] = [];
   const upgradeItems: UpgradeItem[] = [];

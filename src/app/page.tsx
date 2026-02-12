@@ -73,6 +73,26 @@ function Home() {
   const [showStorageToast, setShowStorageToast] = useState(false);
   const [showUrlImportToast, setShowUrlImportToast] = useState(false);
   const [importedFromScanner, setImportedFromScanner] = useState(false);
+  const [lastGameSource, setLastGameSource] = useState<GameSource>("steam");
+  const [igdbUseCount, setIgdbUseCount] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    return parseInt(localStorage.getItem("igdbUseCount") || "0", 10);
+  });
+
+  const IGDB_USE_LIMIT = 5;
+  const isDev = process.env.NODE_ENV === "development";
+  const igdbRemaining = IGDB_USE_LIMIT - igdbUseCount;
+
+  useEffect(() => {
+    localStorage.setItem("igdbUseCount", String(igdbUseCount));
+  }, [igdbUseCount]);
+
+  // In dev, auto-reset when limit is reached
+  useEffect(() => {
+    if (isDev && igdbUseCount >= IGDB_USE_LIMIT) {
+      setIgdbUseCount(0);
+    }
+  }, [isDev, igdbUseCount]);
 
   // Auto-dismiss URL import toast
   useEffect(() => {
@@ -250,6 +270,9 @@ function Home() {
   function goToStep(s: number) {
     setStep(s);
     setMaxReached((prev) => Math.max(prev, s));
+    if (s === 3 && lastGameSource === "igdb") {
+      setIgdbUseCount((c) => c + 1);
+    }
   }
 
   function evaluateUnmatched(s: UserSpecs) {
@@ -273,6 +296,7 @@ function Home() {
     setGame(null);
     setComparison(null);
     setManualMode(false);
+    setLastGameSource(source);
 
     try {
       const params = new URLSearchParams({ appid: String(id), source });
@@ -456,6 +480,9 @@ function Home() {
           loading={loading}
           error={error}
           showInfo={false}
+          igdbRemaining={igdbRemaining}
+          igdbLimit={IGDB_USE_LIMIT}
+          initialSource={lastGameSource}
         />
       )}
 
@@ -497,6 +524,9 @@ function Home() {
           onManualMode={handleManualMode}
           loading={loading}
           error={error}
+          igdbRemaining={igdbRemaining}
+          igdbLimit={IGDB_USE_LIMIT}
+          initialSource={lastGameSource}
         />
       )}
 

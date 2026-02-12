@@ -47,6 +47,9 @@ async function searchSteam(q: string) {
 interface IGDBGame {
   id: number;
   name: string;
+  category?: number;
+  version_parent?: number;
+  parent_game?: number;
   cover?: { image_id: string };
 }
 
@@ -54,7 +57,7 @@ async function searchIGDB(q: string) {
   try {
     const res = await igdbFetch(
       "games",
-      `search "${q.replace(/"/g, '\\"')}"; fields name,cover.image_id; limit 10;`
+      `search "${q.replace(/"/g, '\\"')}"; fields name,category,version_parent,parent_game,cover.image_id; limit 20;`
     );
 
     if (!res.ok) {
@@ -62,14 +65,25 @@ async function searchIGDB(q: string) {
     }
 
     const data: IGDBGame[] = await res.json();
-    const items = data.map((game) => ({
-      id: game.id,
-      name: game.name,
-      tiny_image: game.cover?.image_id
-        ? `https://images.igdb.com/igdb/image/upload/t_thumb/${game.cover.image_id}.png`
-        : "",
-      source: "igdb" as const,
-    }));
+    // Filter to base games only:
+    // - category 0 (main game, omitted in protobuf when default)
+    // - no version_parent (editions like Deluxe, Collector's, GOTY)
+    // - no parent_game (DLCs, seasons, mods, expansions)
+    const items = data
+      .filter((game) =>
+        (game.category ?? 0) === 0 &&
+        !game.version_parent &&
+        !game.parent_game
+      )
+      .slice(0, 10)
+      .map((game) => ({
+        id: game.id,
+        name: game.name,
+        tiny_image: game.cover?.image_id
+          ? `https://images.igdb.com/igdb/image/upload/t_thumb/${game.cover.image_id}.png`
+          : "",
+        source: "igdb" as const,
+      }));
 
     return NextResponse.json({ items });
   } catch {

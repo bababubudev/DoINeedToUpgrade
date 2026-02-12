@@ -1,24 +1,31 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { HiArrowRight } from "react-icons/hi";
+import { HiArrowRight, HiGlobe } from "react-icons/hi";
+import { FaSteam } from "react-icons/fa";
 import { GameSearchResult, GameSource } from "@/types";
 
 interface Props {
   onSelect: (id: number, source: GameSource) => void;
+  igdbRemaining: number;
+  igdbLimit: number;
+  initialSource?: GameSource;
 }
 
-export default function GameSearch({ onSelect }: Props) {
+export default function GameSearch({ onSelect, igdbRemaining, igdbLimit, initialSource = "steam" }: Props) {
   const isMac = useMemo(() => typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform), []);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GameSearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [source, setSource] = useState<GameSource>("steam");
+  const [source, setSource] = useState<GameSource>(initialSource);
+  const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
+
+  const igdbExhausted = igdbRemaining <= 0;
 
   const search = useCallback(async (term: string) => {
     if (term.length < 2) {
@@ -110,19 +117,27 @@ export default function GameSearch({ onSelect }: Props) {
       <div className="card-body">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="card-title">Search for a Game</h2>
-          <div className="join">
+          <div className="join join-horizontal">
             <button
-              className={`join-item btn btn-xs ${source === "steam" ? "btn-primary" : "btn-ghost"}`}
-              onClick={() => { setSource("steam"); setResults([]); setQuery(""); }}
+              className={`join-item btn btn-xs ${source === "steam" ? "text-white border-[#2a475e] bg-[#2a475e] hover:bg-[#1b2838]" : "btn-ghost border border-base-300"}`}
+              onClick={() => { setSource("steam"); setResults([]); }}
             >
-              Steam
+              <FaSteam className="w-3.5 h-3.5" /> Steam
             </button>
-            <button
-              className={`join-item btn btn-xs ${source === "igdb" ? "btn-primary" : "btn-ghost"}`}
-              onClick={() => { setSource("igdb"); setResults([]); setQuery(""); }}
-            >
-              All Games
-            </button>
+            <div className={igdbRemaining < igdbLimit && source === "igdb" ? "indicator" : ""}>
+              {igdbRemaining < igdbLimit && source === "igdb" && (
+                <span className={`indicator-item badge badge-sm aspect-square rounded-full p-0 text-xs font-bold ring-2 ring-base-100 text-white ${igdbExhausted ? "badge-error" : "bg-[#9146FF] border-[#9146FF]"}`}>
+                  {igdbRemaining}
+                </span>
+              )}
+              <button
+                className={`join-item btn btn-xs ${source === "igdb" ? "text-white border-[#9146FF] bg-[#9146FF] hover:bg-[#7c3ae6]" : "btn-ghost border border-base-300"}`}
+                onClick={() => { if (!igdbExhausted) { setSource("igdb"); setResults([]); } }}
+                disabled={igdbExhausted}
+              >
+                <HiGlobe className="w-3.5 h-3.5" /> All Games
+              </button>
+            </div>
           </div>
         </div>
         <div ref={wrapperRef} className="relative">
@@ -133,7 +148,8 @@ export default function GameSearch({ onSelect }: Props) {
             placeholder="Type a game name (e.g., Cyberpunk 2077)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => results.length > 0 && setIsOpen(true)}
+            onFocus={() => { setIsFocused(true); results.length > 0 && setIsOpen(true); }}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyDown}
             role="combobox"
             aria-expanded={isOpen}
@@ -142,7 +158,7 @@ export default function GameSearch({ onSelect }: Props) {
           />
           {loading ? (
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
-          ) : !query && (
+          ) : !query && !isFocused && (
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none flex items-center gap-0.5 text-xs">
               <kbd className="kbd kbd-xs">{isMac ? "⌘" : "Ctrl"}</kbd>
               <span>+</span>
