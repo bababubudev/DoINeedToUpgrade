@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HiArrowRight } from "react-icons/hi";
-import { GameSearchResult } from "@/types";
+import { GameSearchResult, GameSource } from "@/types";
 
 interface Props {
-  onSelect: (appid: number) => void;
+  onSelect: (id: number, source: GameSource) => void;
 }
 
 export default function GameSearch({ onSelect }: Props) {
@@ -15,6 +15,7 @@ export default function GameSearch({ onSelect }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [source, setSource] = useState<GameSource>("steam");
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
@@ -28,7 +29,7 @@ export default function GameSearch({ onSelect }: Props) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(term)}&source=${source}`);
       const data = await res.json();
       const items = data.items || [];
       setResults(items);
@@ -39,13 +40,13 @@ export default function GameSearch({ onSelect }: Props) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [source]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => search(query), 350);
     return () => clearTimeout(debounceRef.current);
-  }, [query, search]);
+  }, [query, search, source]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -93,7 +94,7 @@ export default function GameSearch({ onSelect }: Props) {
           setQuery(game.name);
           setIsOpen(false);
           setSelectedIndex(-1);
-          onSelect(game.id);
+          onSelect(game.id, game.source || source);
         }
         break;
       case "Escape":
@@ -107,7 +108,23 @@ export default function GameSearch({ onSelect }: Props) {
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body">
-        <h2 className="card-title">Search for a Game</h2>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="card-title">Search for a Game</h2>
+          <div className="join">
+            <button
+              className={`join-item btn btn-xs ${source === "steam" ? "btn-primary" : "btn-ghost"}`}
+              onClick={() => { setSource("steam"); setResults([]); setQuery(""); }}
+            >
+              Steam
+            </button>
+            <button
+              className={`join-item btn btn-xs ${source === "igdb" ? "btn-primary" : "btn-ghost"}`}
+              onClick={() => { setSource("igdb"); setResults([]); setQuery(""); }}
+            >
+              All Games
+            </button>
+          </div>
+        </div>
         <div ref={wrapperRef} className="relative">
           <input
             id="game-search-input"
@@ -149,16 +166,20 @@ export default function GameSearch({ onSelect }: Props) {
                         setQuery(game.name);
                         setIsOpen(false);
                         setSelectedIndex(-1);
-                        onSelect(game.id);
+                        onSelect(game.id, game.source || source);
                       }}
                       onMouseEnter={() => setSelectedIndex(index)}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={game.tiny_image}
-                        alt={game.name}
-                        className="w-12 h-auto rounded shrink-0"
-                      />
+                      {game.tiny_image ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={game.tiny_image}
+                          alt={game.name}
+                          className="w-12 h-auto rounded shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded shrink-0 bg-base-300 flex items-center justify-center text-base-content/30 text-lg">?</div>
+                      )}
                       <span className="truncate">{game.name}</span>
                     </button>
                   </li>

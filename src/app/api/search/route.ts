@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { igdbFetch } from "@/lib/igdb";
+import { GameSource } from "@/types";
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q");
+  const source = (request.nextUrl.searchParams.get("source") || "steam") as GameSource;
+
   if (!q) {
     return NextResponse.json({ items: [] });
   }
 
+  if (source === "igdb") {
+    return searchIGDB(q);
+  }
+
+  return searchSteam(q);
+}
+
+async function searchSteam(q: string) {
   try {
     const res = await fetch(
       `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(q)}&l=english&cc=US`,
@@ -22,11 +34,45 @@ export async function GET(request: NextRequest) {
         id: item.id,
         name: item.name,
         tiny_image: item.tiny_image,
+        source: "steam" as const,
       })
     );
 
     return NextResponse.json({ items });
   } catch {
     return NextResponse.json({ error: "Failed to search" }, { status: 500 });
+  }
+}
+
+interface IGDBGame {
+  id: number;
+  name: string;
+  cover?: { image_id: string };
+}
+
+async function searchIGDB(q: string) {
+  try {
+    const res = await igdbFetch(
+      "games",
+      `search "${q.replace(/"/g, '\\"')}"; fields name,cover.image_id; limit 10;`
+    );
+
+    if (!res.ok) {
+      return NextResponse.json({ error: "IGDB API error" }, { status: 502 });
+    }
+
+    const data: IGDBGame[] = await res.json();
+    const items = data.map((game) => ({
+      id: game.id,
+      name: game.name,
+      tiny_image: game.cover?.image_id
+        ? `https://images.igdb.com/igdb/image/upload/t_thumb/${game.cover.image_id}.png`
+        : "",
+      source: "igdb" as const,
+    }));
+
+    return NextResponse.json({ items });
+  } catch {
+    return NextResponse.json({ error: "Failed to search IGDB" }, { status: 500 });
   }
 }

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform } from "@/types";
+import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform, GameSource } from "@/types";
 import { HiCheckCircle } from "react-icons/hi";
 import { compareSpecs } from "@/lib/compareSpecs";
 import { computeVerdict } from "@/lib/computeVerdict";
@@ -267,7 +267,7 @@ function Home() {
     evaluateUnmatched(newSpecs);
   }
 
-  async function handleGameSelect(appid: number) {
+  async function handleGameSelect(id: number, source: GameSource = "steam") {
     setLoading(true);
     setError(null);
     setGame(null);
@@ -275,7 +275,8 @@ function Home() {
     setManualMode(false);
 
     try {
-      const res = await fetch(`/api/game?appid=${appid}`);
+      const params = new URLSearchParams({ appid: String(id), source });
+      const res = await fetch(`/api/game?${params}`);
       if (!res.ok) throw new Error("Failed to load game details");
 
       const data: GameDetails = await res.json();
