@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 import { HiSun, HiMoon } from "react-icons/hi";
 
 export default function ThemeToggle() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
-    if (saved === "dark") {
-      setDark(true);
-      document.documentElement.setAttribute("data-theme", "dark");
-    }
+    const isDark = saved !== "light";
+    setDark(isDark);
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
   }, []);
 
   function toggle() {

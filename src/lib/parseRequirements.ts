@@ -59,7 +59,7 @@ export function parseCPURequirement(text: string): ParsedCPUSpecs {
   let model: string | null = null;
   if (strippedText && strippedText.length > 2) {
     // Contains identifiable CPU brand/model markers
-    const hasModel = /intel|amd|ryzen|core\s*i[3579]|apple\s*m\d/i.test(strippedText);
+    const hasModel = /intel|amd|ryzen|core\s*i[3579]|\bi[3579]\b|apple\s*m\d/i.test(strippedText);
     if (hasModel) {
       model = strippedText;
     }

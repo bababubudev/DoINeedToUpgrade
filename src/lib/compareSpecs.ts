@@ -177,12 +177,21 @@ function familyAverageScore(
   candidates: string[],
   scores: Record<string, number>
 ): number | null {
+  // Detect "and up", "or better", "or higher", "or above" qualifiers
+  const isMinimumTier = /\b(and\s+up|or\s+better|or\s+higher|or\s+above)\b/i.test(reqText);
+
   for (const { pattern, filter } of CPU_FAMILY_PATTERNS) {
     if (!pattern.test(reqText)) continue;
     const members = candidates.filter(
       (c) => filter(c) && scores[c] != null
     );
     if (members.length === 0) continue;
+
+    // "i5 and up" means "at least an i5" → use minimum score in the family
+    // Plain "i5" → use average score as representative benchmark
+    if (isMinimumTier) {
+      return Math.min(...members.map((m) => scores[m]));
+    }
     const total = members.reduce((sum, m) => sum + scores[m], 0);
     return total / members.length;
   }
