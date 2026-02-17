@@ -92,22 +92,36 @@ function compareOS(userOS: string, reqOS: string): ComparisonStatus {
   );
 
   const normalizedUser = normalizeOSString(userOS);
-  const normalizedReq = normalizeOSString(reqOS);
-
   const userMatch = fuzzyMatchHardware(normalizedUser, samePlatformList);
-  const reqMatch = fuzzyMatchHardware(normalizedReq, samePlatformList);
 
-  if (userMatch && reqMatch) {
-    const userScore = osScores[userMatch];
-    const reqScore = osScores[reqMatch];
+  if (!userMatch || osScores[userMatch] == null) {
+    // Same platform but couldn't determine version ordering
+    return "pass";
+  }
 
-    if (userScore != null && reqScore != null) {
-      return userScore >= reqScore ? "pass" : "fail";
+  const userScore = osScores[userMatch];
+
+  // Split requirement on alternatives (e.g. "Windows 10/11" → ["Windows 10", "11"])
+  // and find the lowest matching score (the minimum requirement)
+  const alternatives = splitAlternatives(reqOS);
+  let bestReqScore: number | null = null;
+
+  for (const alt of alternatives) {
+    const normalizedAlt = normalizeOSString(alt);
+    const reqMatch = fuzzyMatchHardware(normalizedAlt, samePlatformList);
+    if (reqMatch && osScores[reqMatch] != null) {
+      if (bestReqScore === null || osScores[reqMatch] < bestReqScore) {
+        bestReqScore = osScores[reqMatch];
+      }
     }
   }
 
-  // Same platform but couldn't determine version ordering
-  return "pass";
+  if (bestReqScore === null) {
+    // Same platform but couldn't determine version ordering
+    return "pass";
+  }
+
+  return userScore >= bestReqScore ? "pass" : "fail";
 }
 
 function splitAlternatives(text: string): string[] {
@@ -199,10 +213,23 @@ function familyAverageScore(
 }
 
 /**
+ * Detect CPU platform from text (Intel vs AMD).
+ */
+function extractCPUPlatform(text: string): "intel" | "amd" | null {
+  const lower = text.toLowerCase();
+  if (lower.includes("intel") || /\b(core\s+)?i[3579]\b/.test(lower)) return "intel";
+  if (lower.includes("amd") || /\b(ryzen|athlon|fx[-\s]|phenom)\b/.test(lower)) return "amd";
+  return null;
+}
+
+/**
  * Compare CPU with fallback to spec-based comparison.
  * 1. Try model-based matching first (existing logic)
  * 2. Try family-average matching for broad requirements like "Intel i5"
  * 3. Fall back to spec-based comparison when model matching fails
+ *
+ * When the requirement lists platform-specific alternatives (e.g.
+ * "i7-3770K or FX-8350"), only compare against the user's platform.
  */
 function compareCPU(
   user: UserSpecs,
@@ -213,7 +240,22 @@ function compareCPU(
   if (!reqText) return "pass";
 
   // Try each alternative in the requirement text
-  const alternatives = splitAlternatives(reqText);
+  const allAlternatives = splitAlternatives(reqText);
+
+  // Prefer same-platform alternatives when available (e.g. Intel user
+  // should compare against the Intel requirement, not the AMD equivalent)
+  const userPlatform = user.cpu ? extractCPUPlatform(user.cpu) : null;
+  let alternatives = allAlternatives;
+  if (userPlatform) {
+    const samePlatform = allAlternatives.filter(
+      (alt) => {
+        const altPlatform = extractCPUPlatform(alt);
+        return altPlatform === userPlatform || altPlatform === null;
+      }
+    );
+    if (samePlatform.length > 0) alternatives = samePlatform;
+  }
+
   let bestStatus: ComparisonStatus = "info";
 
   for (const alt of alternatives) {

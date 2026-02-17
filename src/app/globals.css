@@ -57,3 +57,9 @@
 .animate-shake {
   animation: shake 0.5s ease-in-out;
 }
+
+@keyframes scroll-text {
+  0%, 5%   { transform: translateX(0); }
+  45%, 55% { transform: translateX(var(--scroll-distance)); }
+  95%, 100% { transform: translateX(0); }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { ComparisonItem, ComparisonStatus } from "@/types";
+import { useRef, useEffect, useState } from "react";
 
 interface Props {
   items: ComparisonItem[];
@@ -13,6 +14,57 @@ function cellColor(status: ComparisonStatus): string {
     case "warn":
     case "info": return "bg-warning/30";
   }
+}
+
+function ScrollingCell({ text, className }: { text: string; className: string }) {
+  const cellRef = useRef<HTMLTableCellElement>(null);
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const [overflowPx, setOverflowPx] = useState(0);
+  const [hovered, setHovered] = useState(false);
+
+  useEffect(() => {
+    const span = spanRef.current;
+    const cell = cellRef.current;
+    if (!span || !cell) return;
+
+    const measure = () => {
+      const overflow = span.scrollWidth - span.clientWidth;
+      setOverflowPx(overflow > 0 ? overflow : 0);
+    };
+
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(cell);
+    return () => observer.disconnect();
+  }, [text]);
+
+  const duration = Math.max(overflowPx * 50, 2000);
+  const shouldAnimate = overflowPx > 0 && hovered;
+
+  return (
+    <td
+      ref={cellRef}
+      className={`${className} px-3 overflow-hidden`}
+      title={text}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span
+        ref={spanRef}
+        className={shouldAnimate ? "inline-block whitespace-nowrap" : "block truncate"}
+        style={shouldAnimate ? {
+          animationName: "scroll-text",
+          animationDuration: `${duration}ms`,
+          animationTimingFunction: "ease-in-out",
+          animationIterationCount: "infinite",
+          "--scroll-distance": `-${overflowPx}px`,
+        } as React.CSSProperties : undefined}
+      >
+        {text}
+      </span>
+    </td>
+  );
 }
 
 export default function ComparisonResult({ items }: Props) {
@@ -35,8 +87,14 @@ export default function ComparisonResult({ items }: Props) {
                 <tr key={item.label}>
                   <td className="font-semibold">{item.label}</td>
                   <td className="whitespace-normal break-words">{item.userValue}</td>
-                  <td className={`text-sm max-w-[120px] sm:max-w-[200px] truncate ${cellColor(item.minStatus)}`} title={item.minValue}>{item.minValue}</td>
-                  <td className={`text-sm max-w-[120px] sm:max-w-[200px] truncate ${cellColor(item.recStatus)}`} title={item.recValue}>{item.recValue}</td>
+                  <ScrollingCell
+                    text={item.minValue}
+                    className={`text-sm max-w-[120px] sm:max-w-[200px] ${cellColor(item.minStatus)}`}
+                  />
+                  <ScrollingCell
+                    text={item.recValue}
+                    className={`text-sm max-w-[120px] sm:max-w-[200px] ${cellColor(item.recStatus)}`}
+                  />
                 </tr>
               ))}
             </tbody>
