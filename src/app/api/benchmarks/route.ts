@@ -45,6 +45,39 @@ function normalizeScores(
   return { list, scores };
 }
 
+/**
+ * Calibrate Geekbench-normalized scores to the static hand-curated scale.
+ * Uses overlapping entries (present in both datasets) to compute a median
+ * scaling ratio, then applies it to Geekbench-only entries so all scores
+ * end up on the same scale for reliable cross-source comparisons.
+ */
+function calibrateToStaticScale(
+  geekbenchScores: Record<string, number>,
+  staticScores: Record<string, number>
+): Record<string, number> {
+  const overlapping = Object.keys(geekbenchScores).filter(
+    (k) => staticScores[k] != null && geekbenchScores[k] > 0
+  );
+
+  if (overlapping.length < 3) {
+    // Not enough overlap to calibrate reliably — discard Geekbench scores
+    return {};
+  }
+
+  const ratios = overlapping
+    .map((k) => staticScores[k] / geekbenchScores[k])
+    .sort((a, b) => a - b);
+  const medianRatio = ratios[Math.floor(ratios.length / 2)];
+
+  const calibrated: Record<string, number> = {};
+  for (const [name, score] of Object.entries(geekbenchScores)) {
+    if (staticScores[name] != null) continue; // static takes priority anyway
+    calibrated[name] = Math.max(1, Math.round(score * medianRatio));
+  }
+
+  return calibrated;
+}
+
 function getStaticFallback(): BenchmarkResponse {
   return {
     cpuList: staticCpuList,
@@ -85,14 +118,24 @@ export async function GET() {
         .map((e) => {
           // Use OpenCL as the most universal score, fall back to vulkan/metal/cuda
           const score = e.opencl || e.vulkan || e.metal || e.cuda || 0;
-          return { name: e.name, score };
+          // Normalize GPU names to include vendor prefix for consistency with static data
+          let name = e.name;
+          if (name.startsWith("GeForce") && !name.startsWith("NVIDIA")) {
+            name = `NVIDIA ${name}`;
+          } else if (name.startsWith("Radeon") && !name.startsWith("AMD")) {
+            name = `AMD ${name}`;
+          }
+          return { name, score };
         })
         .filter((e) => e.name && e.score > 0)
     );
 
-    // Merge static data so existing entries are always available
-    const mergedCpuScores = { ...staticCpuScores, ...cpu.scores };
-    const mergedGpuScores = { ...staticGpuScores, ...gpu.scores };
+    // Calibrate Geekbench scores to the static scale, then merge
+    // (static scores take priority — they're hand-curated for gaming)
+    const calibratedCpuScores = calibrateToStaticScale(cpu.scores, staticCpuScores);
+    const calibratedGpuScores = calibrateToStaticScale(gpu.scores, staticGpuScores);
+    const mergedCpuScores = { ...calibratedCpuScores, ...staticCpuScores };
+    const mergedGpuScores = { ...calibratedGpuScores, ...staticGpuScores };
 
     const mergedCpuList = Array.from(
       new Set([...cpu.list, ...staticCpuList])

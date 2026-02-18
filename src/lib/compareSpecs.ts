@@ -495,6 +495,8 @@ export function compareSpecs(
   // If one column is unmatched but the other passes, promote info → pass
   if (cpuMinStatus === "info" && cpuRecStatus === "pass") cpuMinStatus = "pass";
   if (cpuRecStatus === "info" && cpuMinStatus === "pass") cpuRecStatus = "pass";
+  // Recommended reqs are always >= minimum: if rec passes, min must too
+  if (cpuMinStatus === "fail" && cpuRecStatus === "pass") cpuMinStatus = "pass";
 
   items.push({
     label: "Processor",
@@ -525,6 +527,8 @@ export function compareSpecs(
   }
   if (gpuMinStatus === "info" && gpuRecStatus === "pass") gpuMinStatus = "pass";
   if (gpuRecStatus === "info" && gpuMinStatus === "pass") gpuRecStatus = "pass";
+  // Recommended reqs are always >= minimum: if rec passes, min must too
+  if (gpuMinStatus === "fail" && gpuRecStatus === "pass") gpuMinStatus = "pass";
 
   items.push({
     label: "Graphics",

@@ -216,6 +216,10 @@ export const gpuList: string[] = [
   "NVIDIA GeForce GT 710",
   "NVIDIA GeForce GT 730",
   "NVIDIA GeForce GT 1030",
+  // NVIDIA GTX 400 series
+  "NVIDIA GeForce GTX 460",
+  "NVIDIA GeForce GTX 470",
+  "NVIDIA GeForce GTX 480",
   // NVIDIA GTX 500 series
   "NVIDIA GeForce GTX 550 Ti",
   "NVIDIA GeForce GTX 560",
@@ -295,7 +299,14 @@ export const gpuList: string[] = [
   // NVIDIA Quadro (workstation)
   "NVIDIA Quadro P2000",
   "NVIDIA Quadro P4000",
-  // AMD Radeon HD series
+  // AMD Radeon HD 5000/6000 series
+  "AMD Radeon HD 5770",
+  "AMD Radeon HD 5870",
+  "AMD Radeon HD 6850",
+  "AMD Radeon HD 6870",
+  "AMD Radeon HD 6950",
+  "AMD Radeon HD 6970",
+  // AMD Radeon HD 7000 series
   "AMD Radeon HD 7750",
   "AMD Radeon HD 7850",
   "AMD Radeon HD 7870",
@@ -634,6 +645,10 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA GeForce GT 710": 1,
   "NVIDIA GeForce GT 730": 2,
   "NVIDIA GeForce GT 1030": 6,
+  // NVIDIA GTX 400 series
+  "NVIDIA GeForce GTX 460": 2,
+  "NVIDIA GeForce GTX 470": 3,
+  "NVIDIA GeForce GTX 480": 4,
   // NVIDIA GTX 500 series
   "NVIDIA GeForce GTX 550 Ti": 3,
   "NVIDIA GeForce GTX 560": 4,
@@ -713,7 +728,14 @@ export const gpuScores: Record<string, number> = {
   // NVIDIA Quadro (workstation)
   "NVIDIA Quadro P2000": 15,
   "NVIDIA Quadro P4000": 22,
-  // AMD Radeon HD series
+  // AMD Radeon HD 5000/6000 series
+  "AMD Radeon HD 5770": 2,
+  "AMD Radeon HD 5870": 3,
+  "AMD Radeon HD 6850": 3,
+  "AMD Radeon HD 6870": 4,
+  "AMD Radeon HD 6950": 5,
+  "AMD Radeon HD 6970": 6,
+  // AMD Radeon HD 7000 series
   "AMD Radeon HD 7750": 4,
   "AMD Radeon HD 7850": 6,
   "AMD Radeon HD 7870": 7,
