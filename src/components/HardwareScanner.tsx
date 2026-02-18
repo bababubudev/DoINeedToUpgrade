@@ -36,10 +36,10 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   macos: {
     label: "macOS",
     appFiles: [
-      { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.zip" },
-      { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.zip" },
+      { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.dmg" },
+      { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.dmg" },
     ],
-    appInstructions: "Unzip the file, then right-click the app and choose Open — or double-click the included Run Scanner file.",
+    appInstructions: "Open the DMG, then right-click the app and choose Open.",
   },
   linux: {
     label: "Linux",

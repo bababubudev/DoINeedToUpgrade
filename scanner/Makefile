@@ -1,4 +1,4 @@
-.PHONY: all clean windows mac linux mac-intel mac-arm zip appimage-cache icon
+.PHONY: all clean windows mac linux mac-intel mac-arm zip dmg appimage-cache icon
 
 OUTPUT_DIR = ../public/downloads
 APP_NAME = DoINeedAnUpgrade
@@ -71,6 +71,7 @@ mac-intel: $(OUTPUT_DIR) icon
 		'  <string>10.13</string>' \
 		'</dict>' \
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/Info.plist"
+	@codesign --force --deep -s - "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app"
 
 mac-arm: $(OUTPUT_DIR) icon
 	@echo "Building macOS Apple Silicon .app bundle (Swift GUI)..."
@@ -102,6 +103,7 @@ mac-arm: $(OUTPUT_DIR) icon
 		'  <string>11.0</string>' \
 		'</dict>' \
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Info.plist"
+	@codesign --force --deep -s - "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app"
 
 APPIMAGE_CACHE = .appimage-cache
 
@@ -148,8 +150,30 @@ zip: mac
 	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-AppleSilicon.zip $(APP_NAME)-Mac-AppleSilicon.app "Run Scanner.command"
 	@rm -f "$(OUTPUT_DIR)/Run Scanner.command"
 
+# Create DMG disk images for distribution
+dmg: mac
+	@echo "Creating DMG files for macOS apps..."
+	@rm -rf .dmg-stage
+	@# Intel DMG
+	@mkdir -p .dmg-stage/intel
+	@cp -R "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app" ".dmg-stage/intel/$(APP_NAME).app"
+	@xattr -cr ".dmg-stage/intel/$(APP_NAME).app"
+	@cp "Run Scanner.command" ".dmg-stage/intel/Run Scanner.command"
+	@chmod +x ".dmg-stage/intel/Run Scanner.command"
+	@hdiutil create -volname "$(APP_NAME)" -srcfolder .dmg-stage/intel \
+		-ov -format UDZO "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.dmg"
+	@# Apple Silicon DMG
+	@mkdir -p .dmg-stage/arm
+	@cp -R "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app" ".dmg-stage/arm/$(APP_NAME).app"
+	@xattr -cr ".dmg-stage/arm/$(APP_NAME).app"
+	@cp "Run Scanner.command" ".dmg-stage/arm/Run Scanner.command"
+	@chmod +x ".dmg-stage/arm/Run Scanner.command"
+	@hdiutil create -volname "$(APP_NAME)" -srcfolder .dmg-stage/arm \
+		-ov -format UDZO "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.dmg"
+	@rm -rf .dmg-stage
+
 clean:
 	rm -rf $(OUTPUT_DIR)/$(APP_NAME)*
 	rm -rf $(APPIMAGE_CACHE)
-	rm -rf .icon-cache
+	rm -rf .icon-cache .dmg-stage
 	rm -f rsrc_windows_*.syso
