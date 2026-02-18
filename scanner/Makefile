@@ -142,8 +142,11 @@ zip: mac
 	@echo "Creating zip files for macOS apps..."
 	@xattr -cr "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app"
 	@xattr -cr "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app"
-	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-Intel.zip $(APP_NAME)-Mac-Intel.app
-	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-AppleSilicon.zip $(APP_NAME)-Mac-AppleSilicon.app
+	@chmod +x "Run Scanner.command"
+	@cp "Run Scanner.command" "$(OUTPUT_DIR)/Run Scanner.command"
+	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-Intel.zip $(APP_NAME)-Mac-Intel.app "Run Scanner.command"
+	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-AppleSilicon.zip $(APP_NAME)-Mac-AppleSilicon.app "Run Scanner.command"
+	@rm -f "$(OUTPUT_DIR)/Run Scanner.command"
 
 clean:
 	rm -rf $(OUTPUT_DIR)/$(APP_NAME)*

@@ -39,8 +39,7 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
       { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.zip" },
       { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.zip" },
     ],
-    appInstructions: "Unzip the file, then run this command in Terminal to open the app:",
-    runCommand: "xattr -cr ~/Downloads/DoINeedAnUpgrade-Mac-*.app && open ~/Downloads/DoINeedAnUpgrade-Mac-*.app",
+    appInstructions: "Unzip the file, then right-click the app and choose Open — or double-click the included Run Scanner file.",
   },
   linux: {
     label: "Linux",
