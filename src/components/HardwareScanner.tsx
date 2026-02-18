@@ -39,7 +39,8 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
       { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.dmg" },
       { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.dmg" },
     ],
-    appInstructions: "Open the DMG, then right-click the app and choose Open.",
+    appInstructions: "Open the DMG, then right-click the app and choose Open. If macOS still blocks it, run this in Terminal:",
+    runCommand: "xattr -cr /Volumes/DoINeedAnUpgrade/*.app && open /Volumes/DoINeedAnUpgrade/*.app",
   },
   linux: {
     label: "Linux",
