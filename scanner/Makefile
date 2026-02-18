@@ -28,6 +28,12 @@ icon:
 	@rm -rf $(ICONSET_DIR)
 
 windows: $(OUTPUT_DIR)
+	@echo "Generating Windows icon sizes..."
+	@sips -z 16 16   $(ICON_SRC) --out winres/icon-16.png > /dev/null
+	@sips -z 32 32   $(ICON_SRC) --out winres/icon-32.png > /dev/null
+	@sips -z 48 48   $(ICON_SRC) --out winres/icon-48.png > /dev/null
+	@sips -z 64 64   $(ICON_SRC) --out winres/icon-64.png > /dev/null
+	@sips -z 256 256 $(ICON_SRC) --out winres/icon.png    > /dev/null
 	@echo "Generating Windows resources..."
 	@cd . && go run github.com/tc-hib/go-winres@latest make --in winres/winres.json
 	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H=windowsgui" -o $(OUTPUT_DIR)/$(APP_NAME).exe .
