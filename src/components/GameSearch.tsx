@@ -151,6 +151,7 @@ export default function GameSearch({ onSelect, igdbRemaining, igdbLimit, initial
             onFocus={() => { setIsFocused(true); results.length > 0 && setIsOpen(true); }}
             onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyDown}
+            autoComplete="off"
             role="combobox"
             aria-expanded={isOpen}
             aria-autocomplete="list"
@@ -160,7 +161,7 @@ export default function GameSearch({ onSelect, igdbRemaining, igdbLimit, initial
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
           ) : !query && !isFocused && (
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none flex items-center gap-0.5 text-xs">
-              <kbd className="kbd kbd-xs">{isMac ? "⌘" : "Ctrl"}</kbd>
+              <kbd className="kbd kbd-xs">{isMac ? "⌘" : "ctrl"}</kbd>
               <span>+</span>
               <kbd className="kbd kbd-xs">k</kbd>
             </span>
