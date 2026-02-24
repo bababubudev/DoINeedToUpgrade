@@ -496,7 +496,9 @@ export function compareSpecs(
   if (cpuMinStatus === "info" && cpuRecStatus === "pass") cpuMinStatus = "pass";
   if (cpuRecStatus === "info" && cpuMinStatus === "pass") cpuRecStatus = "pass";
   // Recommended reqs are always >= minimum: if rec passes, min must too
-  if (cpuMinStatus === "fail" && cpuRecStatus === "pass") cpuMinStatus = "pass";
+  // Only applies when recommended actually specifies a CPU requirement; an empty
+  // recommended CPU (vacuously "pass") must not override a real minimum failure.
+  if (cpuMinStatus === "fail" && cpuRecStatus === "pass" && rec.cpu) cpuMinStatus = "pass";
 
   items.push({
     label: "Processor",
@@ -528,7 +530,8 @@ export function compareSpecs(
   if (gpuMinStatus === "info" && gpuRecStatus === "pass") gpuMinStatus = "pass";
   if (gpuRecStatus === "info" && gpuMinStatus === "pass") gpuRecStatus = "pass";
   // Recommended reqs are always >= minimum: if rec passes, min must too
-  if (gpuMinStatus === "fail" && gpuRecStatus === "pass") gpuMinStatus = "pass";
+  // Only applies when recommended actually specifies a GPU requirement.
+  if (gpuMinStatus === "fail" && gpuRecStatus === "pass" && rec.gpu) gpuMinStatus = "pass";
 
   items.push({
     label: "Graphics",
