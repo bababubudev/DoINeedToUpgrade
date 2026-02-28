@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { GameDetails, GameRequirements, VerdictResult, ComparisonItem, Platform } from "@/types";
+import { GameDetails, GameRequirements, VerdictResult, ComparisonItem, Platform, FpsEstimate, PlaySettings } from "@/types";
 import ComparisonResult from "@/components/ComparisonResult";
 import RequirementsEditor from "@/components/RequirementsEditor";
 import { HiCheckCircle, HiXCircle, HiQuestionMarkCircle, HiInformationCircle, HiChevronDown, HiExclamation, HiEmojiSad } from "react-icons/hi";
@@ -26,6 +26,22 @@ interface Props {
   userPlatform: Platform;
   availablePlatforms: Platform[];
   onPlatformChange: (platform: Platform) => void;
+  fpsEstimate?: FpsEstimate | null;
+  playSettings?: PlaySettings;
+}
+
+const qualityLabels: Record<string, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  ultra: "Ultra",
+};
+
+function fpsColor(mid: number): string {
+  if (mid < 30) return "text-error";
+  if (mid < 60) return "text-warning";
+  if (mid < 90) return "text-success";
+  return "text-info";
 }
 
 const verdictIcons = {
@@ -116,6 +132,8 @@ export default function StepResults({
   userPlatform,
   availablePlatforms,
   onPlatformChange,
+  fpsEstimate,
+  playSettings,
 }: Props) {
   const [showEditor, setShowEditor] = useState(false);
 
@@ -182,6 +200,19 @@ export default function StepResults({
 
       {comparison && (
         <ComparisonResult items={comparison} />
+      )}
+
+      {fpsEstimate && fpsEstimate.confidence !== "none" && playSettings && (
+        <div className="flex flex-wrap items-center gap-2 px-1 text-sm text-base-content/60">
+          <span>Estimated at {playSettings.resolution} / {qualityLabels[playSettings.quality]}:</span>
+          <span className={`font-semibold ${fpsColor(fpsEstimate.mid)}`}>
+            ~{fpsEstimate.low}–{fpsEstimate.high} FPS
+          </span>
+          {fpsEstimate.confidence === "limited" && (
+            <span className="text-xs text-base-content/40">(rough estimate)</span>
+          )}
+          <span className="text-xs text-base-content/40">· based on hardware scores</span>
+        </div>
       )}
 
       <div>

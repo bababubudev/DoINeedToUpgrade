@@ -76,3 +76,35 @@ export interface ComparisonItem {
   minStatus: ComparisonStatus;
   recStatus: ComparisonStatus;
 }
+
+export type Resolution = "1080p" | "1440p" | "4k";
+export type QualityPreset = "low" | "medium" | "high" | "ultra";
+
+export interface PlaySettings {
+  resolution: Resolution;
+  quality: QualityPreset;
+}
+
+export interface HardwareScores {
+  userGpuScore: number | null;
+  recGpuScore: number | null;
+  minGpuScore: number | null;
+  userCpuScore: number | null;
+  recCpuScore: number | null;
+  minCpuScore: number | null;
+}
+
+export type FpsConfidence = "good" | "limited" | "none";
+
+export interface FpsEstimate {
+  low: number;
+  high: number;
+  mid: number;
+  bottleneck: "gpu" | "cpu" | "balanced";
+  confidence: FpsConfidence;
+}
+
+export interface CompareSpecsResult {
+  items: ComparisonItem[];
+  scores: HardwareScores;
+}

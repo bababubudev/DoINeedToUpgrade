@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform, GameSource } from "@/types";
+import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform, GameSource, PlaySettings, HardwareScores } from "@/types";
 import { HiCheckCircle } from "react-icons/hi";
 import { compareSpecs } from "@/lib/compareSpecs";
+import { estimateFps } from "@/lib/fpsEstimate";
 import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
 import { detectClientSpecs } from "@/lib/detectClientSpecs";
@@ -76,6 +77,8 @@ function Home() {
   const [lastGameSource, setLastGameSource] = useState<GameSource>("steam");
   const [igdbRemaining, setIgdbRemaining] = useState(5);
   const [igdbLimit, setIgdbLimit] = useState(5);
+  const [playSettings, setPlaySettings] = useState<PlaySettings>({ resolution: "1080p", quality: "high" });
+  const [hardwareScores, setHardwareScores] = useState<HardwareScores | null>(null);
 
   // Fetch IGDB usage from server on mount
   useEffect(() => {
@@ -150,8 +153,9 @@ function Home() {
               const hasRec = Object.values(newRec).some((v) => v.trim() !== "");
               const minArg = hasMin ? newMin : null;
               const recArg = hasRec ? newRec : null;
-              const result = compareSpecs(decoded, minArg, recArg, cpuScores, gpuScores);
-              setComparison(result);
+              const { items: compItems, scores } = compareSpecs(decoded, minArg, recArg, cpuScores, gpuScores);
+              setComparison(compItems);
+              setHardwareScores(scores);
               setSpecsConfirmed(true);
               setSpecsDirty(false);
               setStep(3);
@@ -188,6 +192,17 @@ function Home() {
           setUserPlatform(detected);
           setDetecting(false);
         }
+      }
+    } catch {
+      // ignore corrupt data
+    }
+
+    // Restore play settings from localStorage
+    try {
+      const rawPlay = localStorage.getItem("playSettings");
+      if (rawPlay) {
+        const parsed = JSON.parse(rawPlay);
+        if (parsed?.resolution && parsed?.quality) setPlaySettings(parsed);
       }
     } catch {
       // ignore corrupt data
@@ -247,6 +262,7 @@ function Home() {
   }, [step, importedFromScanner, manualMode]);
 
   const verdict = comparison ? computeVerdict(comparison) : null;
+  const fpsEstimate = hardwareScores ? estimateFps(hardwareScores, playSettings) : null;
 
   const runComparison = useCallback(
     (min?: GameRequirements, rec?: GameRequirements) => {
@@ -254,8 +270,9 @@ function Home() {
       const recR = rec ?? recReqs;
       const minArg = hasAnyField(minR) ? minR : null;
       const recArg = hasAnyField(recR) ? recR : null;
-      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
-      setComparison(result);
+      const { items: compItems, scores } = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+      setComparison(compItems);
+      setHardwareScores(scores);
       setSpecsDirty(false);
     },
     [specs, minReqs, recReqs, cpuScores, gpuScores]
@@ -322,8 +339,9 @@ function Home() {
       if (importedFromScanner || specsConfirmed) {
         const minArg = hasAnyField(newMin) ? newMin : null;
         const recArg = hasAnyField(newRec) ? newRec : null;
-        const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
-        setComparison(result);
+        const { items: compItems, scores } = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+        setComparison(compItems);
+        setHardwareScores(scores);
         setSpecsDirty(false);
         goToStep(3);
       } else {
@@ -369,6 +387,7 @@ function Home() {
   function handleCheckAnother() {
     setGame(null);
     setComparison(null);
+    setHardwareScores(null);
     setMinReqs({ ...emptyReqs });
     setRecReqs({ ...emptyReqs });
     setManualMode(false);
@@ -417,6 +436,11 @@ function Home() {
     runComparison(min, rec);
   }
 
+  function handlePlaySettingsChange(settings: PlaySettings) {
+    setPlaySettings(settings);
+    localStorage.setItem("playSettings", JSON.stringify(settings));
+  }
+
   function handlePlatformChange(newPlatform: Platform) {
     if (!game) return;
     setPlatform(newPlatform);
@@ -428,8 +452,9 @@ function Home() {
     if (specsConfirmed) {
       const minArg = hasAnyField(newMin) ? newMin : null;
       const recArg = hasAnyField(newRec) ? newRec : null;
-      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
-      setComparison(result);
+      const { items: compItems, scores } = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+      setComparison(compItems);
+      setHardwareScores(scores);
       setSpecsDirty(false);
     }
   }
@@ -467,6 +492,8 @@ function Home() {
           showStorageToast={false}
           onToastShown={() => {}}
           hideBack
+          playSettings={playSettings}
+          onPlaySettingsChange={handlePlaySettingsChange}
           confirmLabel="Continue"
           showInfo
         />
@@ -499,6 +526,8 @@ function Home() {
             detecting={detecting}
             unmatchedFields={unmatchedFields}
             hideSubmit
+            playSettings={playSettings}
+            onPlaySettingsChange={handlePlaySettingsChange}
           />
           <RequirementsEditor
             minimum={minReqs}
@@ -549,6 +578,8 @@ function Home() {
           onClearSaved={handleClearSavedSpecs}
           showStorageToast={showStorageToast}
           onToastShown={() => setShowStorageToast(false)}
+          playSettings={playSettings}
+          onPlaySettingsChange={handlePlaySettingsChange}
         />
       )}
 
@@ -565,6 +596,8 @@ function Home() {
             detecting={detecting}
             unmatchedFields={unmatchedFields}
             hideSubmit
+            playSettings={playSettings}
+            onPlaySettingsChange={handlePlaySettingsChange}
           />
           <RequirementsEditor
             minimum={minReqs}
@@ -599,6 +632,8 @@ function Home() {
           userPlatform={userPlatform}
           availablePlatforms={game?.availablePlatforms ?? []}
           onPlatformChange={handlePlatformChange}
+          fpsEstimate={fpsEstimate}
+          playSettings={playSettings}
         />
       )}
 

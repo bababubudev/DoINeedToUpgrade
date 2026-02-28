@@ -1,4 +1,4 @@
-import { UserSpecs, GameRequirements, ComparisonItem, ComparisonStatus } from "@/types";
+import { UserSpecs, GameRequirements, ComparisonItem, ComparisonStatus, HardwareScores, CompareSpecsResult } from "@/types";
 import { osList, osScores } from "@/lib/hardwareData";
 import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
 import { parseCPURequirement, ParsedCPUSpecs } from "@/lib/parseRequirements";
@@ -468,7 +468,7 @@ export function compareSpecs(
   recommended: GameRequirements | null,
   cpuScores: Record<string, number>,
   gpuScores: Record<string, number>
-): ComparisonItem[] {
+): CompareSpecsResult {
   const min = minimum ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
   const rec = recommended ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
 
@@ -564,5 +564,22 @@ export function compareSpecs(
     recStatus: compareNumeric(user.storageGB, rec.storage),
   });
 
-  return items;
+  // Extract GPU/CPU scores for FPS estimation
+  const userGpuMatch = fuzzyMatchHardware(cleanedGPU, Object.keys(gpuScores));
+  const recGpuMatch  = rec.gpu  ? fuzzyMatchHardware(rec.gpu,  Object.keys(gpuScores)) : null;
+  const minGpuMatch  = min.gpu  ? fuzzyMatchHardware(min.gpu,  Object.keys(gpuScores)) : null;
+  const userCpuMatch = user.cpu ? fuzzyMatchHardware(user.cpu, Object.keys(cpuScores)) : null;
+  const recCpuMatch  = rec.cpu  ? fuzzyMatchHardware(rec.cpu,  Object.keys(cpuScores)) : null;
+  const minCpuMatch  = min.cpu  ? fuzzyMatchHardware(min.cpu,  Object.keys(cpuScores)) : null;
+
+  const scores: HardwareScores = {
+    userGpuScore: userGpuMatch ? (gpuScores[userGpuMatch] ?? null) : null,
+    recGpuScore:  recGpuMatch  ? (gpuScores[recGpuMatch]  ?? null) : null,
+    minGpuScore:  minGpuMatch  ? (gpuScores[minGpuMatch]  ?? null) : null,
+    userCpuScore: userCpuMatch ? (cpuScores[userCpuMatch] ?? null) : null,
+    recCpuScore:  recCpuMatch  ? (cpuScores[recCpuMatch]  ?? null) : null,
+    minCpuScore:  minCpuMatch  ? (cpuScores[minCpuMatch]  ?? null) : null,
+  };
+
+  return { items, scores };
 }

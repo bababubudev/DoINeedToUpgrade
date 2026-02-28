@@ -1,6 +1,6 @@
 "use client";
 
-import { UserSpecs, DetectionSource } from "@/types";
+import { UserSpecs, DetectionSource, PlaySettings, Resolution, QualityPreset } from "@/types";
 import AutocompleteInput from "./AutocompleteInput";
 import { osList } from "@/lib/hardwareData";
 import { HiRefresh, HiExclamation, HiInformationCircle } from "react-icons/hi";
@@ -16,6 +16,8 @@ interface Props {
   unmatchedFields?: string[];
   hideSubmit?: boolean;
   highlightEmpty?: boolean;
+  playSettings?: PlaySettings;
+  onPlaySettingsChange?: (settings: PlaySettings) => void;
 }
 
 const sourceLabels: Record<DetectionSource, string> = {
@@ -23,7 +25,7 @@ const sourceLabels: Record<DetectionSource, string> = {
   script: "Detected via hardware scan",
 };
 
-export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList, detecting, unmatchedFields = [], hideSubmit = false, highlightEmpty = false }: Props) {
+export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList, gpuList, detecting, unmatchedFields = [], hideSubmit = false, highlightEmpty = false, playSettings, onPlaySettingsChange }: Props) {
   const isAuto = specs.detectionSource === "auto";
   const isScript = specs.detectionSource === "script";
   const manual = specs.manualFields ?? [];
@@ -205,6 +207,49 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
             </div>
           </div>
         </div>
+
+        {onPlaySettingsChange && playSettings && (
+          <div className="collapse collapse-arrow bg-base-200/50 rounded-box mt-4">
+            <input type="checkbox" className="peer" />
+            <div className="collapse-title text-sm font-medium text-base-content/60 !py-3 !px-4">
+              Advanced: Display Settings <span className="text-xs font-normal">(optional, for FPS estimate)</span>
+            </div>
+            <div className="collapse-content">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="form-control gap-1">
+                  <label className="label-text text-sm font-medium">Target Resolution</label>
+                  <div className="join">
+                    {(["1080p", "1440p", "4k"] as Resolution[]).map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        className={`join-item btn btn-sm ${playSettings.resolution === r ? "btn-primary" : "btn-ghost"}`}
+                        onClick={() => onPlaySettingsChange({ ...playSettings, resolution: r })}
+                      >
+                        {r === "4k" ? "4K" : r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-control gap-1">
+                  <label className="label-text text-sm font-medium">Graphics Quality</label>
+                  <div className="join">
+                    {(["low", "medium", "high", "ultra"] as QualityPreset[]).map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        className={`join-item btn btn-sm capitalize ${playSettings.quality === q ? "btn-primary" : "btn-ghost"}`}
+                        onClick={() => onPlaySettingsChange({ ...playSettings, quality: q })}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

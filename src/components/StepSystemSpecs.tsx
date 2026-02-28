@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserSpecs, GameDetails, Platform } from "@/types";
+import { UserSpecs, GameDetails, Platform, PlaySettings } from "@/types";
 import SystemSpecs from "@/components/SystemSpecs";
 import HardwareScanner from "@/components/HardwareScanner";
 import { HiX, HiCheckCircle, HiExclamation } from "react-icons/hi";
@@ -27,6 +27,8 @@ interface Props {
   hideBack?: boolean;
   confirmLabel?: string;
   showInfo?: boolean;
+  playSettings?: PlaySettings;
+  onPlaySettingsChange?: (settings: PlaySettings) => void;
 }
 
 export default function StepSystemSpecs({
@@ -49,6 +51,8 @@ export default function StepSystemSpecs({
   hideBack,
   confirmLabel,
   showInfo,
+  playSettings,
+  onPlaySettingsChange,
 }: Props) {
   const [toastVisible, setToastVisible] = useState(!!showStorageToast);
   const [toastExiting, setToastExiting] = useState(false);
@@ -190,6 +194,8 @@ export default function StepSystemSpecs({
           unmatchedFields={unmatchedFields}
           hideSubmit
           highlightEmpty={highlightEmpty}
+          playSettings={playSettings}
+          onPlaySettingsChange={onPlaySettingsChange}
         />
 
         <div className={`flex ${hideBack ? "justify-end" : "justify-between"} items-center`}>
