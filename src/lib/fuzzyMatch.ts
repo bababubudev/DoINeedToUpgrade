@@ -21,11 +21,33 @@ export function fuzzyMatchHardware(
 ): string | null {
   if (!input.trim()) return null;
 
+  // Split on "or" before matching so that tokens from one alternative
+  // (e.g. "AMD Ryzen 5 2400G") don't pollute the match for another
+  // (e.g. "Intel i5-6600K"). Match each part independently and keep the best.
+  const parts = input.split(/\bor\b/i).map((p) => p.trim()).filter((p) => p.length > 0);
+
+  let bestCandidate: string | null = null;
+  let bestNorm = 0;
+  let bestRaw = 0;
+
+  for (const part of parts) {
+    const [candidate, norm, raw] = matchPart(part, candidates);
+    if (norm >= 0.6 && (norm > bestNorm || (norm === bestNorm && raw > bestRaw))) {
+      bestNorm = norm;
+      bestRaw = raw;
+      bestCandidate = candidate;
+    }
+  }
+
+  return bestCandidate;
+}
+
+function matchPart(input: string, candidates: string[]): [string | null, number, number] {
   const cleaned = stripSpecPatterns(input);
   const allInputTokens = tokenize(cleaned);
   const hasSeries = allInputTokens.includes("series");
   const inputTokens = allInputTokens.filter((t) => !NOISE_WORDS.has(t));
-  if (inputTokens.length === 0) return null;
+  if (inputTokens.length === 0) return [null, 0, 0];
 
   let bestCandidate: string | null = null;
   let bestScore = 0;
@@ -49,10 +71,8 @@ export function fuzzyMatchHardware(
       }
     }
 
-    // Normalize to 0-1 range
     const normalized = maxPossible > 0 ? score / maxPossible : 0;
 
-    // When normalized scores tie, prefer the more specific candidate (higher raw score)
     if (normalized > bestScore || (normalized === bestScore && score > bestRawScore)) {
       bestScore = normalized;
       bestRawScore = score;
@@ -60,8 +80,7 @@ export function fuzzyMatchHardware(
     }
   }
 
-  // Require at least 60% match
-  return bestScore >= 0.6 ? bestCandidate : null;
+  return [bestCandidate, bestScore, bestRawScore];
 }
 
 /**
@@ -109,6 +128,9 @@ function tokenize(text: string): string[] {
     .toLowerCase()
     .replace(/[®™©]+/g, "")
     .split(/[\s\-\/,@()]+/)
+    // Split digit→letter boundaries so "6GB" → ["6", "gb"] and "2400G" → ["2400", "g"].
+    // This lets "(6 GB)" in a spec string match "6GB" in a database entry.
+    .flatMap((t) => t.split(/(?<=\d)(?=[a-z])/))
     .filter((t) => t.length > 0);
 }
 

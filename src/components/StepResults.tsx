@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { GameDetails, GameRequirements, VerdictResult, ComparisonItem, Platform } from "@/types";
+import { GameDetails, GameRequirements, VerdictResult, ComparisonItem, Platform, FpsEstimate } from "@/types";
 import ComparisonResult from "@/components/ComparisonResult";
 import RequirementsEditor from "@/components/RequirementsEditor";
 import { HiCheckCircle, HiXCircle, HiQuestionMarkCircle, HiInformationCircle, HiChevronDown, HiExclamation, HiEmojiSad } from "react-icons/hi";
@@ -26,6 +26,7 @@ interface Props {
   userPlatform: Platform;
   availablePlatforms: Platform[];
   onPlatformChange: (platform: Platform) => void;
+  fpsEstimate?: FpsEstimate | null;
 }
 
 const verdictIcons = {
@@ -35,13 +36,49 @@ const verdictIcons = {
   unknown: HiQuestionMarkCircle,
 } as const;
 
+function fpsColor(mid: number): string {
+  if (mid < 30) return "text-error";
+  if (mid < 60) return "text-warning";
+  if (mid < 90) return "text-success";
+  return "text-info";
+}
+
+function AnimatedFpsNumber({ target }: { target: number }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    setCount(0);
+    if (target <= 0) return;
+    const duration = 900;
+    const startTime = performance.now();
+    let rafId: number;
+
+    function tick(now: number) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = 1 - (1 - t) ** 3;
+      setCount(Math.round(eased * target));
+      if (t < 1) rafId = requestAnimationFrame(tick);
+    }
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [target]);
+
+  return (
+    <div className="absolute inset-y-0 right-3 flex flex-col justify-center items-end select-none pointer-events-none opacity-[0.18] text-base-content">
+      <div className="text-sm font-bold tracking-[0.2em] uppercase leading-none mb-0.5">~FPS</div>
+      <div className="text-6xl font-black tabular-nums leading-none">{count}</div>
+    </div>
+  );
+}
+
 function VerdictCard({ result }: { result: VerdictResult }) {
   const [open, setOpen] = useState(false);
   const Icon = verdictIcons[result.verdict];
   const hasUpgrades = result.upgradeItems.length > 0 && result.verdict !== "pass";
   const isFail = result.verdict === "fail";
 
-  // Reset collapse when verdict changes (e.g. platform switch)
   useEffect(() => {
     setOpen(false);
   }, [result.verdict, result.title]);
@@ -116,20 +153,29 @@ export default function StepResults({
   userPlatform,
   availablePlatforms,
   onPlatformChange,
+  fpsEstimate,
 }: Props) {
   const [showEditor, setShowEditor] = useState(false);
+
+  const hasEstimate = fpsEstimate && fpsEstimate.confidence !== "none";
+  const hasFloor = fpsEstimate && fpsEstimate.confidence === "none"
+    && verdict && (verdict.verdict === "pass" || verdict.verdict === "minimum");
 
   return (
     <div className="animate-fadeIn flex flex-col gap-4">
       {game && (
         <div className="relative flex flex-col sm:flex-row items-center gap-4 p-4 rounded-lg bg-base-200/50 overflow-hidden">
-          {(() => {
+          {/* FPS counter watermark (replaces verdict icon when estimate is available) */}
+          {hasEstimate ? (
+            <AnimatedFpsNumber target={fpsEstimate.mid} />
+          ) : (() => {
             const iconClass = "absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 text-base-content/5 select-none pointer-events-none";
             if (!verdict || verdict.verdict === "unknown") return <HiQuestionMarkCircle className={iconClass} />;
             if (verdict.verdict === "pass") return <HiCheckCircle className={iconClass} />;
             if (verdict.verdict === "minimum") return <HiExclamation className={iconClass} />;
             return <HiEmojiSad className={iconClass} />;
           })()}
+
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={game.headerImage}
@@ -182,6 +228,29 @@ export default function StepResults({
 
       {comparison && (
         <ComparisonResult items={comparison} />
+      )}
+
+      {hasEstimate && (
+        <div className="flex flex-wrap items-center gap-2 px-1 text-sm text-base-content/60">
+          <span>Estimated:</span>
+          <span className={`font-semibold ${fpsColor(fpsEstimate.mid)}`}>
+            ~{fpsEstimate.low}–{fpsEstimate.high} FPS
+          </span>
+          {fpsEstimate.confidence === "limited" && (
+            <span className="text-xs text-base-content/40">(rough estimate)</span>
+          )}
+          <span className="text-xs text-base-content/40">· based on hardware scores</span>
+        </div>
+      )}
+
+      {hasFloor && (
+        <div className="flex flex-wrap items-center gap-2 px-1 text-sm text-base-content/60">
+          <span>Expected performance:</span>
+          <span className={`font-semibold ${verdict.verdict === "pass" ? "text-success" : "text-info"}`}>
+            ≥ {verdict.verdict === "pass" ? 60 : 30} FPS
+          </span>
+          <span className="text-xs text-base-content/40">· your hardware wasn&apos;t found in our database</span>
+        </div>
       )}
 
       <div>

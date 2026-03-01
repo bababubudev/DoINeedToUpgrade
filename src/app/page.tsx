@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform, GameSource } from "@/types";
+import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform, GameSource, HardwareScores } from "@/types";
 import { HiCheckCircle } from "react-icons/hi";
 import { compareSpecs } from "@/lib/compareSpecs";
+import { estimateFps } from "@/lib/fpsEstimate";
 import { computeVerdict } from "@/lib/computeVerdict";
 import { useBenchmarks } from "@/lib/useBenchmarks";
 import { detectClientSpecs } from "@/lib/detectClientSpecs";
@@ -76,6 +77,7 @@ function Home() {
   const [lastGameSource, setLastGameSource] = useState<GameSource>("steam");
   const [igdbRemaining, setIgdbRemaining] = useState(5);
   const [igdbLimit, setIgdbLimit] = useState(5);
+  const [hardwareScores, setHardwareScores] = useState<HardwareScores | null>(null);
 
   // Fetch IGDB usage from server on mount
   useEffect(() => {
@@ -150,8 +152,9 @@ function Home() {
               const hasRec = Object.values(newRec).some((v) => v.trim() !== "");
               const minArg = hasMin ? newMin : null;
               const recArg = hasRec ? newRec : null;
-              const result = compareSpecs(decoded, minArg, recArg, cpuScores, gpuScores);
-              setComparison(result);
+              const { items: compItems, scores } = compareSpecs(decoded, minArg, recArg, cpuScores, gpuScores);
+              setComparison(compItems);
+              setHardwareScores(scores);
               setSpecsConfirmed(true);
               setSpecsDirty(false);
               setStep(3);
@@ -192,6 +195,7 @@ function Home() {
     } catch {
       // ignore corrupt data
     }
+
 
     // Priority 3: Auto-detect specs
     if (!hasSaved) {
@@ -247,6 +251,7 @@ function Home() {
   }, [step, importedFromScanner, manualMode]);
 
   const verdict = comparison ? computeVerdict(comparison) : null;
+  const fpsEstimate = hardwareScores ? estimateFps(hardwareScores) : null;
 
   const runComparison = useCallback(
     (min?: GameRequirements, rec?: GameRequirements) => {
@@ -254,8 +259,9 @@ function Home() {
       const recR = rec ?? recReqs;
       const minArg = hasAnyField(minR) ? minR : null;
       const recArg = hasAnyField(recR) ? recR : null;
-      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
-      setComparison(result);
+      const { items: compItems, scores } = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+      setComparison(compItems);
+      setHardwareScores(scores);
       setSpecsDirty(false);
     },
     [specs, minReqs, recReqs, cpuScores, gpuScores]
@@ -322,8 +328,9 @@ function Home() {
       if (importedFromScanner || specsConfirmed) {
         const minArg = hasAnyField(newMin) ? newMin : null;
         const recArg = hasAnyField(newRec) ? newRec : null;
-        const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
-        setComparison(result);
+        const { items: compItems, scores } = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+        setComparison(compItems);
+        setHardwareScores(scores);
         setSpecsDirty(false);
         goToStep(3);
       } else {
@@ -369,6 +376,7 @@ function Home() {
   function handleCheckAnother() {
     setGame(null);
     setComparison(null);
+    setHardwareScores(null);
     setMinReqs({ ...emptyReqs });
     setRecReqs({ ...emptyReqs });
     setManualMode(false);
@@ -428,8 +436,9 @@ function Home() {
     if (specsConfirmed) {
       const minArg = hasAnyField(newMin) ? newMin : null;
       const recArg = hasAnyField(newRec) ? newRec : null;
-      const result = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
-      setComparison(result);
+      const { items: compItems, scores } = compareSpecs(specs, minArg, recArg, cpuScores, gpuScores);
+      setComparison(compItems);
+      setHardwareScores(scores);
       setSpecsDirty(false);
     }
   }
@@ -599,6 +608,7 @@ function Home() {
           userPlatform={userPlatform}
           availablePlatforms={game?.availablePlatforms ?? []}
           onPlatformChange={handlePlatformChange}
+          fpsEstimate={fpsEstimate}
         />
       )}
 
