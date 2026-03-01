@@ -146,7 +146,8 @@ export default function NavButtons() {
                 <p>
                   We compare your hardware against the game&apos;s requirements using benchmark
                   data for CPUs and GPUs. You&apos;ll see a clear breakdown of which components
-                  meet, exceed, or fall short of the requirements.
+                  meet, exceed, or fall short of the requirements — plus an estimated FPS range
+                  based on your hardware&apos;s performance relative to the game&apos;s specs.
                 </p>
               </div>
 

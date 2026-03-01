@@ -221,6 +221,7 @@ export default function StepSystemSpecs({
             <div className="flex flex-col gap-1 text-sm opacity-50 pt-1">
               <span>&#9679; Auto-detects your hardware</span>
               <span>&#9679; Compares CPU, GPU, RAM &amp; storage</span>
+              <span>&#9679; Estimates your expected FPS</span>
               <span>&#9679; Supports Windows, Mac &amp; Linux</span>
             </div>
             <h3 className="text-base font-semibold opacity-80 pt-3">About the hardware scanner</h3>

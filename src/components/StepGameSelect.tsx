@@ -49,6 +49,7 @@ export default function StepGameSelect({ onSelect, onManualMode, loading, error,
           <div className="flex flex-col gap-1 text-sm text-base-content/70 pt-1">
             <span>&#9679; Auto-detects your hardware</span>
             <span>&#9679; Compares CPU, GPU, RAM &amp; storage</span>
+            <span>&#9679; Estimates your expected FPS</span>
             <span>&#9679; Supports Windows, Mac &amp; Linux</span>
           </div>
           <h3 className="text-base font-semibold text-base-content/90 pt-3">About the hardware scanner</h3>

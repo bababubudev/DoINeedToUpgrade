@@ -7,6 +7,7 @@ A web application that helps users check if their system meets the requirements 
 - **Game Search** — Find any game and view its requirements
 - **Hardware Detection** — Automatic or manual hardware spec input
 - **Requirements Comparison** — See exactly what you're missing (if anything)
+- **FPS Estimation** — Get an estimated FPS range based on your hardware's performance scores
 - **Cross-Platform** — Works on Windows, macOS, and Linux
 
 ## Tech Stack
