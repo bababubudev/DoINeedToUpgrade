@@ -249,7 +249,7 @@ export default function StepResults({
           <span className={`font-semibold ${verdict.verdict === "pass" ? "text-success" : "text-info"}`}>
             ≥ {verdict.verdict === "pass" ? 60 : 30} FPS
           </span>
-          <span className="text-xs text-base-content/40">· your hardware wasn&apos;t found in our database</span>
+          <span className="text-xs text-base-content/40"> hardware wasn&apos;t found in our database</span>
         </div>
       )}
 
