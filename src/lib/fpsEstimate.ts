@@ -5,12 +5,17 @@ const MIN_ANCHOR_FPS = 30;
 const BASELINE_FPS   = 60;
 const UNCERTAINTY    = 0.25;
 const MAX_FPS        = 300;
+// Every SCORE_SCALE points above the recommended spec doubles the predicted FPS,
+// and every SCORE_SCALE points below halves it. This handles score-scale compression
+// better than a power function: a score ratio of 3× can represent a real-world gap
+// of 5×, so basing predictions on the raw score difference is more accurate.
+const SCORE_SCALE    = 25;
 
 /**
  * Estimate the FPS contribution of a single hardware component.
  *
  * - Below minimum  → sub-30fps using min as the 30fps reference
- * - Meets minimum, rec available → 60fps at rec spec
+ * - Meets minimum, rec available → 60fps at rec spec, exponential delta above/below
  * - Meets minimum, no rec       → 60fps at min spec (user-hardware-driven)
  * - No game specs at all        → null (caller handles via early exit)
  */
@@ -28,21 +33,16 @@ function componentFps(
   }
 
   if (recScore !== null) {
-    // Apply diminishing returns above recommended — a GPU 3× faster than recommended
-    // does not deliver 3× the FPS due to resolution, engine, and other bottlenecks.
-    const ratio = userScore / recScore;
-    const fps = ratio <= 1
-      ? REC_ANCHOR_FPS * ratio
-      : REC_ANCHOR_FPS * Math.pow(ratio, 0.7);
+    // Exponential delta: anchored at 60fps for the recommended spec, doubling
+    // every SCORE_SCALE points above (and halving every SCORE_SCALE points below).
+    // This avoids score-compression distortion — a score gap of 88 (RTX 5090 vs
+    // GTX 1080) correctly predicts high FPS instead of being capped by a raw ratio.
+    const fps = REC_ANCHOR_FPS * Math.pow(2, (userScore - recScore) / SCORE_SCALE);
     return { fps, failsMin: false };
   }
 
-  // Above minimum, no rec — treat minimum as the 60fps reference so high-end
-  // hardware isn't artificially dragged down by the 30fps minimum anchor
-  const ratio = userScore / minScore!;
-  const fps = ratio <= 1
-    ? BASELINE_FPS * ratio
-    : BASELINE_FPS * Math.pow(ratio, 0.7);
+  // Above minimum, no rec — treat minimum as the 60fps reference
+  const fps = BASELINE_FPS * Math.pow(2, (userScore - minScore!) / SCORE_SCALE);
   return { fps, failsMin: false };
 }
 
