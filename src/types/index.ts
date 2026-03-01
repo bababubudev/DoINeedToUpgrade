@@ -77,14 +77,6 @@ export interface ComparisonItem {
   recStatus: ComparisonStatus;
 }
 
-export type Resolution = "1080p" | "1440p" | "4k";
-export type QualityPreset = "low" | "medium" | "high" | "ultra";
-
-export interface PlaySettings {
-  resolution: Resolution;
-  quality: QualityPreset;
-}
-
 export interface HardwareScores {
   userGpuScore: number | null;
   recGpuScore: number | null;

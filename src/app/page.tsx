@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform, GameSource, PlaySettings, HardwareScores } from "@/types";
+import { UserSpecs, GameDetails, GameRequirements, ComparisonItem, Platform, GameSource, HardwareScores } from "@/types";
 import { HiCheckCircle } from "react-icons/hi";
 import { compareSpecs } from "@/lib/compareSpecs";
 import { estimateFps } from "@/lib/fpsEstimate";
@@ -77,7 +77,6 @@ function Home() {
   const [lastGameSource, setLastGameSource] = useState<GameSource>("steam");
   const [igdbRemaining, setIgdbRemaining] = useState(5);
   const [igdbLimit, setIgdbLimit] = useState(5);
-  const [playSettings, setPlaySettings] = useState<PlaySettings>({ resolution: "1080p", quality: "high" });
   const [hardwareScores, setHardwareScores] = useState<HardwareScores | null>(null);
 
   // Fetch IGDB usage from server on mount
@@ -197,16 +196,6 @@ function Home() {
       // ignore corrupt data
     }
 
-    // Restore play settings from localStorage
-    try {
-      const rawPlay = localStorage.getItem("playSettings");
-      if (rawPlay) {
-        const parsed = JSON.parse(rawPlay);
-        if (parsed?.resolution && parsed?.quality) setPlaySettings(parsed);
-      }
-    } catch {
-      // ignore corrupt data
-    }
 
     // Priority 3: Auto-detect specs
     if (!hasSaved) {
@@ -262,7 +251,7 @@ function Home() {
   }, [step, importedFromScanner, manualMode]);
 
   const verdict = comparison ? computeVerdict(comparison) : null;
-  const fpsEstimate = hardwareScores ? estimateFps(hardwareScores, playSettings) : null;
+  const fpsEstimate = hardwareScores ? estimateFps(hardwareScores) : null;
 
   const runComparison = useCallback(
     (min?: GameRequirements, rec?: GameRequirements) => {
@@ -436,11 +425,6 @@ function Home() {
     runComparison(min, rec);
   }
 
-  function handlePlaySettingsChange(settings: PlaySettings) {
-    setPlaySettings(settings);
-    localStorage.setItem("playSettings", JSON.stringify(settings));
-  }
-
   function handlePlatformChange(newPlatform: Platform) {
     if (!game) return;
     setPlatform(newPlatform);
@@ -492,8 +476,6 @@ function Home() {
           showStorageToast={false}
           onToastShown={() => {}}
           hideBack
-          playSettings={playSettings}
-          onPlaySettingsChange={handlePlaySettingsChange}
           confirmLabel="Continue"
           showInfo
         />
@@ -526,8 +508,6 @@ function Home() {
             detecting={detecting}
             unmatchedFields={unmatchedFields}
             hideSubmit
-            playSettings={playSettings}
-            onPlaySettingsChange={handlePlaySettingsChange}
           />
           <RequirementsEditor
             minimum={minReqs}
@@ -578,8 +558,6 @@ function Home() {
           onClearSaved={handleClearSavedSpecs}
           showStorageToast={showStorageToast}
           onToastShown={() => setShowStorageToast(false)}
-          playSettings={playSettings}
-          onPlaySettingsChange={handlePlaySettingsChange}
         />
       )}
 
@@ -596,8 +574,6 @@ function Home() {
             detecting={detecting}
             unmatchedFields={unmatchedFields}
             hideSubmit
-            playSettings={playSettings}
-            onPlaySettingsChange={handlePlaySettingsChange}
           />
           <RequirementsEditor
             minimum={minReqs}
@@ -633,7 +609,6 @@ function Home() {
           availablePlatforms={game?.availablePlatforms ?? []}
           onPlatformChange={handlePlatformChange}
           fpsEstimate={fpsEstimate}
-          playSettings={playSettings}
         />
       )}
 

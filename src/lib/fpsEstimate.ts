@@ -1,13 +1,11 @@
-import { HardwareScores, PlaySettings, FpsEstimate } from "@/types";
+import { HardwareScores, FpsEstimate } from "@/types";
 
-const RESOLUTION_FACTORS = { "1080p": 1.0, "1440p": 0.58, "4k": 0.35 } as const;
-const QUALITY_FACTORS    = { "low": 1.7, "medium": 1.25, "high": 1.0, "ultra": 0.7 } as const;
 const REC_ANCHOR_FPS = 60;
 const MIN_ANCHOR_FPS = 30;
 const UNCERTAINTY    = 0.25;
 const MAX_FPS        = 300;
 
-export function estimateFps(scores: HardwareScores, settings: PlaySettings): FpsEstimate {
+export function estimateFps(scores: HardwareScores): FpsEstimate {
   const useRec = scores.recGpuScore !== null || scores.recCpuScore !== null;
   const anchor = useRec ? REC_ANCHOR_FPS : MIN_ANCHOR_FPS;
   const refGpu = useRec ? scores.recGpuScore : scores.minGpuScore;
@@ -20,15 +18,11 @@ export function estimateFps(scores: HardwareScores, settings: PlaySettings): Fps
     ? (scores.recGpuScore !== null && scores.recCpuScore !== null ? "good" : "limited")
     : "limited";
 
-  const resFactor     = RESOLUTION_FACTORS[settings.resolution] ?? 1.0;
-  const qualFactor    = QUALITY_FACTORS[settings.quality] ?? 1.0;
-  const cpuQualFactor = 1 + (qualFactor - 1) * 0.4;
-
   const fpsByGpu = (scores.userGpuScore && refGpu)
-    ? anchor * (scores.userGpuScore / refGpu) * resFactor * qualFactor
+    ? anchor * (scores.userGpuScore / refGpu)
     : null;
   const fpsByCpu = (scores.userCpuScore && refCpu)
-    ? anchor * (scores.userCpuScore / refCpu) * cpuQualFactor
+    ? anchor * (scores.userCpuScore / refCpu)
     : null;
 
   let mid: number;
