@@ -28,12 +28,22 @@ function componentFps(
   }
 
   if (recScore !== null) {
-    return { fps: REC_ANCHOR_FPS * (userScore / recScore), failsMin: false };
+    // Apply diminishing returns above recommended — a GPU 3× faster than recommended
+    // does not deliver 3× the FPS due to resolution, engine, and other bottlenecks.
+    const ratio = userScore / recScore;
+    const fps = ratio <= 1
+      ? REC_ANCHOR_FPS * ratio
+      : REC_ANCHOR_FPS * Math.pow(ratio, 0.5);
+    return { fps, failsMin: false };
   }
 
   // Above minimum, no rec — treat minimum as the 60fps reference so high-end
   // hardware isn't artificially dragged down by the 30fps minimum anchor
-  return { fps: BASELINE_FPS * (userScore / minScore!), failsMin: false };
+  const ratio = userScore / minScore!;
+  const fps = ratio <= 1
+    ? BASELINE_FPS * ratio
+    : BASELINE_FPS * Math.pow(ratio, 0.5);
+  return { fps, failsMin: false };
 }
 
 export function estimateFps(scores: HardwareScores): FpsEstimate {

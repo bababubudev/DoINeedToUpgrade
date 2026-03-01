@@ -456,6 +456,7 @@ export const gpuList: string[] = [
   "NVIDIA Quadro P4000",
   // AMD Radeon HD 5000/6000 series
   "AMD Radeon HD 5770",
+  "AMD Radeon HD 5850",
   "AMD Radeon HD 5870",
   "AMD Radeon HD 6850",
   "AMD Radeon HD 6870",
@@ -1040,6 +1041,7 @@ export const gpuScores: Record<string, number> = {
   "NVIDIA Quadro P4000": 22,
   // AMD Radeon HD 5000/6000 series
   "AMD Radeon HD 5770": 2,
+  "AMD Radeon HD 5850": 2,
   "AMD Radeon HD 5870": 3,
   "AMD Radeon HD 6850": 3,
   "AMD Radeon HD 6870": 4,
