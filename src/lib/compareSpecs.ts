@@ -307,9 +307,12 @@ function compareCPU(
     }
   }
 
-  // If we couldn't determine anything from alternatives, try the original hardware comparison
+  // If we couldn't determine anything from alternatives, try hardware comparison using the
+  // already platform-filtered alternatives (avoids cross-brand false passes, e.g. comparing
+  // an Intel CPU against an AMD FX alternative that has a lower score).
   if (bestStatus === "info" && user.cpu) {
-    return compareHardware(user.cpu, reqText, candidates, scores);
+    const filteredReqText = alternatives.join(" or ");
+    return compareHardware(user.cpu, filteredReqText || reqText, candidates, scores);
   }
 
   return bestStatus;

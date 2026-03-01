@@ -5,6 +5,7 @@ import {
   cpuScores as staticCpuScores,
   gpuScores as staticGpuScores,
 } from "@/lib/hardwareData";
+import { fuzzyMatchHardware } from "@/lib/fuzzyMatch";
 
 interface GeekbenchCPUEntry {
   name: string;
@@ -69,9 +70,16 @@ function calibrateToStaticScale(
     .sort((a, b) => a - b);
   const medianRatio = ratios[Math.floor(ratios.length / 2)];
 
+  const staticNames = Object.keys(staticScores);
   const calibrated: Record<string, number> = {};
   for (const [name, score] of Object.entries(geekbenchScores)) {
-    if (staticScores[name] != null) continue; // static takes priority anyway
+    if (staticScores[name] != null) continue; // exact match — static takes priority
+    // Skip entries that are just name variants of a static entry (e.g. "i7 3770K" vs
+    // "i7-3770K", or "i7-3770K @ 3.50GHz"). Without this check, the fuzzy matcher can
+    // pick the calibrated Geekbench variant (which uses multicore scores) over the
+    // hand-curated static entry, producing a lower score for old CPUs and causing
+    // false "pass" results when comparing against them.
+    if (fuzzyMatchHardware(name, staticNames)) continue;
     calibrated[name] = Math.max(1, Math.round(score * medianRatio));
   }
 

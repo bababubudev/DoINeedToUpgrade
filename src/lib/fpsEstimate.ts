@@ -2,52 +2,85 @@ import { HardwareScores, FpsEstimate } from "@/types";
 
 const REC_ANCHOR_FPS = 60;
 const MIN_ANCHOR_FPS = 30;
+const BASELINE_FPS   = 60;
 const UNCERTAINTY    = 0.25;
 const MAX_FPS        = 300;
 
+/**
+ * Estimate the FPS contribution of a single hardware component.
+ *
+ * - Below minimum  → sub-30fps using min as the 30fps reference
+ * - Meets minimum, rec available → 60fps at rec spec
+ * - Meets minimum, no rec       → 60fps at min spec (user-hardware-driven)
+ * - No game specs at all        → null (caller handles via early exit)
+ */
+function componentFps(
+  userScore: number | null,
+  minScore: number | null,
+  recScore: number | null,
+): { fps: number | null; failsMin: boolean } {
+  if (userScore === null) return { fps: null, failsMin: false };
+  if (minScore === null && recScore === null) return { fps: null, failsMin: false };
+
+  if (minScore !== null && userScore < minScore) {
+    // Below minimum — gives sub-30fps so the estimate reflects the failing result
+    return { fps: MIN_ANCHOR_FPS * (userScore / minScore), failsMin: true };
+  }
+
+  if (recScore !== null) {
+    return { fps: REC_ANCHOR_FPS * (userScore / recScore), failsMin: false };
+  }
+
+  // Above minimum, no rec — treat minimum as the 60fps reference so high-end
+  // hardware isn't artificially dragged down by the 30fps minimum anchor
+  return { fps: BASELINE_FPS * (userScore / minScore!), failsMin: false };
+}
+
 export function estimateFps(scores: HardwareScores): FpsEstimate {
   const useRec = scores.recGpuScore !== null || scores.recCpuScore !== null;
-  const anchor = useRec ? REC_ANCHOR_FPS : MIN_ANCHOR_FPS;
-  const refGpu = useRec ? scores.recGpuScore : scores.minGpuScore;
-  const refCpu = useRec ? scores.recCpuScore : scores.minCpuScore;
+  const useMin = scores.minGpuScore !== null || scores.minCpuScore !== null;
 
-  const hasAny = refGpu !== null || refCpu !== null;
-  if (!hasAny) return { low: 0, high: 0, mid: 0, bottleneck: "balanced", confidence: "none" };
+  if (!useRec && !useMin) return { low: 0, high: 0, mid: 0, bottleneck: "balanced", confidence: "none" };
+
+  const gpu = componentFps(scores.userGpuScore, scores.minGpuScore, scores.recGpuScore);
+  const cpu = componentFps(scores.userCpuScore, scores.minCpuScore, scores.recCpuScore);
+
+  const fpsByGpu = gpu.fps;
+  const fpsByCpu = cpu.fps;
+
+  if (fpsByGpu === null && fpsByCpu === null) {
+    return { low: 0, high: 0, mid: 0, bottleneck: "balanced", confidence: "none" };
+  }
 
   const confidence = useRec
     ? (scores.recGpuScore !== null && scores.recCpuScore !== null ? "good" : "limited")
     : "limited";
 
-  const fpsByGpu = (scores.userGpuScore && refGpu)
-    ? anchor * (scores.userGpuScore / refGpu)
-    : null;
-  const fpsByCpu = (scores.userCpuScore && refCpu)
-    ? anchor * (scores.userCpuScore / refCpu)
-    : null;
-
   let mid: number;
   let bottleneck: FpsEstimate["bottleneck"];
+  const anyFailsMin = gpu.failsMin || cpu.failsMin;
 
   if (fpsByGpu !== null && fpsByCpu !== null) {
-    // Geometric mean instead of min: prevents one weak component from overly
-    // dragging down the estimate when the other greatly exceeds requirements.
-    mid = Math.sqrt(fpsByGpu * fpsByCpu);
-    bottleneck = Math.abs(fpsByGpu - fpsByCpu) <= Math.min(fpsByGpu, fpsByCpu) * 0.15
-      ? "balanced" : fpsByGpu < fpsByCpu ? "gpu" : "cpu";
+    if (anyFailsMin) {
+      // A component below minimum is the hard bottleneck — a great GPU/CPU
+      // can't compensate, so use min() rather than geometric mean
+      mid = Math.min(fpsByGpu, fpsByCpu);
+      bottleneck = fpsByGpu <= fpsByCpu ? "gpu" : "cpu";
+    } else {
+      // Both pass — geometric mean prevents one outlier from dominating
+      mid = Math.sqrt(fpsByGpu * fpsByCpu);
+      bottleneck = Math.abs(fpsByGpu - fpsByCpu) <= Math.min(fpsByGpu, fpsByCpu) * 0.15
+        ? "balanced" : fpsByGpu < fpsByCpu ? "gpu" : "cpu";
+    }
   } else if (fpsByGpu !== null) {
     mid = fpsByGpu;
     bottleneck = "gpu";
-  } else if (fpsByCpu !== null) {
-    mid = fpsByCpu;
-    bottleneck = "cpu";
   } else {
-    return { low: 0, high: 0, mid: 0, bottleneck: "balanced", confidence: "none" };
+    mid = fpsByCpu!;
+    bottleneck = "cpu";
   }
 
-  // When using minimum-only specs, cap more conservatively since the actual
-  // ceiling depends on in-engine limits we can't know.
-  const maxFps = useRec ? MAX_FPS : 4 * MIN_ANCHOR_FPS;
-  mid = Math.min(mid, maxFps);
+  mid = Math.min(mid, MAX_FPS);
   return {
     low: Math.max(1, Math.floor(mid * (1 - UNCERTAINTY))),
     high: Math.ceil(mid * (1 + UNCERTAINTY)),
