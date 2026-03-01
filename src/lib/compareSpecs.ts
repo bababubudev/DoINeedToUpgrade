@@ -213,6 +213,41 @@ function familyAverageScore(
 }
 
 /**
+ * Detect GPU vendor from text (NVIDIA / AMD / Intel).
+ */
+function extractGPUVendor(text: string): "nvidia" | "amd" | "intel" | null {
+  const lower = text.toLowerCase();
+  if (lower.includes("nvidia") || lower.includes("geforce") || /\b(gtx|rtx|quadro)\b/.test(lower)) return "nvidia";
+  if (lower.includes("amd") || lower.includes("radeon") || /\b(rx\s*\d|vega|r9|r7)\b/.test(lower)) return "amd";
+  if (lower.includes("intel") || /\b(arc|iris|uhd|hd\s+graphics)\b/.test(lower)) return "intel";
+  return null;
+}
+
+/**
+ * Fuzzy-match a requirement string against candidates, preferring alternatives
+ * that share the same vendor/platform as the user's hardware.
+ * Falls back to the full requirement text if no same-vendor alternative matches.
+ */
+function vendorAwareMatch(
+  userText: string,
+  reqText: string,
+  candidates: string[],
+  extractVendor: (t: string) => string | null,
+): string | null {
+  const userVendor = extractVendor(userText);
+  if (userVendor) {
+    const sameVendor = splitAlternatives(reqText).filter(
+      (alt) => { const v = extractVendor(alt); return v === userVendor || v === null; }
+    );
+    if (sameVendor.length > 0) {
+      const match = fuzzyMatchHardware(sameVendor.join(" or "), candidates);
+      if (match) return match;
+    }
+  }
+  return fuzzyMatchHardware(reqText, candidates);
+}
+
+/**
  * Detect CPU platform from text (Intel vs AMD).
  */
 function extractCPUPlatform(text: string): "intel" | "amd" | null {
@@ -567,13 +602,13 @@ export function compareSpecs(
     recStatus: compareNumeric(user.storageGB, rec.storage),
   });
 
-  // Extract GPU/CPU scores for FPS estimation
+  // Extract GPU/CPU scores for FPS estimation, preferring same-vendor alternatives
   const userGpuMatch = fuzzyMatchHardware(cleanedGPU, Object.keys(gpuScores));
-  const recGpuMatch  = rec.gpu  ? fuzzyMatchHardware(rec.gpu,  Object.keys(gpuScores)) : null;
-  const minGpuMatch  = min.gpu  ? fuzzyMatchHardware(min.gpu,  Object.keys(gpuScores)) : null;
+  const recGpuMatch  = rec.gpu  ? vendorAwareMatch(cleanedGPU,    rec.gpu,  Object.keys(gpuScores), extractGPUVendor) : null;
+  const minGpuMatch  = min.gpu  ? vendorAwareMatch(cleanedGPU,    min.gpu,  Object.keys(gpuScores), extractGPUVendor) : null;
   const userCpuMatch = user.cpu ? fuzzyMatchHardware(user.cpu, Object.keys(cpuScores)) : null;
-  const recCpuMatch  = rec.cpu  ? fuzzyMatchHardware(rec.cpu,  Object.keys(cpuScores)) : null;
-  const minCpuMatch  = min.cpu  ? fuzzyMatchHardware(min.cpu,  Object.keys(cpuScores)) : null;
+  const recCpuMatch  = rec.cpu  ? vendorAwareMatch(user.cpu ?? "", rec.cpu, Object.keys(cpuScores), extractCPUPlatform) : null;
+  const minCpuMatch  = min.cpu  ? vendorAwareMatch(user.cpu ?? "", min.cpu, Object.keys(cpuScores), extractCPUPlatform) : null;
 
   const scores: HardwareScores = {
     userGpuScore: userGpuMatch ? (gpuScores[userGpuMatch] ?? null) : null,
