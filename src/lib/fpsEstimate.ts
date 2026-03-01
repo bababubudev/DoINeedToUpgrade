@@ -33,7 +33,7 @@ function componentFps(
     const ratio = userScore / recScore;
     const fps = ratio <= 1
       ? REC_ANCHOR_FPS * ratio
-      : REC_ANCHOR_FPS * Math.pow(ratio, 0.5);
+      : REC_ANCHOR_FPS * Math.pow(ratio, 0.7);
     return { fps, failsMin: false };
   }
 
@@ -42,7 +42,7 @@ function componentFps(
   const ratio = userScore / minScore!;
   const fps = ratio <= 1
     ? BASELINE_FPS * ratio
-    : BASELINE_FPS * Math.pow(ratio, 0.5);
+    : BASELINE_FPS * Math.pow(ratio, 0.7);
   return { fps, failsMin: false };
 }
 
