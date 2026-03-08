@@ -69,7 +69,7 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
     ],
     stepGroups: [
       {
-        primary: "For .deb: double-click to install via Software Center.",
+        primary: "For .deb: right-click → Open With → Software Install, then click Install.",
         alternatives: [{
           text: "For AppImage: right-click → Properties → mark as executable, then double-click.",
         }],
