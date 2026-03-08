@@ -56,7 +56,7 @@ export default function SettingsDropdown() {
   }
 
   return (
-    <div className="dropdown dropdown-end" ref={ref}>
+    <div className={`dropdown dropdown-end${open ? " dropdown-open" : ""}`} ref={ref}>
       <button
         className="btn btn-ghost btn-sm"
         onClick={() => setOpen(!open)}
