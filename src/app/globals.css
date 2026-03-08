@@ -58,6 +58,21 @@
   animation: shake 0.5s ease-in-out;
 }
 
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-dropdownIn {
+  animation: dropdownIn 0.15s ease-out;
+}
+
+[data-reduce-motion="true"] *,
+[data-reduce-motion="true"] *::before,
+[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
 @keyframes scroll-text {
   0%, 5%   { transform: translateX(0); }
   45%, 55% { transform: translateX(var(--scroll-distance)); }

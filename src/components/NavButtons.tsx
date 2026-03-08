@@ -54,7 +54,7 @@ export default function NavButtons() {
         {dropdownOpen && (
           <ul
             tabIndex={0}
-            className="dropdown-content z-50 menu p-2 shadow-lg bg-base-200 rounded-box w-[calc(100vw-2rem)] sm:w-56 mt-2 right-0"
+            className="dropdown-content z-50 menu p-2 shadow-lg bg-base-200 rounded-box w-[calc(100vw-2rem)] sm:w-56 mt-2 right-0 animate-dropdownIn"
           >
             {clientPlatform === "macos" ? (
               downloadLinks.macos.map((link) => (

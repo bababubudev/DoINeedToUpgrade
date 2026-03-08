@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
-import ThemeToggle from "@/components/ThemeToggle";
 import NavButtons from "@/components/NavButtons";
+import SettingsDropdown from "@/components/SettingsDropdown";
 import Logo from "@/components/Logo";
 import { StructuredData } from "@/components/StructuredData";
 import GeometricBackground from "@/components/GeometricBackground";
@@ -59,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark">
+    <html lang="en" data-theme="dark" data-reduce-motion="false">
       <head>
         <StructuredData />
       </head>
@@ -71,7 +71,7 @@ export default function RootLayout({
           </div>
           <div className="flex-none flex items-center gap-1">
             <NavButtons />
-            <ThemeToggle />
+            <SettingsDropdown />
           </div>
         </div>
         <div className="container mx-auto px-4 py-6 max-w-5xl relative z-10">

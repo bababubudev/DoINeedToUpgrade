@@ -14,6 +14,7 @@ export default function GeometricBackground() {
 
     let animationId: number;
     let isPaused = false;
+    let isMotionReduced = false;
     let lastFrameTime = 0;
 
     const TARGET_FPS = 30;
@@ -36,12 +37,32 @@ export default function GeometricBackground() {
     };
 
     let colors = getColors();
-    const observer = new MutationObserver(() => {
-      colors = getColors();
+
+    function applyMotionState() {
+      isMotionReduced =
+        document.documentElement.getAttribute("data-reduce-motion") === "true";
+      if (isMotionReduced) {
+        cancelAnimationFrame(animationId);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = "none";
+      } else {
+        canvas.style.display = "";
+        if (!isPaused) {
+          lastFrameTime = 0;
+          animationId = requestAnimationFrame(loop);
+        }
+      }
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.attributeName === "data-theme") colors = getColors();
+        if (m.attributeName === "data-reduce-motion") applyMotionState();
+      }
     });
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["data-theme"],
+      attributeFilter: ["data-theme", "data-reduce-motion"],
     });
 
     // Flat arrays for better cache performance
@@ -209,7 +230,7 @@ export default function GeometricBackground() {
     }
 
     function loop(timestamp: number) {
-      if (isPaused) return;
+      if (isPaused || isMotionReduced) return;
       animationId = requestAnimationFrame(loop);
       if (timestamp - lastFrameTime < FRAME_INTERVAL) return;
       lastFrameTime = timestamp;
@@ -222,8 +243,10 @@ export default function GeometricBackground() {
         cancelAnimationFrame(animationId);
       } else {
         isPaused = false;
-        lastFrameTime = 0;
-        animationId = requestAnimationFrame(loop);
+        if (!isMotionReduced) {
+          lastFrameTime = 0;
+          animationId = requestAnimationFrame(loop);
+        }
       }
     }
 
@@ -238,7 +261,10 @@ export default function GeometricBackground() {
     }
 
     resize();
-    animationId = requestAnimationFrame(loop);
+    applyMotionState();
+    if (!isMotionReduced) {
+      animationId = requestAnimationFrame(loop);
+    }
 
     window.addEventListener("resize", resize);
     window.addEventListener("mousemove", handleMouse);
