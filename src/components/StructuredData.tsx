@@ -1,4 +1,4 @@
-'use client';
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://do-i-need-to-upgrade.vercel.app';
 
 export function StructuredData() {
   const structuredData = {
@@ -6,7 +6,7 @@ export function StructuredData() {
     '@type': 'WebApplication',
     name: 'Do I Need An Upgrade',
     description: 'Check if your PC can run any Steam game. Compare your CPU, GPU, RAM and storage against game requirements instantly.',
-    url: 'https://do-i-need-to-upgrade.vercel.app',
+    url: baseUrl,
     applicationCategory: 'UtilityApplication',
     operatingSystem: ['Windows', 'macOS', 'Linux'],
     offers: {
@@ -14,12 +14,7 @@ export function StructuredData() {
       price: '0',
       priceCurrency: 'USD',
     },
-    image: 'https://do-i-need-to-upgrade.vercel.app/icon-512.png',
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '100',
-    },
+    image: `${baseUrl}/icon-512.png`,
   };
 
   return (

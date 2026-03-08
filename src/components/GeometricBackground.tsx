@@ -15,15 +15,17 @@ export default function GeometricBackground() {
     let animationId: number;
     let waveAngle = Math.random() * Math.PI * 2;
     let waveProgress = 0;
+    let lastFrameTime = 0;
+    let isPaused = false;
 
-    const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
+    const TARGET_FPS = 12;
+    const FRAME_INTERVAL = 1000 / TARGET_FPS;
+    const SPACING = 45;
+
+    // Pre-computed hash offsets (recomputed on resize)
+    let offsets: Float32Array;
+    let gridCols = 0;
+    let gridRows = 0;
 
     const getColors = () => {
       const isDark =
@@ -38,33 +40,59 @@ export default function GeometricBackground() {
       };
     };
 
+    // Cache colors, update on theme change
+    let cachedColors = getColors();
+    const observer = new MutationObserver(() => {
+      cachedColors = getColors();
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Pre-compute deterministic hash offsets
+      gridCols = Math.ceil(canvas.width / SPACING) + 1;
+      gridRows = Math.ceil(canvas.height / SPACING) + 1;
+      offsets = new Float32Array(gridCols * gridRows);
+      for (let i = 0; i < gridCols; i++) {
+        for (let j = 0; j < gridRows; j++) {
+          const hash = Math.sin(i * 127.1 + j * 311.7) * 43758.5453;
+          offsets[i * gridRows + j] = (hash - Math.floor(hash)) * 3 - 1.5;
+        }
+      }
+    };
+
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const { line, glow, lineAlpha, dotAlpha, glowMult, flickerMult } = getColors();
-      const spacing = 45;
-      const cols = Math.ceil(canvas.width / spacing) + 1;
-      const rows = Math.ceil(canvas.height / spacing) + 1;
+      const { line, glow, lineAlpha, dotAlpha, glowMult, flickerMult } = cachedColors;
+      const cols = Math.ceil(canvas.width / SPACING) + 1;
+      const rows = Math.ceil(canvas.height / SPACING) + 1;
 
       // Draw grid lines
       ctx.lineWidth = 0.5;
+      ctx.strokeStyle = `rgba(${line}, ${lineAlpha})`;
 
-      // Vertical lines
       for (let i = 0; i < cols; i++) {
-        const x = i * spacing;
+        const x = i * SPACING;
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
-        ctx.strokeStyle = `rgba(${line}, ${lineAlpha})`;
         ctx.stroke();
       }
 
-      // Horizontal lines
       for (let j = 0; j < rows; j++) {
-        const y = j * spacing;
+        const y = j * SPACING;
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
-        ctx.strokeStyle = `rgba(${line}, ${lineAlpha})`;
         ctx.stroke();
       }
 
@@ -81,14 +109,21 @@ export default function GeometricBackground() {
 
       const wavePos = minProj - padding + waveProgress * totalRange;
 
+      // Merged loop: base dots + wave/flicker effects
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
+          const x = i * SPACING;
+          const y = j * SPACING;
+
+          // Base tiny dot at intersection
+          ctx.beginPath();
+          ctx.arc(x, y, 0.8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${line}, ${dotAlpha})`;
+          ctx.fill();
+
+          // Wave/flicker calculations
           const proj = i * dx + j * dy;
-
-          // Per-node offset for irregularity (deterministic hash from grid position)
-          const hash = Math.sin(i * 127.1 + j * 311.7) * 43758.5453;
-          const offset = (hash - Math.floor(hash)) * 3 - 1.5;
-
+          const offset = offsets[i * gridRows + j];
           const adjustedProj = proj + offset;
           const dist = Math.min(
             Math.abs(adjustedProj - wavePos),
@@ -97,21 +132,15 @@ export default function GeometricBackground() {
           );
           const intensity = Math.max(0, 1 - dist / 10);
 
-          // Subtle ambient flicker independent of wave
           const flicker = Math.sin(waveProgress * 40 + i * 3.7 + j * 5.3) * 0.5 + 0.5;
           const flickerIntensity = flicker * flickerMult;
 
-          const x = i * spacing;
-          const y = j * spacing;
-
           if (intensity > 0) {
-            // Glow dot at intersection
             ctx.beginPath();
             ctx.arc(x, y, 1.5 + intensity * 1, 0, Math.PI * 2);
             ctx.fillStyle = `rgba(${glow}, ${intensity * glowMult + flickerIntensity})`;
             ctx.fill();
           } else if (flickerIntensity > 0.01) {
-            // Ambient flicker on non-wave nodes
             ctx.beginPath();
             ctx.arc(x, y, 1, 0, Math.PI * 2);
             ctx.fillStyle = `rgba(${glow}, ${flickerIntensity})`;
@@ -120,34 +149,45 @@ export default function GeometricBackground() {
         }
       }
 
-      // Tiny dots at intersections
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          ctx.beginPath();
-          ctx.arc(i * spacing, j * spacing, 0.8, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${line}, ${dotAlpha})`;
-          ctx.fill();
-        }
-      }
-
-      // Advance wave; speed normalized so wave crosses at consistent pace
-      waveProgress += 0.0015 / (totalRange / 30);
+      // Advance wave (time-based: ~0.09 per second, equivalent to old 0.0015 * 60fps)
+      waveProgress += 0.09 / TARGET_FPS / (totalRange / 30);
       if (waveProgress >= 1) {
         waveProgress -= 1;
         waveAngle = Math.random() * Math.PI * 2;
       }
-      animationId = requestAnimationFrame(draw);
+    };
+
+    const loop = (timestamp: number) => {
+      if (isPaused) return;
+      animationId = requestAnimationFrame(loop);
+      if (timestamp - lastFrameTime < FRAME_INTERVAL) return;
+      lastFrameTime = timestamp;
+      draw();
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        isPaused = true;
+        cancelAnimationFrame(animationId);
+      } else {
+        isPaused = false;
+        lastFrameTime = 0;
+        animationId = requestAnimationFrame(loop);
+      }
     };
 
     resize();
-    draw();
+    animationId = requestAnimationFrame(loop);
 
     const onResize = () => resize();
     window.addEventListener("resize", onResize);
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      observer.disconnect();
     };
   }, []);
 
