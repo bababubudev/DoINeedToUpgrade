@@ -38,7 +38,7 @@ export default function StepCombinedGameAndSpecs({
   return (
     <div className="animate-fadeIn flex flex-col gap-4 mt-4">
       {/* Compact specs summary */}
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm">
         <div className="card-body p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

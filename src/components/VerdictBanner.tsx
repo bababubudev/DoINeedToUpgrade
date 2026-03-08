@@ -18,7 +18,7 @@ const verdictStyles = {
   pass: "alert alert-success",
   minimum: "alert alert-warning",
   fail: "alert alert-error",
-  unknown: "card bg-base-100 dark:bg-warning/20 shadow-sm",
+  unknown: "card bg-base-100/80 dark:bg-warning/20 backdrop-blur-sm shadow-sm",
 } as const;
 
 const verdictIcons = {

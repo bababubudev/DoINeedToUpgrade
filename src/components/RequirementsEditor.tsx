@@ -96,7 +96,7 @@ export default function RequirementsEditor({
   }
 
   return (
-    <div className="card bg-base-100 shadow-sm">
+    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm">
       <div className="card-body">
         <div className="flex items-center justify-between">
           <h3 className="card-title text-lg">Game Requirements</h3>

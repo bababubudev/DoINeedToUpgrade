@@ -69,7 +69,7 @@ function ScrollingCell({ text, className }: { text: string; className: string })
 
 export default function ComparisonResult({ items }: Props) {
   return (
-    <div className="card bg-base-100 shadow-sm">
+    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm">
       <div className="card-body">
         <h2 className="card-title">Component Breakdown</h2>
         <div className="overflow-x-auto">

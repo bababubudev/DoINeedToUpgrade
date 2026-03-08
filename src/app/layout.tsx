@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -76,6 +77,7 @@ export default function RootLayout({
         <div className="container mx-auto px-4 py-6 max-w-5xl relative z-10">
           {children}
         </div>
+        <Analytics />
       </body>
     </html>
   );
