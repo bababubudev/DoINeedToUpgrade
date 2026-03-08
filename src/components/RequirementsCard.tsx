@@ -1,5 +1,3 @@
-"use client";
-
 import { GameRequirements } from "@/types";
 
 interface Props {

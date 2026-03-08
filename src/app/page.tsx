@@ -227,6 +227,20 @@ function Home() {
     }
   }, [cpuList, gpuList, searchParams]);
 
+  // Handle ?game= parameter from game page CTA
+  useEffect(() => {
+    const gameParam = searchParams.get("game");
+    if (gameParam && /^\d+$/.test(gameParam)) {
+      // Clean up URL
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("game");
+        window.history.replaceState({}, "", url.pathname + url.search || "/");
+      }
+      handleGameSelect(Number(gameParam), "steam");
+    }
+  }, [searchParams]);
+
   // Global "/" shortcut to focus game search input (or navigate there from results)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {

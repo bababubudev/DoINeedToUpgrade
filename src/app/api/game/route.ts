@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseRequirements } from "@/lib/parseRequirements";
 import { igdbFetch } from "@/lib/igdb";
 import { getIgdbUsage, incrementIgdbUsage } from "@/lib/igdbRateLimit";
-import { Platform, ParsedGameRequirements, PlatformRequirements, GameRequirements, GameSource } from "@/types";
+import { fetchGameDetails } from "@/lib/fetchGameDetails";
+import { Platform, PlatformRequirements, GameRequirements, GameSource } from "@/types";
 
 function hasContent(reqs: GameRequirements | null): boolean {
   if (!reqs) return false;
@@ -36,54 +37,11 @@ export async function GET(request: NextRequest) {
 
 async function fetchSteamGame(appid: string) {
   try {
-    const res = await fetch(
-      `https://store.steampowered.com/api/appdetails?appids=${encodeURIComponent(appid)}`,
-      { cache: "force-cache" } as RequestInit
-    );
-
-    if (!res.ok) {
-      return NextResponse.json({ error: "Steam API error" }, { status: 502 });
-    }
-
-    const data = await res.json();
-    const appData = data[appid];
-
-    if (!appData?.success) {
+    const game = await fetchGameDetails(appid);
+    if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
-
-    const info = appData.data;
-
-    const platformMap: Record<Platform, Record<string, string>> = {
-      windows: info.pc_requirements || {},
-      macos: info.mac_requirements || {},
-      linux: info.linux_requirements || {},
-    };
-
-    const platformRequirements: PlatformRequirements = {};
-    const availablePlatforms: Platform[] = [];
-
-    for (const [platform, reqs] of Object.entries(platformMap) as [Platform, Record<string, string>][]) {
-      if (reqs.minimum || reqs.recommended) {
-        const parsed: ParsedGameRequirements = parseRequirements(reqs.minimum, reqs.recommended);
-        if (hasContent(parsed.minimum) || hasContent(parsed.recommended)) {
-          platformRequirements[platform] = parsed;
-          availablePlatforms.push(platform);
-        }
-      }
-    }
-
-    const requirements = platformRequirements.windows ?? platformRequirements[availablePlatforms[0]] ?? { minimum: null, recommended: null };
-
-    return NextResponse.json({
-      appid: Number(appid),
-      name: info.name,
-      headerImage: info.header_image,
-      requirements,
-      platformRequirements,
-      availablePlatforms,
-      source: "steam",
-    });
+    return NextResponse.json(game);
   } catch {
     return NextResponse.json({ error: "Failed to fetch game" }, { status: 500 });
   }

@@ -4,10 +4,12 @@ export async function GET() {
   const robots = `# Allow search engines to crawl all public pages
 User-agent: *
 Allow: /
-Allow: /public/
+Allow: /game/
 
-# Disallow crawling of internal API routes
+# Disallow crawling of internal API routes (except sitemap)
 Disallow: /api/
+Allow: /api/sitemap
+Allow: /api/og
 
 # Sitemap location
 Sitemap: ${baseUrl}/sitemap.xml
