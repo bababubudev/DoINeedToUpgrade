@@ -1,4 +1,4 @@
-.PHONY: all clean windows mac linux mac-intel mac-arm zip appimage-cache icon
+.PHONY: all clean windows mac linux mac-intel mac-arm zip dmg deb icon
 
 OUTPUT_DIR = ../public/downloads
 APP_NAME = DoINeedAnUpgrade
@@ -71,6 +71,7 @@ mac-intel: $(OUTPUT_DIR) icon
 		'  <string>10.13</string>' \
 		'</dict>' \
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app/Contents/Info.plist"
+	@codesign --force --deep -s - "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app"
 
 mac-arm: $(OUTPUT_DIR) icon
 	@echo "Building macOS Apple Silicon .app bundle (Swift GUI)..."
@@ -102,6 +103,7 @@ mac-arm: $(OUTPUT_DIR) icon
 		'  <string>11.0</string>' \
 		'</dict>' \
 		'</plist>' > "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app/Contents/Info.plist"
+	@codesign --force --deep -s - "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app"
 
 APPIMAGE_CACHE = .appimage-cache
 
@@ -145,8 +147,50 @@ zip: mac
 	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-Intel.zip $(APP_NAME)-Mac-Intel.app
 	@cd $(OUTPUT_DIR) && zip -r $(APP_NAME)-Mac-AppleSilicon.zip $(APP_NAME)-Mac-AppleSilicon.app
 
+DMG_STAGING = .dmg-staging
+
+dmg: mac
+	@echo "Creating DMG files..."
+	@rm -rf $(DMG_STAGING)
+	@mkdir -p $(DMG_STAGING)/intel $(DMG_STAGING)/arm
+	@cp -r "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.app" $(DMG_STAGING)/intel/
+	@ln -s /Applications $(DMG_STAGING)/intel/Applications
+	@hdiutil create -volname "$(APP_NAME)" -srcfolder $(DMG_STAGING)/intel \
+		-ov -format UDZO "$(OUTPUT_DIR)/$(APP_NAME)-Mac-Intel.dmg"
+	@cp -r "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.app" $(DMG_STAGING)/arm/
+	@ln -s /Applications $(DMG_STAGING)/arm/Applications
+	@hdiutil create -volname "$(APP_NAME)" -srcfolder $(DMG_STAGING)/arm \
+		-ov -format UDZO "$(OUTPUT_DIR)/$(APP_NAME)-Mac-AppleSilicon.dmg"
+	@rm -rf $(DMG_STAGING)
+	@echo "Created DMG files"
+
+deb: $(OUTPUT_DIR)
+	@echo "Building Linux .deb package..."
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin .
+	@rm -rf $(APPIMAGE_CACHE)/deb
+	@mkdir -p $(APPIMAGE_CACHE)/deb/DEBIAN
+	@mkdir -p $(APPIMAGE_CACHE)/deb/usr/bin
+	@mkdir -p $(APPIMAGE_CACHE)/deb/usr/share/applications
+	@mkdir -p $(APPIMAGE_CACHE)/deb/usr/share/icons/hicolor/256x256/apps
+	@cp $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin $(APPIMAGE_CACHE)/deb/usr/bin/$(APP_NAME)
+	@chmod 755 $(APPIMAGE_CACHE)/deb/usr/bin/$(APP_NAME)
+	@cp linux-appimage/$(APP_NAME).desktop $(APPIMAGE_CACHE)/deb/usr/share/applications/
+	@cp ../public/icon-512.png $(APPIMAGE_CACHE)/deb/usr/share/icons/hicolor/256x256/apps/$(APP_NAME).png
+	@printf 'Package: doineedanupgrade\nVersion: 1.0\nSection: utils\nPriority: optional\nArchitecture: amd64\nMaintainer: DoINeedAnUpgrade\nDescription: Hardware scanner for DoINeedAnUpgrade\n Detects hardware specs and opens the web app.\n' \
+		> $(APPIMAGE_CACHE)/deb/DEBIAN/control
+	@docker run --rm \
+		-v $(CURDIR)/$(APPIMAGE_CACHE):/work \
+		--platform linux/amd64 \
+		ubuntu:22.04 \
+		bash -c 'dpkg-deb --build /work/deb /work/$(APP_NAME)-Linux.deb'
+	@mv $(APPIMAGE_CACHE)/$(APP_NAME)-Linux.deb $(OUTPUT_DIR)/$(APP_NAME)-Linux.deb
+	@rm -f $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin
+	@rm -rf $(APPIMAGE_CACHE)/deb
+	@echo "Built $(OUTPUT_DIR)/$(APP_NAME)-Linux.deb"
+
 clean:
 	rm -rf $(OUTPUT_DIR)/$(APP_NAME)*
 	rm -rf $(APPIMAGE_CACHE)
+	rm -rf $(DMG_STAGING)
 	rm -rf .icon-cache
 	rm -f rsrc_windows_*.syso
