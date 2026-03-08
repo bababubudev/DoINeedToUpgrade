@@ -23,8 +23,8 @@ export default function PerformanceHint() {
   }
 
   return (
-    <div className="toast toast-end toast-top z-50">
-      <div className="alert alert-warning shadow-lg gap-2">
+    <div className="toast toast-end toast-top z-50 mt-16">
+      <div className="alert alert-warning shadow-lg gap-2 py-2">
         <span className="text-sm">
           Animations may be affecting performance. You can disable them in <strong>Settings</strong>.
         </span>

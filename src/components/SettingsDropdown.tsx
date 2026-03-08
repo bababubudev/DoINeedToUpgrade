@@ -67,7 +67,7 @@ export default function SettingsDropdown() {
           </li>
           <li>
             <button className="flex items-center gap-2" onClick={toggleMotion}>
-              {reduced ? <HiMinusCircle className="w-4 h-4" /> : <HiSparkles className="w-4 h-4" />}
+              {reduced ? <HiSparkles className="w-4 h-4" /> : <HiMinusCircle className="w-4 h-4" />}
               {reduced ? "Show Animations" : "Hide Animations"}
             </button>
           </li>
