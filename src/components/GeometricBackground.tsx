@@ -6,166 +6,154 @@ export default function GeometricBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const canvas = canvasRef.current!;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d")!;
     if (!ctx) return;
 
     let animationId: number;
-    let waveAngle = Math.random() * Math.PI * 2;
-    let waveProgress = 0;
-    let lastFrameTime = 0;
     let isPaused = false;
+    let lastFrameTime = 0;
 
-    const TARGET_FPS = 12;
+    const TARGET_FPS = 30;
     const FRAME_INTERVAL = 1000 / TARGET_FPS;
-    const SPACING = 45;
-
-    // Pre-computed hash offsets (recomputed on resize)
-    let offsets: Float32Array;
-    let gridCols = 0;
-    let gridRows = 0;
+    const CONNECT_DIST = 150;
+    const CONNECT_DIST_SQ = CONNECT_DIST * CONNECT_DIST;
+    const DENSITY = 8000;
+    const VELOCITY = 0.4;
+    const PARTICLE_RADIUS = 1.5;
 
     const getColors = () => {
       const isDark =
         document.documentElement.getAttribute("data-theme") === "dark";
       return {
-        line: isDark ? "148, 163, 184" : "30, 41, 59",
-        glow: isDark ? "56, 189, 248" : "8, 145, 178",
-        lineAlpha: isDark ? 0.04 : 0.1,
-        dotAlpha: isDark ? 0.06 : 0.15,
-        glowMult: isDark ? 0.1 : 0.25,
-        flickerMult: isDark ? 0.03 : 0.08,
+        particle: isDark ? "148, 163, 184" : "80, 80, 80",
+        line: isDark ? "148, 163, 184" : "80, 80, 80",
+        particleAlpha: isDark ? 0.5 : 0.4,
+        lineBaseAlpha: isDark ? 0.15 : 0.12,
       };
     };
 
-    // Cache colors, update on theme change
-    let cachedColors = getColors();
+    let colors = getColors();
     const observer = new MutationObserver(() => {
-      cachedColors = getColors();
+      colors = getColors();
     });
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["data-theme"],
     });
 
-    const resize = () => {
+    // Flat arrays for better cache performance
+    let px: Float32Array; // x positions
+    let py: Float32Array; // y positions
+    let pvx: Float32Array; // x velocities
+    let pvy: Float32Array; // y velocities
+    let count = 0;
+    let w = 0;
+    let h = 0;
+
+    const mouse = { x: -9999, y: -9999 };
+
+    function resize() {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Pre-compute deterministic hash offsets
-      gridCols = Math.ceil(canvas.width / SPACING) + 1;
-      gridRows = Math.ceil(canvas.height / SPACING) + 1;
-      offsets = new Float32Array(gridCols * gridRows);
-      for (let i = 0; i < gridCols; i++) {
-        for (let j = 0; j < gridRows; j++) {
-          const hash = Math.sin(i * 127.1 + j * 311.7) * 43758.5453;
-          offsets[i * gridRows + j] = (hash - Math.floor(hash)) * 3 - 1.5;
-        }
+      count = Math.floor((w * h) / DENSITY);
+      px = new Float32Array(count);
+      py = new Float32Array(count);
+      pvx = new Float32Array(count);
+      pvy = new Float32Array(count);
+      for (let i = 0; i < count; i++) {
+        px[i] = Math.random() * w;
+        py[i] = Math.random() * h;
+        pvx[i] = (Math.random() - 0.5) * VELOCITY;
+        pvy[i] = (Math.random() - 0.5) * VELOCITY;
       }
-    };
+    }
 
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const { line, glow, lineAlpha, dotAlpha, glowMult, flickerMult } = cachedColors;
-      const cols = Math.ceil(canvas.width / SPACING) + 1;
-      const rows = Math.ceil(canvas.height / SPACING) + 1;
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      const { particle, line, particleAlpha, lineBaseAlpha } = colors;
+      const invDist = 1 / CONNECT_DIST;
 
-      // Draw grid lines
-      ctx.lineWidth = 0.5;
-      ctx.strokeStyle = `rgba(${line}, ${lineAlpha})`;
-
-      for (let i = 0; i < cols; i++) {
-        const x = i * SPACING;
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
+      // Update positions
+      for (let i = 0; i < count; i++) {
+        px[i] += pvx[i];
+        py[i] += pvy[i];
+        if (px[i] < -20) px[i] = w + 20;
+        else if (px[i] > w + 20) px[i] = -20;
+        if (py[i] < -20) py[i] = h + 20;
+        else if (py[i] > h + 20) py[i] = -20;
       }
 
-      for (let j = 0; j < rows; j++) {
-        const y = j * SPACING;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
+      // Draw connections — batch by alpha bands to reduce strokeStyle changes
+      ctx.lineWidth = 0.6;
+      const mx = mouse.x;
+      const my = mouse.y;
 
-      // Wave direction from current angle
-      const dx = Math.cos(waveAngle);
-      const dy = Math.sin(waveAngle);
+      for (let i = 0; i < count; i++) {
+        const ax = px[i];
+        const ay = py[i];
 
-      // Compute projection range for current angle
-      const projections = [0, (cols - 1) * dx, (rows - 1) * dy, (cols - 1) * dx + (rows - 1) * dy];
-      const minProj = Math.min(...projections);
-      const maxProj = Math.max(...projections);
-      const padding = 10;
-      const totalRange = maxProj - minProj + padding * 2;
-
-      const wavePos = minProj - padding + waveProgress * totalRange;
-
-      // Merged loop: base dots + wave/flicker effects
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          const x = i * SPACING;
-          const y = j * SPACING;
-
-          // Base tiny dot at intersection
+        // Connect to mouse (squared distance check)
+        const mdx = ax - mx;
+        const mdy = ay - my;
+        const mDistSq = mdx * mdx + mdy * mdy;
+        if (mDistSq < CONNECT_DIST_SQ) {
+          const mDist = Math.sqrt(mDistSq);
+          const alpha = (1 - mDist * invDist) * lineBaseAlpha * 2;
+          ctx.strokeStyle = `rgba(${line}, ${alpha})`;
           ctx.beginPath();
-          ctx.arc(x, y, 0.8, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${line}, ${dotAlpha})`;
-          ctx.fill();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(mx, my);
+          ctx.stroke();
+        }
 
-          // Wave/flicker calculations
-          const proj = i * dx + j * dy;
-          const offset = offsets[i * gridRows + j];
-          const adjustedProj = proj + offset;
-          const dist = Math.min(
-            Math.abs(adjustedProj - wavePos),
-            Math.abs(adjustedProj - (wavePos + totalRange)),
-            Math.abs(adjustedProj - (wavePos - totalRange))
-          );
-          const intensity = Math.max(0, 1 - dist / 10);
-
-          const flicker = Math.sin(waveProgress * 40 + i * 3.7 + j * 5.3) * 0.5 + 0.5;
-          const flickerIntensity = flicker * flickerMult;
-
-          if (intensity > 0) {
+        // Connect to other particles
+        for (let j = i + 1; j < count; j++) {
+          const dx = ax - px[j];
+          // Early exit: if dx alone exceeds distance, skip
+          if (dx > CONNECT_DIST || dx < -CONNECT_DIST) continue;
+          const dy = ay - py[j];
+          if (dy > CONNECT_DIST || dy < -CONNECT_DIST) continue;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < CONNECT_DIST_SQ) {
+            const dist = Math.sqrt(distSq);
+            const alpha = (1 - dist * invDist) * lineBaseAlpha;
+            ctx.strokeStyle = `rgba(${line}, ${alpha})`;
             ctx.beginPath();
-            ctx.arc(x, y, 1.5 + intensity * 1, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${glow}, ${intensity * glowMult + flickerIntensity})`;
-            ctx.fill();
-          } else if (flickerIntensity > 0.01) {
-            ctx.beginPath();
-            ctx.arc(x, y, 1, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${glow}, ${flickerIntensity})`;
-            ctx.fill();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(px[j], py[j]);
+            ctx.stroke();
           }
         }
       }
 
-      // Advance wave (time-based: ~0.09 per second, equivalent to old 0.0015 * 60fps)
-      waveProgress += 0.09 / TARGET_FPS / (totalRange / 30);
-      if (waveProgress >= 1) {
-        waveProgress -= 1;
-        waveAngle = Math.random() * Math.PI * 2;
+      // Draw particles in one batch
+      ctx.fillStyle = `rgba(${particle}, ${particleAlpha})`;
+      for (let i = 0; i < count; i++) {
+        ctx.beginPath();
+        ctx.arc(px[i], py[i], PARTICLE_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
       }
-    };
+    }
 
-    const loop = (timestamp: number) => {
+    function loop(timestamp: number) {
       if (isPaused) return;
       animationId = requestAnimationFrame(loop);
       if (timestamp - lastFrameTime < FRAME_INTERVAL) return;
       lastFrameTime = timestamp;
       draw();
-    };
+    }
 
-    const handleVisibility = () => {
+    function handleVisibility() {
       if (document.hidden) {
         isPaused = true;
         cancelAnimationFrame(animationId);
@@ -174,18 +162,31 @@ export default function GeometricBackground() {
         lastFrameTime = 0;
         animationId = requestAnimationFrame(loop);
       }
-    };
+    }
+
+    function handleMouse(e: MouseEvent) {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    }
+
+    function handleMouseLeave() {
+      mouse.x = -9999;
+      mouse.y = -9999;
+    }
 
     resize();
     animationId = requestAnimationFrame(loop);
 
-    const onResize = () => resize();
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", resize);
+    window.addEventListener("mousemove", handleMouse);
+    window.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", handleMouse);
+      window.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("visibilitychange", handleVisibility);
       observer.disconnect();
     };

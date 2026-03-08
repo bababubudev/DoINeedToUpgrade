@@ -46,7 +46,7 @@ export default function GamePageClient({ game }: Props) {
 
   if (!specs) {
     return (
-      <div className="card bg-base-100 shadow-sm">
+      <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm">
         <div className="card-body items-center text-center">
           <h3 className="card-title text-xl">Check Your PC</h3>
           <p className="text-base-content/70 max-w-md">

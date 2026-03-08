@@ -113,7 +113,7 @@ export default function GameSearch({ onSelect, igdbRemaining, igdbLimit, initial
   }
 
   return (
-    <div className="card bg-base-100 shadow-sm">
+    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm">
       <div className="card-body">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="card-title">Search for a Game</h2>

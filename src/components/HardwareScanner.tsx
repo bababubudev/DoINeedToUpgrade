@@ -136,7 +136,7 @@ export default function HardwareScanner({ onImport, onDownload }: Props) {
 
   return (
     <>
-      <div id="hardware-scanner" className="collapse collapse-arrow bg-base-100 shadow-sm">
+      <div id="hardware-scanner" className="collapse collapse-arrow bg-base-100/80 backdrop-blur-sm shadow-sm">
         <input type="checkbox" ref={collapseRef} />
         <div className="collapse-title">
           <h3 className="font-semibold text-sm">Need more accurate detection?</h3>
@@ -170,7 +170,7 @@ export default function HardwareScanner({ onImport, onDownload }: Props) {
                 <div key={groupIdx} className={``}>
                   {group.alternatives ? (
                     <div className="flex items-start gap-2">
-                      <span className="badge badge-primary w-5 h-5 rounded-full p-0 mt-3 shrink-0">{groupIdx + 1}</span>
+                      <span className="badge badge-neutral text-neutral-content w-5 h-5 rounded-full p-0 mt-3 shrink-0 text-xs">{groupIdx + 1}</span>
                       <div className="flex-1 flex flex-col gap-2 rounded-lg p-3" style={{ backgroundColor: "rgba(0,0,0,0.08)" }}>
                         <span className="text-xs">{group.primary}</span>
                         {group.alternatives.map((alt, altIdx) => (
@@ -209,8 +209,8 @@ export default function HardwareScanner({ onImport, onDownload }: Props) {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2">
-                      <span className="badge badge-primary w-5 h-5 rounded-full p-0 mt-0.5 shrink-0">{groupIdx + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="badge badge-neutral text-neutral-content w-5 h-5 rounded-full p-0 shrink-0 text-xs">{groupIdx + 1}</span>
                       <span className="text-xs">{group.primary}</span>
                     </div>
                   )}
