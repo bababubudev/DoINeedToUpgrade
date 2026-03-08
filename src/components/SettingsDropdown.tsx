@@ -3,13 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { HiCog, HiSun, HiMoon, HiSparkles, HiMinusCircle } from "react-icons/hi";
 
-function shouldReduceMotion(): boolean {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
-  if (navigator.hardwareConcurrency <= 2) return true;
-  if ("deviceMemory" in navigator && (navigator as { deviceMemory?: number }).deviceMemory! <= 2) return true;
-  return false;
-}
-
 export default function SettingsDropdown() {
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(true);
@@ -23,12 +16,11 @@ export default function SettingsDropdown() {
     document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
 
     const savedMotion = localStorage.getItem("reduceMotion");
-    const isReduced = savedMotion !== null ? savedMotion === "true" : shouldReduceMotion();
+    const isReduced = savedMotion !== null
+      ? savedMotion === "true"
+      : window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setReduced(isReduced);
     document.documentElement.setAttribute("data-reduce-motion", String(isReduced));
-    if (savedMotion === null && isReduced) {
-      localStorage.setItem("reduceMotion", "true");
-    }
   }, []);
 
   useEffect(() => {

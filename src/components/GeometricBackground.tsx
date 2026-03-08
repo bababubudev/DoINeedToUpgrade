@@ -17,6 +17,12 @@ export default function GeometricBackground() {
     let isMotionReduced = false;
     let lastFrameTime = 0;
 
+    // FPS monitoring for performance hints
+    let fpsDrawCount = 0;
+    let fpsWindowStart = 0;
+    let lowFpsStreak = 0;
+    let hintDispatched = false;
+
     const TARGET_FPS = 30;
     const FRAME_INTERVAL = 1000 / TARGET_FPS;
     const CONNECT_DIST = 150;
@@ -235,6 +241,27 @@ export default function GeometricBackground() {
       if (timestamp - lastFrameTime < FRAME_INTERVAL) return;
       lastFrameTime = timestamp;
       draw();
+
+      // Track FPS over 2-second windows
+      if (!hintDispatched) {
+        fpsDrawCount++;
+        if (!fpsWindowStart) fpsWindowStart = timestamp;
+        const elapsed = timestamp - fpsWindowStart;
+        if (elapsed >= 2000) {
+          const fps = (fpsDrawCount / elapsed) * 1000;
+          if (fps < 15) {
+            lowFpsStreak++;
+            if (lowFpsStreak >= 2) {
+              window.dispatchEvent(new CustomEvent("performancehint"));
+              hintDispatched = true;
+            }
+          } else {
+            lowFpsStreak = 0;
+          }
+          fpsDrawCount = 0;
+          fpsWindowStart = timestamp;
+        }
+      }
     }
 
     function handleVisibility() {
