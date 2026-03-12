@@ -9,16 +9,14 @@ interface Props {
   loading: boolean;
   error: string | null;
   showInfo?: boolean;
-  igdbRemaining: number;
-  igdbLimit: number;
   initialSource?: GameSource;
 }
 
-export default function StepGameSelect({ onSelect, onManualMode, loading, error, showInfo = true, igdbRemaining, igdbLimit, initialSource }: Props) {
+export default function StepGameSelect({ onSelect, onManualMode, loading, error, showInfo = true, initialSource }: Props) {
   return (
     <div className="animate-fadeIn flex flex-col items-center gap-3 mt-8 py-2">
       <div className="w-full max-w-2xl">
-        <GameSearch onSelect={onSelect} igdbRemaining={igdbRemaining} igdbLimit={igdbLimit} initialSource={initialSource} />
+        <GameSearch onSelect={onSelect} initialSource={initialSource} />
       </div>
 
       {loading && (

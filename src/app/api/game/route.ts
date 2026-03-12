@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseRequirements } from "@/lib/parseRequirements";
 import { igdbFetch } from "@/lib/igdb";
-import { getIgdbUsage, incrementIgdbUsage } from "@/lib/igdbRateLimit";
 import { fetchGameDetails } from "@/lib/fetchGameDetails";
-import { Platform, PlatformRequirements, GameRequirements, GameSource } from "@/types";
-
-function hasContent(reqs: GameRequirements | null): boolean {
-  if (!reqs) return false;
-  return Object.values(reqs).some((v) => v && v.trim() !== "");
-}
+import { fetchPCGWRequirements } from "@/lib/pcgamingwiki";
+import { GameSource } from "@/types";
 
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("appid") || request.nextUrl.searchParams.get("id");
@@ -19,17 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (source === "igdb") {
-    // Enforce rate limit in production
-    if (process.env.NODE_ENV !== "development") {
-      const usage = getIgdbUsage(request);
-      if (usage.exhausted) {
-        return NextResponse.json(
-          { error: "IGDB lookup limit reached. Try again in 24 hours.", remaining: 0 },
-          { status: 429 }
-        );
-      }
-    }
-    return fetchIGDBGame(id, request);
+    return fetchIGDBGame(id);
   }
 
   return fetchSteamGame(id);
@@ -47,26 +31,7 @@ async function fetchSteamGame(appid: string) {
   }
 }
 
-interface RAWGPlatformReq {
-  platform: { id: number; name: string; slug: string };
-  requirements?: { minimum?: string; recommended?: string } | null;
-}
-
-interface RAWGGameDetail {
-  id: number;
-  name: string;
-  background_image?: string;
-  platforms?: RAWGPlatformReq[];
-}
-
-const RAWG_PLATFORM_MAP: Record<string, Platform> = {
-  pc: "windows",
-  macos: "macos",
-  "apple-macintosh": "macos",
-  linux: "linux",
-};
-
-async function fetchIGDBGame(id: string, request: NextRequest) {
+async function fetchIGDBGame(id: string) {
   try {
     // 1. Get game details from IGDB
     const igdbRes = await igdbFetch(
@@ -85,64 +50,11 @@ async function fetchIGDBGame(id: string, request: NextRequest) {
 
     const igdbGame = igdbData[0] as { id: number; name: string; cover?: { image_id: string }; slug?: string };
 
-    // 2. Search RAWG for requirements using game name
-    const rawgKey = process.env.RAWG_API_KEY;
-    if (!rawgKey) {
-      // No RAWG key — return game info without requirements
-      return returnGameWithoutRequirements(igdbGame);
-    }
+    // 2. Fetch requirements from PCGamingWiki
+    const pcgwResult = await fetchPCGWRequirements(igdbGame.name);
 
-    const searchName = igdbGame.name;
-    const rawgSearchRes = await fetch(
-      `https://api.rawg.io/api/games?key=${rawgKey}&search=${encodeURIComponent(searchName)}&search_precise=true&page_size=5`
-    );
-
-    if (!rawgSearchRes.ok) {
-      return returnGameWithoutRequirements(igdbGame);
-    }
-
-    const rawgSearchData = await rawgSearchRes.json();
-    const rawgResults = rawgSearchData.results || [];
-
-    if (rawgResults.length === 0) {
-      return returnGameWithoutRequirements(igdbGame);
-    }
-
-    // Find best match by name similarity
-    const rawgMatch = rawgResults.find(
-      (r: { name: string }) => r.name.toLowerCase() === searchName.toLowerCase()
-    ) || rawgResults[0];
-
-    // 3. Fetch full RAWG game details
-    const rawgDetailRes = await fetch(
-      `https://api.rawg.io/api/games/${rawgMatch.id}?key=${rawgKey}`
-    );
-
-    if (!rawgDetailRes.ok) {
-      return returnGameWithoutRequirements(igdbGame);
-    }
-
-    const rawgDetail: RAWGGameDetail = await rawgDetailRes.json();
-
-    // 4. Extract and parse requirements from RAWG platforms
-    const platformRequirements: PlatformRequirements = {};
-    const availablePlatforms: Platform[] = [];
-
-    if (rawgDetail.platforms) {
-      for (const p of rawgDetail.platforms) {
-        const platformKey = RAWG_PLATFORM_MAP[p.platform.slug];
-        if (!platformKey) continue;
-
-        const reqs = p.requirements;
-        if (reqs && (reqs.minimum || reqs.recommended)) {
-          const parsed = parseRequirements(reqs.minimum, reqs.recommended);
-          if (hasContent(parsed.minimum) || hasContent(parsed.recommended)) {
-            platformRequirements[platformKey] = parsed;
-            availablePlatforms.push(platformKey);
-          }
-        }
-      }
-    }
+    const platformRequirements = pcgwResult?.platformRequirements ?? {};
+    const availablePlatforms = pcgwResult?.availablePlatforms ?? [];
 
     const requirements = platformRequirements.windows
       ?? platformRequirements[availablePlatforms[0]]
@@ -150,9 +62,9 @@ async function fetchIGDBGame(id: string, request: NextRequest) {
 
     const headerImage = igdbGame.cover?.image_id
       ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${igdbGame.cover.image_id}.png`
-      : rawgDetail.background_image ?? "";
+      : "";
 
-    const responseData = {
+    return NextResponse.json({
       appid: igdbGame.id,
       name: igdbGame.name,
       headerImage,
@@ -160,34 +72,8 @@ async function fetchIGDBGame(id: string, request: NextRequest) {
       platformRequirements,
       availablePlatforms,
       source: "igdb" as const,
-      igdbRemaining: undefined as number | undefined,
-    };
-
-    // Increment usage in production
-    if (process.env.NODE_ENV !== "development") {
-      const { usage, cookieHeader } = incrementIgdbUsage(request);
-      responseData.igdbRemaining = usage.remaining;
-      const res = NextResponse.json(responseData);
-      res.headers.set("Set-Cookie", cookieHeader);
-      return res;
-    }
-
-    return NextResponse.json(responseData);
+    });
   } catch {
     return NextResponse.json({ error: "Failed to fetch game" }, { status: 500 });
   }
-}
-
-function returnGameWithoutRequirements(igdbGame: { id: number; name: string; cover?: { image_id: string } }) {
-  return NextResponse.json({
-    appid: igdbGame.id,
-    name: igdbGame.name,
-    headerImage: igdbGame.cover?.image_id
-      ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${igdbGame.cover.image_id}.png`
-      : "",
-    requirements: { minimum: null, recommended: null },
-    platformRequirements: {},
-    availablePlatforms: [],
-    source: "igdb",
-  });
 }

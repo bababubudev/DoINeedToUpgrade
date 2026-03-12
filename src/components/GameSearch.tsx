@@ -7,12 +7,10 @@ import { GameSearchResult, GameSource } from "@/types";
 
 interface Props {
   onSelect: (id: number, source: GameSource) => void;
-  igdbRemaining: number;
-  igdbLimit: number;
   initialSource?: GameSource;
 }
 
-export default function GameSearch({ onSelect, igdbRemaining, igdbLimit, initialSource = "steam" }: Props) {
+export default function GameSearch({ onSelect, initialSource = "steam" }: Props) {
   const isMac = useMemo(() => typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform), []);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GameSearchResult[]>([]);
@@ -24,8 +22,6 @@ export default function GameSearch({ onSelect, igdbRemaining, igdbLimit, initial
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
-
-  const igdbExhausted = igdbRemaining <= 0;
 
   const search = useCallback(async (term: string) => {
     if (term.length < 2) {
@@ -124,20 +120,12 @@ export default function GameSearch({ onSelect, igdbRemaining, igdbLimit, initial
             >
               <FaSteam className="w-3.5 h-3.5" /> Steam
             </button>
-            <div className={igdbRemaining < igdbLimit && source === "igdb" ? "indicator" : ""}>
-              {igdbRemaining < igdbLimit && source === "igdb" && (
-                <span className={`indicator-item badge badge-sm aspect-square rounded-full p-0 text-xs font-bold ring-2 ring-base-100 text-white ${igdbExhausted ? "badge-error" : "bg-[#9146FF] border-[#9146FF]"}`}>
-                  {igdbRemaining}
-                </span>
-              )}
-              <button
-                className={`join-item btn btn-xs ${source === "igdb" ? "text-white border-[#9146FF] bg-[#9146FF] hover:bg-[#7c3ae6]" : "btn-ghost border border-base-300"}`}
-                onClick={() => { if (!igdbExhausted) { setSource("igdb"); setResults([]); } }}
-                disabled={igdbExhausted}
-              >
-                <HiGlobe className="w-3.5 h-3.5" /> All Games
-              </button>
-            </div>
+            <button
+              className={`join-item btn btn-xs ${source === "igdb" ? "text-white border-[#9146FF] bg-[#9146FF] hover:bg-[#7c3ae6]" : "btn-ghost border border-base-300"}`}
+              onClick={() => { setSource("igdb"); setResults([]); }}
+            >
+              <HiGlobe className="w-3.5 h-3.5" /> All Games
+            </button>
           </div>
         </div>
         <div ref={wrapperRef} className="relative">

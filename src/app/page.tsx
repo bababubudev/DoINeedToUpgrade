@@ -75,20 +75,7 @@ function Home() {
   const [showUrlImportToast, setShowUrlImportToast] = useState(false);
   const [importedFromScanner, setImportedFromScanner] = useState(false);
   const [lastGameSource, setLastGameSource] = useState<GameSource>("steam");
-  const [igdbRemaining, setIgdbRemaining] = useState(5);
-  const [igdbLimit, setIgdbLimit] = useState(5);
   const [hardwareScores, setHardwareScores] = useState<HardwareScores | null>(null);
-
-  // Fetch IGDB usage from server on mount
-  useEffect(() => {
-    fetch("/api/igdb-usage")
-      .then((res) => res.json())
-      .then((data: { remaining: number; limit: number }) => {
-        setIgdbRemaining(data.remaining);
-        setIgdbLimit(data.limit);
-      })
-      .catch(() => {});
-  }, []);
 
   // Auto-dismiss URL import toast
   useEffect(() => {
@@ -312,18 +299,9 @@ function Home() {
     try {
       const params = new URLSearchParams({ appid: String(id), source });
       const res = await fetch(`/api/game?${params}`);
-      if (res.status === 429) {
-        setIgdbRemaining(0);
-        setError("IGDB lookup limit reached. Try again in 24 hours.");
-        return;
-      }
       if (!res.ok) throw new Error("Failed to load game details");
 
       const data = await res.json();
-      // Update remaining count from server response
-      if (source === "igdb" && typeof data.igdbRemaining === "number") {
-        setIgdbRemaining(data.igdbRemaining);
-      }
       setGame(data as GameDetails);
 
       // Auto-select platform: prefer user's OS, fall back to first available
@@ -503,8 +481,7 @@ function Home() {
           loading={loading}
           error={error}
           showInfo={false}
-          igdbRemaining={igdbRemaining}
-          igdbLimit={igdbLimit}
+
           initialSource={lastGameSource}
         />
       )}
@@ -547,8 +524,7 @@ function Home() {
           onManualMode={handleManualMode}
           loading={loading}
           error={error}
-          igdbRemaining={igdbRemaining}
-          igdbLimit={igdbLimit}
+
           initialSource={lastGameSource}
         />
       )}

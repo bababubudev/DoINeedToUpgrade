@@ -298,21 +298,32 @@ function compareCPU(
 
     // Strategy 1: Try model-based matching if there's a model in the requirement
     if (parsed.model && user.cpu) {
-      const userMatch = fuzzyMatchHardware(user.cpu, candidates);
+      const userScore = resolveScore(user.cpu, candidates, scores, estimateCPUScore);
       const reqMatch = fuzzyMatchHardware(parsed.model, candidates);
 
-      if (userMatch && reqMatch && scores[userMatch] != null && scores[reqMatch] != null) {
-        const status = scores[userMatch] >= scores[reqMatch] ? "pass" : "fail";
+      if (userScore != null && reqMatch && scores[reqMatch] != null) {
+        const status = userScore >= scores[reqMatch] ? "pass" : "fail";
         if (status === "pass") return "pass"; // Found a passing alternative
         if (bestStatus === "info" || bestStatus === "warn") bestStatus = status;
         continue;
       }
 
       // Strategy 1b: Exact model match failed — try family-average comparison
-      if (userMatch && scores[userMatch] != null) {
+      if (userScore != null) {
         const familyScore = familyAverageScore(parsed.model, candidates, scores);
         if (familyScore !== null) {
-          const status = scores[userMatch] >= familyScore ? "pass" : "fail";
+          const status = userScore >= familyScore ? "pass" : "fail";
+          if (status === "pass") return "pass";
+          if (bestStatus === "info" || bestStatus === "warn") bestStatus = status;
+          continue;
+        }
+      }
+
+      // Strategy 1c: Try score interpolation for the requirement model
+      if (userScore != null) {
+        const reqEstimate = estimateCPUScore(parsed.model, scores);
+        if (reqEstimate !== null) {
+          const status = userScore >= reqEstimate ? "pass" : "fail";
           if (status === "pass") return "pass";
           if (bestStatus === "info" || bestStatus === "warn") bestStatus = status;
           continue;
@@ -347,7 +358,7 @@ function compareCPU(
   // an Intel CPU against an AMD FX alternative that has a lower score).
   if (bestStatus === "info" && user.cpu) {
     const filteredReqText = alternatives.join(" or ");
-    return compareHardware(user.cpu, filteredReqText || reqText, candidates, scores);
+    return compareHardware(user.cpu, filteredReqText || reqText, candidates, scores, estimateCPUScore);
   }
 
   return bestStatus;
@@ -468,18 +479,197 @@ function cleanLspciGPU(text: string): string {
   return cleaned;
 }
 
+/**
+ * Parse a GPU name into vendor prefix + model number for score interpolation.
+ * Handles NVIDIA (GT/GTX/RTX), AMD (HD/R7/R9/RX), and mobile variants.
+ */
+function parseGPUModelNumber(text: string): { prefix: string; modelNum: number; isMobile: boolean } | null {
+  const lower = text.toLowerCase();
+
+  // NVIDIA GeForce RTX/GTX/GT patterns
+  const nvidiaMatch = lower.match(/\b(rtx|gtx|gt)\s*(\d{3,4})/);
+  if (nvidiaMatch) {
+    const afterNum = lower.slice(lower.indexOf(nvidiaMatch[2]) + nvidiaMatch[2].length);
+    return {
+      prefix: "NVIDIA " + nvidiaMatch[1].toUpperCase(),
+      modelNum: parseInt(nvidiaMatch[2]),
+      isMobile: /^\s*m\b/.test(afterNum),
+    };
+  }
+
+  // AMD Radeon RX patterns
+  const rxMatch = lower.match(/\brx\s*(\d{3,4})/);
+  if (rxMatch) {
+    return { prefix: "AMD RX", modelNum: parseInt(rxMatch[1]), isMobile: false };
+  }
+
+  // AMD Radeon HD patterns
+  const hdMatch = lower.match(/\bhd\s*(\d{4})/);
+  if (hdMatch) {
+    return { prefix: "AMD HD", modelNum: parseInt(hdMatch[1]), isMobile: false };
+  }
+
+  // AMD Radeon R7/R9 patterns
+  const rMatch = lower.match(/\b(r[79])\s*(\d{3})/);
+  if (rMatch) {
+    return { prefix: "AMD " + rMatch[1].toUpperCase(), modelNum: parseInt(rMatch[2]), isMobile: false };
+  }
+
+  return null;
+}
+
+/**
+ * Estimate a GPU score by interpolating from known models in the same product line.
+ * Used as fallback when fuzzy matching can't find an exact match.
+ */
+function estimateGPUScore(text: string, scores: Record<string, number>): number | null {
+  const parsed = parseGPUModelNumber(text);
+  if (!parsed) return null;
+
+  // Find all known GPUs in the same product line
+  const samePrefix: { num: number; score: number }[] = [];
+  for (const [name, score] of Object.entries(scores)) {
+    const candidate = parseGPUModelNumber(name);
+    if (candidate && candidate.prefix === parsed.prefix && !candidate.isMobile) {
+      samePrefix.push({ num: candidate.modelNum, score });
+    }
+  }
+
+  if (samePrefix.length === 0) return null;
+
+  // Sort by model number
+  samePrefix.sort((a, b) => a.num - b.num);
+
+  // Find nearest neighbors for interpolation
+  let below: typeof samePrefix[0] | null = null;
+  let above: typeof samePrefix[0] | null = null;
+
+  for (const entry of samePrefix) {
+    if (entry.num <= parsed.modelNum) below = entry;
+    if (entry.num >= parsed.modelNum && !above) above = entry;
+  }
+
+  let score: number;
+  if (below && above && below !== above) {
+    // Linear interpolation between nearest known models
+    const range = above.num - below.num;
+    const t = range > 0 ? (parsed.modelNum - below.num) / range : 0.5;
+    score = below.score + t * (above.score - below.score);
+  } else if (below) {
+    score = below.score;
+  } else if (above) {
+    score = above.score;
+  } else {
+    return null;
+  }
+
+  // Mobile GPUs are typically ~70% of desktop performance
+  if (parsed.isMobile) {
+    score *= 0.7;
+  }
+
+  return score;
+}
+
+/**
+ * Parse a CPU name into family + generation + model number for score interpolation.
+ * Handles Intel Core iX-YYYY and AMD Ryzen X YYYY patterns.
+ */
+function parseCPUModelNumber(text: string): { prefix: string; modelNum: number } | null {
+  const lower = text.toLowerCase();
+
+  // Intel Core iX-YYYY (e.g., i7-3770, i5-12600K)
+  const intelMatch = lower.match(/\bi([3579])\s*[-\s]\s*(\d{4,5})/);
+  if (intelMatch) {
+    return {
+      prefix: "Intel i" + intelMatch[1],
+      modelNum: parseInt(intelMatch[2]),
+    };
+  }
+
+  // AMD Ryzen X YYYY (e.g., Ryzen 5 3600, Ryzen 7 5800X)
+  const ryzenMatch = lower.match(/\bryzen\s*([3579])\s*(\d{4})/);
+  if (ryzenMatch) {
+    return {
+      prefix: "AMD Ryzen " + ryzenMatch[1],
+      modelNum: parseInt(ryzenMatch[2]),
+    };
+  }
+
+  // AMD FX-XXXX
+  const fxMatch = lower.match(/\bfx\s*[-\s]\s*(\d{4})/);
+  if (fxMatch) {
+    return { prefix: "AMD FX", modelNum: parseInt(fxMatch[1]) };
+  }
+
+  return null;
+}
+
+/**
+ * Estimate a CPU score by interpolating from known models in the same family/tier.
+ */
+function estimateCPUScore(text: string, scores: Record<string, number>): number | null {
+  const parsed = parseCPUModelNumber(text);
+  if (!parsed) return null;
+
+  const samePrefix: { num: number; score: number }[] = [];
+  for (const [name, score] of Object.entries(scores)) {
+    const candidate = parseCPUModelNumber(name);
+    if (candidate && candidate.prefix === parsed.prefix) {
+      samePrefix.push({ num: candidate.modelNum, score });
+    }
+  }
+
+  if (samePrefix.length === 0) return null;
+
+  samePrefix.sort((a, b) => a.num - b.num);
+
+  let below: typeof samePrefix[0] | null = null;
+  let above: typeof samePrefix[0] | null = null;
+
+  for (const entry of samePrefix) {
+    if (entry.num <= parsed.modelNum) below = entry;
+    if (entry.num >= parsed.modelNum && !above) above = entry;
+  }
+
+  if (below && above && below !== above) {
+    const range = above.num - below.num;
+    const t = range > 0 ? (parsed.modelNum - below.num) / range : 0.5;
+    return below.score + t * (above.score - below.score);
+  } else if (below) {
+    return below.score;
+  } else if (above) {
+    return above.score;
+  }
+
+  return null;
+}
+
+/**
+ * Try to get a hardware score: first by fuzzy match, then by interpolation.
+ */
+function resolveScore(
+  text: string,
+  candidates: string[],
+  scores: Record<string, number>,
+  estimator: (text: string, scores: Record<string, number>) => number | null,
+): number | null {
+  const match = fuzzyMatchHardware(text, candidates);
+  if (match && scores[match] != null) return scores[match];
+  return estimator(text, scores);
+}
+
 function compareHardware(
   userText: string,
   reqText: string,
   candidates: string[],
-  scores: Record<string, number>
+  scores: Record<string, number>,
+  estimator: (text: string, scores: Record<string, number>) => number | null = estimateGPUScore,
 ): ComparisonStatus {
   if (!reqText) return "pass";
   if (!userText) return "info";
 
-  const userMatch = fuzzyMatchHardware(userText, candidates);
-  if (!userMatch) return "info";
-  const userScore = scores[userMatch];
+  const userScore = resolveScore(userText, candidates, scores, estimator);
   if (userScore == null) return "info";
 
   // Try each alternative in the requirement text — pass if user beats any
@@ -487,10 +677,10 @@ function compareHardware(
   let bestReqScore: number | null = null;
 
   for (const alt of alternatives) {
-    const reqMatch = fuzzyMatchHardware(alt, candidates);
-    if (reqMatch && scores[reqMatch] != null) {
-      if (bestReqScore === null || scores[reqMatch] < bestReqScore) {
-        bestReqScore = scores[reqMatch];
+    const altScore = resolveScore(alt, candidates, scores, estimator);
+    if (altScore != null) {
+      if (bestReqScore === null || altScore < bestReqScore) {
+        bestReqScore = altScore;
       }
     }
   }
@@ -602,19 +792,21 @@ export function compareSpecs(
     recStatus: compareNumeric(user.storageGB, rec.storage),
   });
 
-  // Extract GPU/CPU scores for FPS estimation, preferring same-vendor alternatives
-  const userGpuMatch = fuzzyMatchHardware(cleanedGPU, Object.keys(gpuScores));
+  // Extract GPU/CPU scores for FPS estimation, preferring same-vendor alternatives.
+  // Use resolveScore for fallback interpolation when fuzzy match fails.
+  const userGpuScore = cleanedGPU ? resolveScore(cleanedGPU, Object.keys(gpuScores), gpuScores, estimateGPUScore) : null;
+  const userCpuScore = user.cpu   ? resolveScore(user.cpu,   Object.keys(cpuScores), cpuScores, estimateCPUScore) : null;
+
   const recGpuMatch  = rec.gpu  ? vendorAwareMatch(cleanedGPU,    rec.gpu,  Object.keys(gpuScores), extractGPUVendor) : null;
   const minGpuMatch  = min.gpu  ? vendorAwareMatch(cleanedGPU,    min.gpu,  Object.keys(gpuScores), extractGPUVendor) : null;
-  const userCpuMatch = user.cpu ? fuzzyMatchHardware(user.cpu, Object.keys(cpuScores)) : null;
   const recCpuMatch  = rec.cpu  ? vendorAwareMatch(user.cpu ?? "", rec.cpu, Object.keys(cpuScores), extractCPUPlatform) : null;
   const minCpuMatch  = min.cpu  ? vendorAwareMatch(user.cpu ?? "", min.cpu, Object.keys(cpuScores), extractCPUPlatform) : null;
 
   const scores: HardwareScores = {
-    userGpuScore: userGpuMatch ? (gpuScores[userGpuMatch] ?? null) : null,
+    userGpuScore,
     recGpuScore:  recGpuMatch  ? (gpuScores[recGpuMatch]  ?? null) : null,
     minGpuScore:  minGpuMatch  ? (gpuScores[minGpuMatch]  ?? null) : null,
-    userCpuScore: userCpuMatch ? (cpuScores[userCpuMatch] ?? null) : null,
+    userCpuScore,
     recCpuScore:  recCpuMatch  ? (cpuScores[recCpuMatch]  ?? null) : null,
     minCpuScore:  minCpuMatch  ? (cpuScores[minCpuMatch]  ?? null) : null,
   };
