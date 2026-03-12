@@ -156,18 +156,34 @@ export default function StepResults({
   fpsEstimate,
 }: Props) {
   const [showEditor, setShowEditor] = useState(false);
+  const [showHiddenFps, setShowHiddenFps] = useState(false);
 
   const hasEstimate = fpsEstimate && fpsEstimate.confidence !== "none";
   const hasFloor = fpsEstimate && fpsEstimate.confidence === "none"
     && verdict && (verdict.verdict === "pass" || verdict.verdict === "minimum");
+
+  // Hide FPS when failing minimum or OS doesn't match (cross-platform warn)
+  const osMismatch = comparison?.some(
+    (item) => item.label === "Operating System" && item.minStatus === "warn"
+  ) ?? false;
+  const shouldHideFps = hasEstimate && (verdict?.verdict === "fail" || osMismatch);
+  const fpsVisible = hasEstimate && (!shouldHideFps || showHiddenFps);
 
   return (
     <div className="animate-fadeIn flex flex-col gap-4">
       {game && (
         <div className="relative flex flex-col sm:flex-row items-center gap-4 p-4 rounded-lg bg-base-200/50 overflow-hidden">
           {/* FPS counter watermark (replaces verdict icon when estimate is available) */}
-          {hasEstimate ? (
+          {fpsVisible ? (
             <AnimatedFpsNumber target={fpsEstimate.mid} />
+          ) : shouldHideFps ? (
+            <button
+              onClick={() => setShowHiddenFps(true)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 text-base-content/5 hover:text-base-content/15 transition-colors cursor-pointer select-none"
+              title="Show estimated FPS anyway"
+            >
+              <HiEmojiSad className="w-full h-full" />
+            </button>
           ) : (() => {
             const iconClass = "absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 text-base-content/5 select-none pointer-events-none";
             if (!verdict || verdict.verdict === "unknown") return <HiQuestionMarkCircle className={iconClass} />;
@@ -230,7 +246,7 @@ export default function StepResults({
         <ComparisonResult items={comparison} />
       )}
 
-      {hasEstimate && (
+      {fpsVisible && (
         <div className="flex flex-wrap items-center gap-2 px-1 text-sm text-base-content/60">
           <span>Estimated:</span>
           <span className={`font-semibold ${fpsColor(fpsEstimate.mid)}`}>
@@ -238,6 +254,9 @@ export default function StepResults({
           </span>
           {fpsEstimate.confidence === "limited" && (
             <span className="text-xs text-base-content/40">(rough estimate)</span>
+          )}
+          {shouldHideFps && (
+            <span className="text-xs text-base-content/40">(may not reflect actual performance)</span>
           )}
           <span className="text-xs text-base-content/40">· based on hardware scores</span>
         </div>

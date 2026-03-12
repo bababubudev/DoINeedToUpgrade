@@ -8,6 +8,7 @@ import { estimateFps } from "@/lib/fpsEstimate";
 import { useBenchmarks } from "@/lib/useBenchmarks";
 import VerdictBanner from "@/components/VerdictBanner";
 import ComparisonResult from "@/components/ComparisonResult";
+import { HiEmojiSad } from "react-icons/hi";
 import Link from "next/link";
 
 interface Props {
@@ -22,6 +23,7 @@ export default function GamePageClient({ game }: Props) {
   const { cpuScores, gpuScores, loading } = useBenchmarks();
   const [specs, setSpecs] = useState<UserSpecs | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
+  const [showHiddenFps, setShowHiddenFps] = useState(false);
 
   useEffect(() => {
     try {
@@ -73,12 +75,27 @@ export default function GamePageClient({ game }: Props) {
   const fpsEstimate = estimateFps(scores);
 
   const hasEstimate = fpsEstimate && fpsEstimate.confidence !== "none";
+  const osMismatch = items.some(
+    (item) => item.label === "Operating System" && item.minStatus === "warn"
+  );
+  const shouldHideFps = hasEstimate && (verdict.verdict === "fail" || osMismatch);
+  const fpsVisible = hasEstimate && (!shouldHideFps || showHiddenFps);
 
   return (
     <div className="flex flex-col gap-4">
       <VerdictBanner result={verdict} />
       <ComparisonResult items={items} />
-      {hasEstimate && (
+      {shouldHideFps && !showHiddenFps && (
+        <button
+          onClick={() => setShowHiddenFps(true)}
+          className="flex items-center gap-2 px-1 text-sm text-base-content/40 hover:text-base-content/60 transition-colors cursor-pointer w-fit"
+          title="Show estimated FPS anyway"
+        >
+          <HiEmojiSad className="w-5 h-5" />
+          <span>Show estimated FPS anyway</span>
+        </button>
+      )}
+      {fpsVisible && (
         <div className="flex flex-wrap items-center gap-2 px-1 text-sm text-base-content/60">
           <span>Estimated:</span>
           <span className="font-semibold">
@@ -86,6 +103,9 @@ export default function GamePageClient({ game }: Props) {
           </span>
           {fpsEstimate.confidence === "limited" && (
             <span className="text-xs text-base-content/40">(rough estimate)</span>
+          )}
+          {shouldHideFps && (
+            <span className="text-xs text-base-content/40">(may not reflect actual performance)</span>
           )}
           <span className="text-xs text-base-content/40">&middot; based on hardware scores</span>
         </div>
