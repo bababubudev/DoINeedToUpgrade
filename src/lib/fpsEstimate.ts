@@ -7,17 +7,17 @@ const UNCERTAINTY    = 0.25;
 const MAX_FPS        = 300;
 // Every SCORE_SCALE points above the recommended spec doubles the predicted FPS,
 // and every SCORE_SCALE points below halves it. This handles score-scale compression
-// better than a power function: a score ratio of 3× can represent a real-world gap
-// of 5×, so basing predictions on the raw score difference is more accurate.
+// better than a power function: a score ratio of 3x can represent a real-world gap
+// of 5x, so basing predictions on the raw score difference is more accurate.
 const SCORE_SCALE    = 25;
 
 /**
  * Estimate the FPS contribution of a single hardware component.
  *
- * - Below minimum  → sub-30fps using min as the 30fps reference
- * - Meets minimum, rec available → 60fps at rec spec, exponential delta above/below
- * - Meets minimum, no rec       → 60fps at min spec (user-hardware-driven)
- * - No game specs at all        → null (caller handles via early exit)
+ * Uses a continuous curve that anchors at 30fps for minimum specs and 60fps
+ * for recommended specs (when available). Below minimum, the curve extrapolates
+ * downward smoothly rather than using a separate linear formula — this avoids
+ * a discontinuity at the min threshold.
  */
 function componentFps(
   userScore: number | null,
@@ -27,23 +27,76 @@ function componentFps(
   if (userScore === null) return { fps: null, failsMin: false };
   if (minScore === null && recScore === null) return { fps: null, failsMin: false };
 
-  if (minScore !== null && userScore < minScore) {
-    // Below minimum — gives sub-30fps so the estimate reflects the failing result
-    return { fps: MIN_ANCHOR_FPS * (userScore / minScore), failsMin: true };
+  const failsMin = minScore !== null && userScore < minScore;
+
+  if (recScore !== null && minScore !== null) {
+    // Two anchors: 30fps at minScore, 60fps at recScore.
+    // Solve for base: 60/30 = base^(recScore - minScore) → base = 2^(1/(rec-min))
+    // Then fps = 30 * base^(userScore - minScore)
+    // This is continuous across the entire range including below minimum.
+    const gap = recScore - minScore;
+    if (gap > 0) {
+      const fps = MIN_ANCHOR_FPS * Math.pow(2, (userScore - minScore) / gap);
+      return { fps, failsMin };
+    }
+    // rec ≈ min — fall through to single-anchor formula
+    const fps = REC_ANCHOR_FPS * Math.pow(2, (userScore - recScore) / SCORE_SCALE);
+    return { fps, failsMin };
   }
 
   if (recScore !== null) {
-    // Exponential delta: anchored at 60fps for the recommended spec, doubling
-    // every SCORE_SCALE points above (and halving every SCORE_SCALE points below).
-    // This avoids score-compression distortion — a score gap of 88 (RTX 5090 vs
-    // GTX 1080) correctly predicts high FPS instead of being capped by a raw ratio.
+    // Only rec available — anchor at 60fps
     const fps = REC_ANCHOR_FPS * Math.pow(2, (userScore - recScore) / SCORE_SCALE);
-    return { fps, failsMin: false };
+    return { fps, failsMin };
   }
 
-  // Above minimum, no rec — treat minimum as the 60fps reference
+  // Only min available — treat minimum as the 60fps reference
   const fps = BASELINE_FPS * Math.pow(2, (userScore - minScore!) / SCORE_SCALE);
-  return { fps, failsMin: false };
+  return { fps, failsMin };
+}
+
+/**
+ * Compute a RAM penalty multiplier (0.4 – 1.0).
+ * RAM doesn't scale FPS linearly — it's a cliff: enough RAM = no impact,
+ * not enough = severe stuttering from OS paging.
+ *
+ * - >= recommended (or no req): 1.0 (no penalty)
+ * - >= minimum but < recommended: mild penalty scaling linearly (0.85 – 1.0)
+ * - < minimum: harsh penalty scaling with the deficit (down to 0.4)
+ */
+function ramPenalty(
+  userGB: number | null,
+  minGB: number | null,
+  recGB: number | null,
+): { multiplier: number; isBottleneck: boolean } {
+  if (userGB === null) return { multiplier: 1, isBottleneck: false };
+
+  const effectiveMin = minGB;
+  const effectiveRec = recGB ?? minGB;
+
+  // No RAM requirements listed — no penalty
+  if (effectiveMin === null && effectiveRec === null) return { multiplier: 1, isBottleneck: false };
+
+  if (effectiveRec !== null && userGB >= effectiveRec) {
+    return { multiplier: 1, isBottleneck: false };
+  }
+
+  if (effectiveMin !== null && userGB < effectiveMin) {
+    // Below minimum — harsh penalty. At 50% of minimum → 0.4x, at 100% → 0.85x
+    const ratio = Math.max(userGB / effectiveMin, 0);
+    const mult = 0.4 + 0.45 * ratio;
+    return { multiplier: mult, isBottleneck: true };
+  }
+
+  if (effectiveMin !== null && effectiveRec !== null && effectiveRec > effectiveMin) {
+    // Between min and rec — mild penalty (0.85 at min, 1.0 at rec)
+    const t = (userGB - effectiveMin) / (effectiveRec - effectiveMin);
+    const mult = 0.85 + 0.15 * t;
+    return { multiplier: mult, isBottleneck: false };
+  }
+
+  // Has min but no rec, and user meets min
+  return { multiplier: 1, isBottleneck: false };
 }
 
 export function estimateFps(scores: HardwareScores): FpsEstimate {
@@ -88,6 +141,19 @@ export function estimateFps(scores: HardwareScores): FpsEstimate {
   } else {
     mid = fpsByCpu!;
     bottleneck = "cpu";
+  }
+
+  // Apply RAM penalty — insufficient RAM causes paging which tanks performance
+  const ram = ramPenalty(scores.userRamGB, scores.minRamGB, scores.recRamGB);
+  mid *= ram.multiplier;
+
+  // RAM becomes the declared bottleneck if it's the dominant limiter
+  if (ram.isBottleneck) {
+    // Only override if RAM penalty is worse than the CPU/GPU bottleneck effect
+    const cpuGpuMin = Math.min(fpsByGpu ?? Infinity, fpsByCpu ?? Infinity);
+    if (ram.multiplier * cpuGpuMin < cpuGpuMin) {
+      bottleneck = "ram";
+    }
   }
 
   mid = Math.min(mid, MAX_FPS);

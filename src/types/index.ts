@@ -84,6 +84,9 @@ export interface HardwareScores {
   userCpuScore: number | null;
   recCpuScore: number | null;
   minCpuScore: number | null;
+  userRamGB: number | null;
+  minRamGB: number | null;
+  recRamGB: number | null;
 }
 
 export type FpsConfidence = "good" | "limited" | "none";
@@ -92,7 +95,7 @@ export interface FpsEstimate {
   low: number;
   high: number;
   mid: number;
-  bottleneck: "gpu" | "cpu" | "balanced";
+  bottleneck: "gpu" | "cpu" | "ram" | "balanced";
   confidence: FpsConfidence;
 }
 

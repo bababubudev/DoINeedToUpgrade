@@ -809,6 +809,9 @@ export function compareSpecs(
     userCpuScore,
     recCpuScore:  recCpuMatch  ? (cpuScores[recCpuMatch]  ?? null) : null,
     minCpuScore:  minCpuMatch  ? (cpuScores[minCpuMatch]  ?? null) : null,
+    userRamGB:    user.ramGB,
+    minRamGB:     parseGB(min.ram),
+    recRamGB:     parseGB(rec.ram),
   };
 
   return { items, scores };
