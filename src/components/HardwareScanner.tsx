@@ -165,6 +165,7 @@ export default function HardwareScanner({ onImport, onDownload }: Props) {
                 onClick={async () => {
                   const cmd = info.terminalCommand.command.replace("{BASE}", window.location.origin);
                   await navigator.clipboard.writeText(cmd);
+                  onDownload?.();
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 }}
