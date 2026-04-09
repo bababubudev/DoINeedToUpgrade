@@ -10,8 +10,9 @@ import (
 	"strings"
 )
 
-func detectSpecs() Specs {
+func detectSpecs() DetectionResult {
 	specs := Specs{}
+	var errors []string
 
 	// OS
 	if data, err := os.ReadFile("/etc/os-release"); err == nil {
@@ -23,8 +24,12 @@ func detectSpecs() Specs {
 		}
 	}
 	if specs.OS == "" {
-		out, _ := exec.Command("uname", "-sr").Output()
-		specs.OS = strings.TrimSpace(string(out))
+		out, err := exec.Command("uname", "-sr").Output()
+		if err != nil {
+			errors = append(errors, "Could not detect OS version")
+		} else {
+			specs.OS = strings.TrimSpace(string(out))
+		}
 	}
 
 	// CPU
@@ -39,10 +44,22 @@ func detectSpecs() Specs {
 			}
 		}
 	}
+	if specs.CPU == "" {
+		errors = append(errors, "Could not detect CPU name")
+	}
 
-	// CPU Cores
-	out, _ := exec.Command("nproc").Output()
-	specs.CPUCores, _ = strconv.Atoi(strings.TrimSpace(string(out)))
+	// CPU Cores (physical) — count unique (physical_id, core_id) pairs
+	specs.CPUCores = countPhysicalCores()
+	if specs.CPUCores == 0 {
+		// Fallback to nproc (gives logical threads)
+		out, _ := exec.Command("nproc").Output()
+		specs.CPUCores, _ = strconv.Atoi(strings.TrimSpace(string(out)))
+		if specs.CPUCores > 0 {
+			errors = append(errors, "Core count is logical threads, not physical cores (nproc fallback)")
+		} else {
+			errors = append(errors, "Could not detect CPU core count")
+		}
+	}
 
 	// CPU Speed - try max frequency first, fall back to current
 	if data, err := os.ReadFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"); err == nil {
@@ -66,10 +83,15 @@ func detectSpecs() Specs {
 			}
 		}
 	}
+	if specs.CPUSpeedGHz == 0 {
+		errors = append(errors, "Could not detect CPU speed")
+	}
 
 	// GPU
 	lspciOut, err := exec.Command("lspci").Output()
-	if err == nil {
+	if err != nil {
+		errors = append(errors, "Could not detect GPU (lspci failed)")
+	} else {
 		for _, line := range strings.Split(string(lspciOut), "\n") {
 			lower := strings.ToLower(line)
 			if strings.Contains(lower, "vga") || strings.Contains(lower, "3d") || strings.Contains(lower, "display") {
@@ -81,6 +103,9 @@ func detectSpecs() Specs {
 					break
 				}
 			}
+		}
+		if specs.GPU == "" {
+			errors = append(errors, "Could not detect GPU name from lspci output")
 		}
 	}
 
@@ -97,19 +122,62 @@ func detectSpecs() Specs {
 			}
 		}
 	}
+	if specs.RAMGB == 0 {
+		errors = append(errors, "Could not detect RAM size")
+	}
 
 	// Storage (free space on root)
-	dfOut, _ := exec.Command("df", "-BG", "/").Output()
-	lines := strings.Split(string(dfOut), "\n")
-	if len(lines) >= 2 {
-		fields := strings.Fields(lines[1])
-		if len(fields) >= 4 {
-			freeStr := strings.TrimSuffix(fields[3], "G")
-			specs.StorageGB, _ = strconv.Atoi(freeStr)
+	dfOut, err := exec.Command("df", "-BG", "/").Output()
+	if err != nil {
+		errors = append(errors, "Could not detect storage free space")
+	} else {
+		lines := strings.Split(string(dfOut), "\n")
+		if len(lines) >= 2 {
+			fields := strings.Fields(lines[1])
+			if len(fields) >= 4 {
+				freeStr := strings.TrimSuffix(fields[3], "G")
+				specs.StorageGB, _ = strconv.Atoi(freeStr)
+			}
+		}
+		if specs.StorageGB == 0 {
+			errors = append(errors, "Could not parse storage free space")
 		}
 	}
 
-	return specs
+	return DetectionResult{Specs: specs, Errors: errors}
+}
+
+// countPhysicalCores counts unique (physical_id, core_id) pairs from /proc/cpuinfo.
+func countPhysicalCores() int {
+	data, err := os.ReadFile("/proc/cpuinfo")
+	if err != nil {
+		return 0
+	}
+
+	type coreKey struct {
+		physicalID string
+		coreID     string
+	}
+	seen := make(map[coreKey]bool)
+	var currentPhysicalID, currentCoreID string
+
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "physical id") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				currentPhysicalID = strings.TrimSpace(parts[1])
+			}
+		} else if strings.HasPrefix(line, "core id") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				currentCoreID = strings.TrimSpace(parts[1])
+				seen[coreKey{currentPhysicalID, currentCoreID}] = true
+			}
+		}
+	}
+
+	return len(seen)
 }
 
 // cleanGPUName normalises lspci GPU output into a form that matches our database.
@@ -152,15 +220,5 @@ func cleanGPUName(name string) string {
 
 	// Collapse whitespace
 	name = regexp.MustCompile(`\s+`).ReplaceAllString(name, " ")
-	return strings.TrimSpace(name)
-}
-
-func cleanCPUName(name string) string {
-	name = strings.ReplaceAll(name, "(R)", "")
-	name = strings.ReplaceAll(name, "(TM)", "")
-	name = strings.ReplaceAll(name, "(tm)", "")
-	// Collapse multiple spaces
-	re := regexp.MustCompile(`\s+`)
-	name = re.ReplaceAllString(name, " ")
 	return strings.TrimSpace(name)
 }

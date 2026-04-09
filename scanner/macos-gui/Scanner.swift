@@ -4,6 +4,7 @@ struct Specs: Codable {
     let os: String
     let cpu: String
     let cpuCores: Int
+    let cpuSpeedGHz: Double
     let gpu: String
     let ramGB: Int
     let storageGB: Int
@@ -24,8 +25,21 @@ class Scanner {
         let coresStr = execCmd("/usr/sbin/sysctl", ["-n", "hw.physicalcpu"]).trimmingCharacters(in: .whitespacesAndNewlines)
         let cpuCores = Int(coresStr) ?? 0
 
-        // GPU - Apple Silicon uses chip name as GPU
+        // Architecture (used for both CPU speed and GPU detection)
         let arch = execCmd("/usr/bin/uname", ["-m"]).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // CPU Speed
+        var cpuSpeedGHz: Double = 0.0
+        if arch == "arm64" {
+            cpuSpeedGHz = getAppleSiliconSpeed(cpu)
+        } else {
+            let freqStr = execCmd("/usr/sbin/sysctl", ["-n", "hw.cpufrequency_max"]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if let freqHz = Int64(freqStr), freqHz > 0 {
+                cpuSpeedGHz = Double(freqHz) / 1_000_000_000.0
+            }
+        }
+
+        // GPU - Apple Silicon uses chip name as GPU
         var gpu = ""
         if arch == "arm64" {
             // Extract Apple chip name from CPU
@@ -64,7 +78,7 @@ class Scanner {
             }
         }
 
-        return Specs(os: os, cpu: cpu, cpuCores: cpuCores, gpu: gpu, ramGB: ramGB, storageGB: storageGB)
+        return Specs(os: os, cpu: cpu, cpuCores: cpuCores, cpuSpeedGHz: cpuSpeedGHz, gpu: gpu, ramGB: ramGB, storageGB: storageGB)
     }
 
     static func encodeSpecs(_ specs: Specs) -> String? {
@@ -99,6 +113,28 @@ class Scanner {
 
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         return String(data: data, encoding: .utf8) ?? ""
+    }
+
+    private static func getAppleSiliconSpeed(_ cpuName: String) -> Double {
+        let knownSpeeds: [Int: Double] = [
+            1: 3.2, 2: 3.5, 3: 4.1, 4: 4.4
+        ]
+
+        // Extract generation number from "Apple M4 Pro" etc.
+        let pattern = #"M(\d+)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: cpuName, range: NSRange(cpuName.startIndex..., in: cpuName)),
+              let genRange = Range(match.range(at: 1), in: cpuName),
+              let gen = Int(cpuName[genRange]) else {
+            return 3.0
+        }
+
+        if let speed = knownSpeeds[gen] {
+            return speed
+        }
+
+        // Extrapolate for future generations
+        return 4.4 + Double(gen - 4) * 0.3
     }
 
     private static func cleanCPUName(_ name: String) -> String {

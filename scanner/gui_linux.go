@@ -20,9 +20,14 @@ func hasCommand(name string) bool {
 func runGUI() {
 	if !hasDisplay() {
 		// No display server — just detect, print specs code, and exit
-		specs := detectSpecs()
-		code := encodeSpecs(specs)
+		result := detectSpecs()
+		code := encodeSpecs(result.Specs)
 		fmt.Println(code)
+		if len(result.Errors) > 0 {
+			for _, e := range result.Errors {
+				fmt.Printf("warning: %s\n", e)
+			}
+		}
 		return
 	}
 
@@ -45,20 +50,27 @@ func runWithZenity() {
 		"--title=DoINeedAnUpgrade", "--text=Scanning your hardware...", "--auto-close")
 	progress.Start()
 
-	specs := detectSpecs()
-	code := encodeSpecs(specs)
+	result := detectSpecs()
+	code := encodeSpecs(result.Specs)
 	copyToClipboard(code)
 
-	url := getURL(specs)
+	url := getURL(result.Specs)
 	openBrowser(url)
 
 	if progress.Process != nil {
 		progress.Process.Kill()
 	}
 
+	msg := "Hardware scan complete!\n\nYour specs have been copied to clipboard and the browser is opening."
+	if len(result.Errors) > 0 {
+		msg += "\n\nWarnings:"
+		for _, e := range result.Errors {
+			msg += "\n- " + e
+		}
+	}
 	exec.Command("zenity", "--info",
 		"--title=DoINeedAnUpgrade",
-		"--text=Hardware scan complete!\n\nYour specs have been copied to clipboard and the browser is opening.",
+		"--text="+msg,
 		"--timeout=3").Run()
 }
 
@@ -66,36 +78,45 @@ func runWithKdialog() {
 	// Show passive popup as progress indicator
 	exec.Command("kdialog", "--passivepopup", "Scanning your hardware...", "3").Start()
 
-	specs := detectSpecs()
-	code := encodeSpecs(specs)
+	result := detectSpecs()
+	code := encodeSpecs(result.Specs)
 	copyToClipboard(code)
 
-	url := getURL(specs)
+	url := getURL(result.Specs)
 	openBrowser(url)
 
-	exec.Command("kdialog", "--msgbox",
-		"Hardware scan complete!\n\nYour specs have been copied to clipboard and the browser is opening.").Run()
+	msg := "Hardware scan complete!\n\nYour specs have been copied to clipboard and the browser is opening."
+	if len(result.Errors) > 0 {
+		msg += "\n\nWarnings:"
+		for _, e := range result.Errors {
+			msg += "\n- " + e
+		}
+	}
+	exec.Command("kdialog", "--msgbox", msg).Run()
 }
 
 func runWithNotifySend() {
 	exec.Command("notify-send", "DoINeedAnUpgrade", "Scanning your hardware...").Run()
 
-	specs := detectSpecs()
-	code := encodeSpecs(specs)
+	result := detectSpecs()
+	code := encodeSpecs(result.Specs)
 	copyToClipboard(code)
 
-	url := getURL(specs)
+	url := getURL(result.Specs)
 	openBrowser(url)
 
-	exec.Command("notify-send", "DoINeedAnUpgrade",
-		"Hardware scan complete! Your browser is opening.").Run()
+	notifyMsg := "Hardware scan complete! Your browser is opening."
+	if len(result.Errors) > 0 {
+		notifyMsg += " (with warnings)"
+	}
+	exec.Command("notify-send", "DoINeedAnUpgrade", notifyMsg).Run()
 }
 
 func runSilent() {
-	specs := detectSpecs()
-	code := encodeSpecs(specs)
+	result := detectSpecs()
+	code := encodeSpecs(result.Specs)
 	copyToClipboard(code)
 
-	url := getURL(specs)
+	url := getURL(result.Specs)
 	openBrowser(url)
 }

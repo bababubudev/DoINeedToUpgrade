@@ -31,6 +31,7 @@ type StepGroup = {
 type PlatformInfo = {
   label: string;
   appFiles: { label: string; file: string }[];
+  terminalCommand: { label: string; command: string };
   stepGroups: StepGroup[];
 };
 
@@ -38,6 +39,7 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   windows: {
     label: "Windows",
     appFiles: [{ label: "Windows", file: "/downloads/DoINeedAnUpgrade.exe" }],
+    terminalCommand: { label: "PowerShell", command: "irm {BASE}/api/scan.ps1 | iex" },
     stepGroups: [
       { primary: "Double-click the downloaded file to run." },
       { primary: "The scanner will detect your specs and open this page with them imported automatically." },
@@ -49,6 +51,7 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
       { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.dmg" },
       { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.dmg" },
     ],
+    terminalCommand: { label: "Terminal", command: "curl -s {BASE}/api/scan | bash" },
     stepGroups: [
       { primary: "Open the .dmg and drag the app to Applications." },
       {
@@ -67,6 +70,7 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
       { label: ".deb (Ubuntu/Debian)", file: "/downloads/DoINeedAnUpgrade-Linux.deb" },
       { label: ".AppImage (Other)", file: "/downloads/DoINeedAnUpgrade-Linux.AppImage" },
     ],
+    terminalCommand: { label: "Terminal", command: "curl -s {BASE}/api/scan | bash" },
     stepGroups: [
       {
         primary: "For .deb: right-click → Open With → Software Install, then click Install.",
@@ -145,6 +149,41 @@ export default function HardwareScanner({ onImport, onDownload }: Props) {
           </p>
         </div>
         <div className="collapse-content flex flex-col gap-4">
+          {/* Terminal command section (primary) */}
+          <div className="bg-base-200 rounded-lg p-4">
+            <p className="text-sm font-medium mb-3">
+              Run in {info.terminalCommand.label}:
+            </p>
+            <div className="flex items-stretch gap-2">
+              <div className="flex-1 bg-base-300 rounded-lg px-4 flex items-center overflow-x-auto">
+                <code className="font-mono text-xs whitespace-nowrap">
+                  {info.terminalCommand.command.replace("{BASE}", typeof window !== "undefined" ? window.location.origin : "")}
+                </code>
+              </div>
+              <button
+                className="btn btn-sm btn-primary btn-square shrink-0"
+                onClick={async () => {
+                  const cmd = info.terminalCommand.command.replace("{BASE}", window.location.origin);
+                  await navigator.clipboard.writeText(cmd);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+              >
+                {copied ? <HiCheckCircle className="w-5 h-5" /> : <HiClipboardCopy className="w-5 h-5" />}
+              </button>
+            </div>
+            <p className="text-xs text-base-content/60 mt-2">
+              Detects your hardware and opens this page with specs imported.
+            </p>
+          </div>
+
+          {/* Divider between terminal and download */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-base-300" />
+            <span className="text-xs text-base-content/50">or download the app</span>
+            <div className="flex-1 h-px bg-base-300" />
+          </div>
+
           {/* Download section */}
           <div className="bg-base-200 rounded-lg p-4">
             <p className="text-sm font-medium mb-3">

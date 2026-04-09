@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
+	"strings"
 )
 
 const baseURL = "https://do-i-need-to-upgrade.vercel.app"
@@ -20,6 +22,25 @@ type Specs struct {
 	GPU         string  `json:"gpu"`
 	RAMGB       int     `json:"ramGB"`
 	StorageGB   int     `json:"storageGB"`
+}
+
+type DetectionResult struct {
+	Specs  Specs
+	Errors []string
+}
+
+// cleanCPUName normalises CPU brand strings for matching.
+func cleanCPUName(name string) string {
+	name = strings.ReplaceAll(name, "(R)", "")
+	name = strings.ReplaceAll(name, "(TM)", "")
+	name = strings.ReplaceAll(name, "(tm)", "")
+	// Remove "CPU @ X.XGHz" pattern (common in Intel strings)
+	re := regexp.MustCompile(`\s+CPU\s+@\s+[\d.]+\s*[GgMm][Hh][Zz]`)
+	name = re.ReplaceAllString(name, "")
+	// Collapse multiple spaces
+	re = regexp.MustCompile(`\s+`)
+	name = re.ReplaceAllString(name, " ")
+	return strings.TrimSpace(name)
 }
 
 func main() {
@@ -36,15 +57,23 @@ func runTerminal() {
 	fmt.Println("=== DoINeedAnUpgrade Hardware Scanner ===")
 	fmt.Println()
 
-	specs := detectSpecs()
+	result := detectSpecs()
 
-	fmt.Printf("OS:      %s\n", specs.OS)
-	fmt.Printf("CPU:     %s (%d cores @ %.1f GHz)\n", specs.CPU, specs.CPUCores, specs.CPUSpeedGHz)
-	fmt.Printf("GPU:     %s\n", specs.GPU)
-	fmt.Printf("RAM:     %d GB\n", specs.RAMGB)
-	fmt.Printf("Storage: %d GB free\n", specs.StorageGB)
+	fmt.Printf("OS:      %s\n", result.Specs.OS)
+	fmt.Printf("CPU:     %s (%d cores @ %.1f GHz)\n", result.Specs.CPU, result.Specs.CPUCores, result.Specs.CPUSpeedGHz)
+	fmt.Printf("GPU:     %s\n", result.Specs.GPU)
+	fmt.Printf("RAM:     %d GB\n", result.Specs.RAMGB)
+	fmt.Printf("Storage: %d GB free\n", result.Specs.StorageGB)
 
-	code := encodeSpecs(specs)
+	if len(result.Errors) > 0 {
+		fmt.Println()
+		fmt.Println("Warnings:")
+		for _, e := range result.Errors {
+			fmt.Printf("  - %s\n", e)
+		}
+	}
+
+	code := encodeSpecs(result.Specs)
 
 	fmt.Println()
 	fmt.Println("Your hardware specs:")
@@ -55,7 +84,7 @@ func runTerminal() {
 	copyToClipboard(code)
 
 	// Open browser
-	url := getURL(specs)
+	url := getURL(result.Specs)
 	fmt.Println()
 	fmt.Println("Opening browser...")
 	openBrowser(url)

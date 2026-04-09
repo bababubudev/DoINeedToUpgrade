@@ -29,17 +29,20 @@ func showMessage(title, message string) {
 }
 
 func runGUI() {
-	// Detect specs
-	specs := detectSpecs()
+	result := detectSpecs()
 
-	// Encode and copy to clipboard
-	code := encodeSpecs(specs)
+	code := encodeSpecs(result.Specs)
 	copyToClipboard(code)
 
-	// Open browser
-	url := getURL(specs)
+	url := getURL(result.Specs)
 	openBrowser(url)
 
-	// Show completion message
-	showMessage("DoINeedAnUpgrade", "Hardware scan complete!\n\nYour specs have been copied to clipboard and the browser is opening.")
+	msg := "Hardware scan complete!\n\nYour specs have been copied to clipboard and the browser is opening."
+	if len(result.Errors) > 0 {
+		msg += "\n\nWarnings:"
+		for _, e := range result.Errors {
+			msg += "\n- " + e
+		}
+	}
+	showMessage("DoINeedAnUpgrade", msg)
 }

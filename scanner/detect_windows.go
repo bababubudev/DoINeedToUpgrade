@@ -5,7 +5,6 @@ package main
 import (
 	"encoding/json"
 	"os/exec"
-	"regexp"
 	"strings"
 	"syscall"
 )
@@ -13,8 +12,9 @@ import (
 // CREATE_NO_WINDOW prevents console window from appearing
 const CREATE_NO_WINDOW = 0x08000000
 
-func detectSpecs() Specs {
+func detectSpecs() DetectionResult {
 	specs := Specs{}
+	var errors []string
 
 	// Run all queries in a single PowerShell call to avoid multiple window flashes
 	script := `
@@ -51,17 +51,47 @@ $storage = [math]::Round((Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3
 		Storage int    `json:"storage"`
 	}
 
-	if err := json.Unmarshal([]byte(out), &result); err == nil {
-		specs.OS = strings.TrimSpace(result.OS)
-		specs.CPU = cleanCPUName(strings.TrimSpace(result.CPU))
-		specs.CPUCores = result.Cores
-		specs.CPUSpeedGHz = float64(result.Speed) / 1000.0 // MHz to GHz
-		specs.GPU = strings.TrimSpace(result.GPU)
-		specs.RAMGB = result.RAM
-		specs.StorageGB = result.Storage
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		errors = append(errors, "Failed to parse hardware information from PowerShell: "+err.Error())
+		return DetectionResult{Specs: specs, Errors: errors}
 	}
 
-	return specs
+	specs.OS = strings.TrimSpace(result.OS)
+	if specs.OS == "" {
+		errors = append(errors, "Could not detect OS version")
+	}
+
+	specs.CPU = cleanCPUName(strings.TrimSpace(result.CPU))
+	if specs.CPU == "" {
+		errors = append(errors, "Could not detect CPU name")
+	}
+
+	specs.CPUCores = result.Cores
+	if specs.CPUCores == 0 {
+		errors = append(errors, "Could not detect CPU core count")
+	}
+
+	specs.CPUSpeedGHz = float64(result.Speed) / 1000.0 // MHz to GHz
+	if specs.CPUSpeedGHz == 0 {
+		errors = append(errors, "Could not detect CPU speed")
+	}
+
+	specs.GPU = strings.TrimSpace(result.GPU)
+	if specs.GPU == "" {
+		errors = append(errors, "Could not detect GPU name")
+	}
+
+	specs.RAMGB = result.RAM
+	if specs.RAMGB == 0 {
+		errors = append(errors, "Could not detect RAM size")
+	}
+
+	specs.StorageGB = result.Storage
+	if specs.StorageGB == 0 {
+		errors = append(errors, "Could not detect storage free space")
+	}
+
+	return DetectionResult{Specs: specs, Errors: errors}
 }
 
 func powershellHidden(script string) string {
@@ -71,17 +101,4 @@ func powershellHidden(script string) string {
 	}
 	out, _ := cmd.Output()
 	return string(out)
-}
-
-func cleanCPUName(name string) string {
-	name = strings.ReplaceAll(name, "(R)", "")
-	name = strings.ReplaceAll(name, "(TM)", "")
-	name = strings.ReplaceAll(name, "(tm)", "")
-	// Remove CPU @ frequency pattern
-	re := regexp.MustCompile(`\s+CPU\s+@\s+[\d.]+\s*[GgMm][Hh][Zz]`)
-	name = re.ReplaceAllString(name, "")
-	// Collapse multiple spaces
-	re = regexp.MustCompile(`\s+`)
-	name = re.ReplaceAllString(name, " ")
-	return strings.TrimSpace(name)
 }

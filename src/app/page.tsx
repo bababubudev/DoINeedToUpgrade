@@ -86,6 +86,90 @@ function Home() {
 
   // Load specs from URL params, localStorage, or detect automatically
   useEffect(() => {
+    // Priority 0: Check URL params for import token (from shell script)
+    const importToken = searchParams.get("import");
+    if (importToken) {
+      // Clean up URL immediately
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("import");
+        window.history.replaceState({}, "", url.pathname);
+      }
+
+      (async () => {
+        try {
+          const res = await fetch(`/api/import?token=${encodeURIComponent(importToken)}`);
+          if (!res.ok) throw new Error("Token expired or invalid");
+          const data = await res.json();
+
+          const imported: UserSpecs = {
+            os: data.os ?? "",
+            cpu: data.cpu ?? "",
+            cpuCores: typeof data.cpuCores === "number" ? data.cpuCores : null,
+            cpuSpeedGHz: typeof data.cpuSpeedGHz === "number" ? data.cpuSpeedGHz : null,
+            gpu: typeof data.gpu === "string" ? data.gpu : "",
+            ramGB: typeof data.ramGB === "number" ? data.ramGB : null,
+            storageGB: typeof data.storageGB === "number" ? data.storageGB : null,
+            detectionSource: "script",
+            ramApproximate: false,
+          };
+
+          setSpecs(imported);
+          const now = new Date().toISOString();
+          setSavedAt(now);
+          localStorage.setItem("savedSpecs", JSON.stringify({ specs: imported, savedAt: now }));
+          const detected = detectPlatformFromOS(imported.os || "");
+          setPlatform(detected);
+          setUserPlatform(detected);
+          setUnmatchedFields([]);
+          setDetecting(false);
+          setShowUrlImportToast(true);
+
+          // Check for pending game (same logic as ?specs= path)
+          const pendingGame = getPendingGame();
+          if (pendingGame) {
+            clearPendingGame();
+            try {
+              const gameRes = await fetch(`/api/game?appid=${pendingGame.appid}`);
+              if (!gameRes.ok) throw new Error("Failed to load game details");
+              const gameData: GameDetails = await gameRes.json();
+              setGame(gameData);
+
+              const selectedPlatform = gameData.availablePlatforms.includes(detected)
+                ? detected
+                : gameData.availablePlatforms[0] ?? "windows";
+              setPlatform(selectedPlatform);
+
+              const platformReqs = gameData.platformRequirements[selectedPlatform] ?? gameData.requirements;
+              const newMin = platformReqs.minimum ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
+              const newRec = platformReqs.recommended ?? { os: "", cpu: "", gpu: "", ram: "", storage: "" };
+              setMinReqs(newMin);
+              setRecReqs(newRec);
+
+              const hasMin = Object.values(newMin).some((v) => v.trim() !== "");
+              const hasRec = Object.values(newRec).some((v) => v.trim() !== "");
+              const { items: compItems, scores } = compareSpecs(imported, hasMin ? newMin : null, hasRec ? newRec : null, cpuScores, gpuScores);
+              setComparison(compItems);
+              setHardwareScores(scores);
+              setSpecsConfirmed(true);
+              setSpecsDirty(false);
+              setStep(3);
+              setMaxReached(3);
+              setImportedFromScanner(false);
+            } catch {
+              setImportedFromScanner(true);
+            }
+          } else {
+            setImportedFromScanner(true);
+          }
+        } catch {
+          // Token expired/invalid — fall through to normal detection
+          setDetecting(false);
+        }
+      })();
+      return;
+    }
+
     // Priority 1: Check URL params for specs (from hardware scanner script)
     const urlSpecs = searchParams.get("specs");
     if (urlSpecs) {
