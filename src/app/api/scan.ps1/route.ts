@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const host = request.headers.get("host") ?? "do-i-need-to-upgrade.vercel.app";
+  const host = request.headers.get("host") ?? "doineedtoupgrade.com";
   const proto = request.headers.get("x-forwarded-proto") ?? "https";
   const baseUrl = `${proto}://${host}`;
 

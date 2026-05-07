@@ -1,5 +1,5 @@
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://do-i-need-to-upgrade.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://doineedtoupgrade.com";
   
   const robots = `# Allow search engines to crawl all public pages
 User-agent: *

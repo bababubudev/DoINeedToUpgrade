@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const baseURL = "https://do-i-need-to-upgrade.vercel.app"
+const baseURL = "https://doineedtoupgrade.com"
 
 type Specs struct {
 	OS          string  `json:"os"`

@@ -1,4 +1,4 @@
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://do-i-need-to-upgrade.vercel.app';
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://doineedtoupgrade.com';
 
 export function StructuredData() {
   const structuredData = {

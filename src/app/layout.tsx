@@ -12,7 +12,7 @@ import PerformanceHint from "@/components/PerformanceHint";
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://do-i-need-to-upgrade.vercel.app"),
+  metadataBase: new URL("https://doineedtoupgrade.com"),
   title: {
     default: "Do I Need An Upgrade",
     template: "%s | Do I Need An Upgrade",

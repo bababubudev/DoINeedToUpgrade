@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : `Check if your PC can run ${game.name}. Compare your hardware against the official system requirements.`;
 
   const slug = slugify(game.name);
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://do-i-need-to-upgrade.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://doineedtoupgrade.com";
   const canonical = `${baseUrl}/game/${game.appid}/${slug}`;
 
   return {
