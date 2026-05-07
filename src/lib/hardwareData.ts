@@ -364,6 +364,9 @@ export const cpuList: string[] = [
   "Apple M4",
   "Apple M4 Pro",
   "Apple M4 Max",
+  "Apple M5",
+  "Apple M5 Pro",
+  "Apple M5 Max",
 ];
 
 export const gpuList: string[] = [
@@ -580,6 +583,9 @@ export const gpuList: string[] = [
   "Apple M4 GPU",
   "Apple M4 Pro GPU",
   "Apple M4 Max GPU",
+  "Apple M5 GPU",
+  "Apple M5 Pro GPU",
+  "Apple M5 Max GPU",
 ];
 
 // Relative performance scores (~10-100 scale, not real benchmarks)
@@ -949,6 +955,9 @@ export const cpuScores: Record<string, number> = {
   "Apple M4": 72,
   "Apple M4 Pro": 82,
   "Apple M4 Max": 92,
+  "Apple M5": 79,
+  "Apple M5 Pro": 89,
+  "Apple M5 Max": 99,
 };
 
 export const gpuScores: Record<string, number> = {
@@ -1165,6 +1174,9 @@ export const gpuScores: Record<string, number> = {
   "Apple M4 GPU": 42,
   "Apple M4 Pro GPU": 55,
   "Apple M4 Max GPU": 70,
+  "Apple M5 GPU": 48,
+  "Apple M5 Pro GPU": 62,
+  "Apple M5 Max GPU": 78,
 };
 
 // OS version ordering for comparison (higher = newer)
