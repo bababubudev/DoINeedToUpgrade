@@ -18,6 +18,16 @@ const nextConfig = {
       { source: "/sitemap.xml", destination: "/api/sitemap" },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "do-i-need-to-upgrade.vercel.app" }],
+        destination: "https://doineedtoupgrade.com/:path*",
+        statusCode: 301,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
