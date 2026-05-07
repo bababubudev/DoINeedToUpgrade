@@ -60,13 +60,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark" data-reduce-motion="false">
+    <html lang="en" data-theme="dark" data-reduce-motion="false" className="h-full overflow-hidden">
       <head>
         <StructuredData />
       </head>
-      <body className={`${montserrat.className} min-h-screen bg-base-200`}>
+      <body className={`${montserrat.className} h-full overflow-hidden flex flex-col bg-base-200`}>
         <GeometricBackground />
-        <div className="navbar bg-base-100/80 backdrop-blur-sm border-b border-base-300 px-4 relative z-20">
+        <div className="navbar bg-base-100/80 backdrop-blur-sm border-b border-base-300 px-4 relative z-20 flex-none">
           <div className="flex-1">
             <Logo />
           </div>
@@ -75,9 +75,11 @@ export default function RootLayout({
             <SettingsDropdown />
           </div>
         </div>
-        <div className="container mx-auto px-4 py-6 max-w-5xl relative z-10">
-          {children}
-        </div>
+        <main className="flex-1 overflow-y-auto relative z-10">
+          <div className="container mx-auto px-4 py-6 max-w-5xl">
+            {children}
+          </div>
+        </main>
         <PerformanceHint />
         <Analytics />
       </body>

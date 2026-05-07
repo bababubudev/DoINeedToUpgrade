@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  html { scrollbar-gutter: stable; }
   body { @apply antialiased; }
 }
 @layer components {
