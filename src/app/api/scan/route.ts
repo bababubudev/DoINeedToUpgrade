@@ -19,7 +19,7 @@ function generateBashScript(baseUrl: string): string {
   return `#!/usr/bin/env bash
 set -euo pipefail
 
-# DoINeedAnUpgrade Hardware Scanner
+# DoINeedToUpgrade Hardware Scanner
 # Usage: curl -s ${baseUrl}/api/scan | bash
 
 errors=()

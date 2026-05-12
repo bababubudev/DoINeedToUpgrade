@@ -47,7 +47,7 @@ func runGUI() {
 func runWithZenity() {
 	// Show progress dialog
 	progress := exec.Command("zenity", "--progress", "--pulsate", "--no-cancel",
-		"--title=DoINeedAnUpgrade", "--text=Scanning your hardware...", "--auto-close")
+		"--title=DoINeedToUpgrade", "--text=Scanning your hardware...", "--auto-close")
 	progress.Start()
 
 	result := detectSpecs()
@@ -69,7 +69,7 @@ func runWithZenity() {
 		}
 	}
 	exec.Command("zenity", "--info",
-		"--title=DoINeedAnUpgrade",
+		"--title=DoINeedToUpgrade",
 		"--text="+msg,
 		"--timeout=3").Run()
 }
@@ -96,7 +96,7 @@ func runWithKdialog() {
 }
 
 func runWithNotifySend() {
-	exec.Command("notify-send", "DoINeedAnUpgrade", "Scanning your hardware...").Run()
+	exec.Command("notify-send", "DoINeedToUpgrade", "Scanning your hardware...").Run()
 
 	result := detectSpecs()
 	code := encodeSpecs(result.Specs)
@@ -109,7 +109,7 @@ func runWithNotifySend() {
 	if len(result.Errors) > 0 {
 		notifyMsg += " (with warnings)"
 	}
-	exec.Command("notify-send", "DoINeedAnUpgrade", notifyMsg).Run()
+	exec.Command("notify-send", "DoINeedToUpgrade", notifyMsg).Run()
 }
 
 func runSilent() {

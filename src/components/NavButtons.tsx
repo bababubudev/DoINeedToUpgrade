@@ -15,12 +15,12 @@ function detectClientPlatform(): ClientPlatform {
 }
 
 const downloadLinks = {
-  windows: { label: "Windows", file: "/downloads/DoINeedAnUpgrade.exe" },
+  windows: { label: "Windows", file: "/downloads/DoINeedToUpgrade.exe" },
   macos: [
-    { label: "macOS (Apple Silicon)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.zip" },
-    { label: "macOS (Intel)", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.zip" },
+    { label: "macOS (Apple Silicon)", file: "/downloads/DoINeedToUpgrade-Mac-AppleSilicon.zip" },
+    { label: "macOS (Intel)", file: "/downloads/DoINeedToUpgrade-Mac-Intel.zip" },
   ],
-  linux: { label: "Linux", file: "/downloads/DoINeedAnUpgrade-Linux.AppImage" },
+  linux: { label: "Linux", file: "/downloads/DoINeedToUpgrade-Linux.AppImage" },
 };
 
 export default function NavButtons() {

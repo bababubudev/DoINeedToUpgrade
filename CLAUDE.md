@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DoINeedAnUpgrade is a web application that compares user hardware specs against video game system requirements. It fetches game requirements from Steam and uses fuzzy matching with performance scores to determine compatibility.
+DoINeedToUpgrade is a web application that compares user hardware specs against video game system requirements. It fetches game requirements from Steam and uses fuzzy matching with performance scores to determine compatibility.
 
 ## Commands
 

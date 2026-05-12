@@ -6,7 +6,7 @@ export default function Logo() {
       onClick={() => window.location.href = '/'}
       className="text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity cursor-pointer"
     >
-      Do I Need An Upgrade?
+      Do I Need To Upgrade?
     </button>
   );
 }

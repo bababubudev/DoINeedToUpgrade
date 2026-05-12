@@ -1,7 +1,7 @@
 .PHONY: all clean windows mac linux mac-intel mac-arm zip dmg deb icon
 
 OUTPUT_DIR = ../public/downloads
-APP_NAME = DoINeedAnUpgrade
+APP_NAME = DoINeedToUpgrade
 SWIFT_SRC = macos-gui/main.swift macos-gui/Scanner.swift
 ICON_SRC = ../public/icon-512.png
 ICONSET_DIR = .icon-cache/$(APP_NAME).iconset
@@ -60,7 +60,7 @@ mac-intel: $(OUTPUT_DIR) icon
 		'  <key>CFBundleIconFile</key>' \
 		'  <string>$(APP_NAME)</string>' \
 		'  <key>CFBundleIdentifier</key>' \
-		'  <string>com.doineedanupgrade.scanner</string>' \
+		'  <string>com.doineedtoupgrade.scanner</string>' \
 		'  <key>CFBundleName</key>' \
 		'  <string>$(APP_NAME)</string>' \
 		'  <key>CFBundlePackageType</key>' \
@@ -92,7 +92,7 @@ mac-arm: $(OUTPUT_DIR) icon
 		'  <key>CFBundleIconFile</key>' \
 		'  <string>$(APP_NAME)</string>' \
 		'  <key>CFBundleIdentifier</key>' \
-		'  <string>com.doineedanupgrade.scanner</string>' \
+		'  <string>com.doineedtoupgrade.scanner</string>' \
 		'  <key>CFBundleName</key>' \
 		'  <string>$(APP_NAME)</string>' \
 		'  <key>CFBundlePackageType</key>' \
@@ -115,7 +115,7 @@ linux: $(OUTPUT_DIR)
 	@rm -rf $(APPIMAGE_CACHE)/AppDir
 	@mkdir -p $(APPIMAGE_CACHE)/AppDir/usr/bin
 	@cp $(OUTPUT_DIR)/$(APP_NAME)-Linux-bin $(APPIMAGE_CACHE)/AppDir/usr/bin/$(APP_NAME)
-	@cp linux-appimage/DoINeedAnUpgrade.desktop $(APPIMAGE_CACHE)/AppDir/$(APP_NAME).desktop
+	@cp linux-appimage/DoINeedToUpgrade.desktop $(APPIMAGE_CACHE)/AppDir/$(APP_NAME).desktop
 	@cp ../public/icon-512.png $(APPIMAGE_CACHE)/AppDir/$(APP_NAME).png
 	@printf '#!/bin/sh\nHERE=$$(dirname "$$(readlink -f "$$0")")\nexec "$$HERE/usr/bin/$(APP_NAME)" "$$@"\n' \
 		> $(APPIMAGE_CACHE)/AppDir/AppRun
@@ -176,7 +176,7 @@ deb: $(OUTPUT_DIR)
 	@chmod 755 $(APPIMAGE_CACHE)/deb/usr/bin/$(APP_NAME)
 	@cp linux-appimage/$(APP_NAME).desktop $(APPIMAGE_CACHE)/deb/usr/share/applications/
 	@cp ../public/icon-512.png $(APPIMAGE_CACHE)/deb/usr/share/icons/hicolor/256x256/apps/$(APP_NAME).png
-	@printf 'Package: doineedanupgrade\nVersion: 1.0\nSection: utils\nPriority: optional\nArchitecture: amd64\nMaintainer: DoINeedAnUpgrade\nDescription: Hardware scanner for DoINeedAnUpgrade\n Detects hardware specs and opens the web app.\n' \
+	@printf 'Package: doineedtoupgrade\nVersion: 1.0\nSection: utils\nPriority: optional\nArchitecture: amd64\nMaintainer: DoINeedToUpgrade\nDescription: Hardware scanner for DoINeedToUpgrade\n Detects hardware specs and opens the web app.\n' \
 		> $(APPIMAGE_CACHE)/deb/DEBIAN/control
 	@docker run --rm \
 		-v $(CURDIR)/$(APPIMAGE_CACHE):/work \

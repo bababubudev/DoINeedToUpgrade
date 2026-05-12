@@ -13,7 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "DoINeedAnUpgrade"
+        window.title = "DoINeedToUpgrade"
         window.center()
 
         // Content view

@@ -4,7 +4,7 @@ export function StructuredData() {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'Do I Need An Upgrade',
+    name: 'Do I Need To Upgrade',
     description: 'Check if your PC can run any Steam game. Compare your CPU, GPU, RAM and storage against game requirements instantly.',
     url: baseUrl,
     applicationCategory: 'UtilityApplication',

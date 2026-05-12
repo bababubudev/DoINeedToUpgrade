@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 }
 
 function generatePowerShellScript(baseUrl: string): string {
-  return `# DoINeedAnUpgrade Hardware Scanner
+  return `# DoINeedToUpgrade Hardware Scanner
 # Usage: irm ${baseUrl}/api/scan.ps1 | iex
 
 \$ErrorActionPreference = "Continue"

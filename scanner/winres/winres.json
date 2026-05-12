@@ -14,10 +14,10 @@
     "#1": {
       "0409": {
         "identity": {
-          "name": "com.doineedanupgrade.scanner",
+          "name": "com.doineedtoupgrade.scanner",
           "version": "1.0.0.0"
         },
-        "description": "DoINeedAnUpgrade Hardware Scanner",
+        "description": "DoINeedToUpgrade Hardware Scanner",
         "minimum-os": "win7",
         "dpi-awareness": "system"
       }
@@ -32,13 +32,13 @@
         },
         "info": {
           "0409": {
-            "CompanyName": "DoINeedAnUpgrade",
-            "FileDescription": "DoINeedAnUpgrade Hardware Scanner",
+            "CompanyName": "DoINeedToUpgrade",
+            "FileDescription": "DoINeedToUpgrade Hardware Scanner",
             "FileVersion": "1.0.0.0",
-            "InternalName": "DoINeedAnUpgrade",
-            "LegalCopyright": "DoINeedAnUpgrade",
-            "OriginalFilename": "DoINeedAnUpgrade.exe",
-            "ProductName": "DoINeedAnUpgrade",
+            "InternalName": "DoINeedToUpgrade",
+            "LegalCopyright": "DoINeedToUpgrade",
+            "OriginalFilename": "DoINeedToUpgrade.exe",
+            "ProductName": "DoINeedToUpgrade",
             "ProductVersion": "1.0.0.0"
           }
         }

@@ -213,7 +213,7 @@ export default function StepSystemSpecs({
           <div className="mt-14 w-full max-w-2xl space-y-3">
             <h2 className="text-lg font-semibold opacity-80">What is this?</h2>
             <p className="text-sm opacity-60 leading-relaxed">
-              <strong>Do I Need An Upgrade?</strong> checks whether your PC can run a
+              <strong>Do I Need To Upgrade?</strong> checks whether your PC can run a
               game by comparing your hardware against its system requirements. Search
               for any Steam game above, and we&apos;ll auto-detect your specs and tell
               you if you&apos;re good to go or what you might need to upgrade.

@@ -38,7 +38,7 @@ type PlatformInfo = {
 const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   windows: {
     label: "Windows",
-    appFiles: [{ label: "Windows", file: "/downloads/DoINeedAnUpgrade.exe" }],
+    appFiles: [{ label: "Windows", file: "/downloads/DoINeedToUpgrade.exe" }],
     terminalCommand: { label: "PowerShell", command: "irm {BASE}/api/scan.ps1 | iex" },
     stepGroups: [
       { primary: "Double-click the downloaded file to run." },
@@ -48,8 +48,8 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   macos: {
     label: "macOS",
     appFiles: [
-      { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedAnUpgrade-Mac-AppleSilicon.dmg" },
-      { label: "Intel Mac", file: "/downloads/DoINeedAnUpgrade-Mac-Intel.dmg" },
+      { label: "Apple Silicon (M1/M2/M3)", file: "/downloads/DoINeedToUpgrade-Mac-AppleSilicon.dmg" },
+      { label: "Intel Mac", file: "/downloads/DoINeedToUpgrade-Mac-Intel.dmg" },
     ],
     terminalCommand: { label: "Terminal", command: "curl -s {BASE}/api/scan | bash" },
     stepGroups: [
@@ -58,7 +58,7 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
         primary: <>On first launch, go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>&quot;Open Anyway&quot;</strong>.</>,
         alternatives: [{
           text: "Remove the quarantine and open via Terminal:",
-          terminalCommand: "xattr -d com.apple.quarantine /Applications/DoINeedAnUpgrade*.app && open /Applications/DoINeedAnUpgrade*.app",
+          terminalCommand: "xattr -d com.apple.quarantine /Applications/DoINeedToUpgrade*.app && open /Applications/DoINeedToUpgrade*.app",
         }],
       },
       { primary: "The scanner will detect your specs and open this page with them imported automatically." },
@@ -67,8 +67,8 @@ const platformInfo: Record<ClientPlatform, PlatformInfo> = {
   linux: {
     label: "Linux",
     appFiles: [
-      { label: ".deb (Ubuntu/Debian)", file: "/downloads/DoINeedAnUpgrade-Linux.deb" },
-      { label: ".AppImage (Other)", file: "/downloads/DoINeedAnUpgrade-Linux.AppImage" },
+      { label: ".deb (Ubuntu/Debian)", file: "/downloads/DoINeedToUpgrade-Linux.deb" },
+      { label: ".AppImage (Other)", file: "/downloads/DoINeedToUpgrade-Linux.AppImage" },
     ],
     terminalCommand: { label: "Terminal", command: "curl -s {BASE}/api/scan | bash" },
     stepGroups: [

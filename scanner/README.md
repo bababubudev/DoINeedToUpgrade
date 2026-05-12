@@ -1,4 +1,4 @@
-# DoINeedAnUpgrade Hardware Scanner
+# DoINeedToUpgrade Hardware Scanner
 
 Cross-platform hardware detection tool written in Go that detects CPU, GPU, RAM, storage, and opens the browser with specs auto-imported.
 
@@ -10,10 +10,10 @@ make all  # Builds for Windows, macOS, and Linux
 ```
 
 Outputs go to `../public/downloads/`:
-- `DoINeedAnUpgrade.exe` — Windows
-- `DoINeedAnUpgrade-Mac-Intel.app` — macOS Intel
-- `DoINeedAnUpgrade-Mac-AppleSilicon.app` — macOS Apple Silicon (arm64)
-- `DoINeedAnUpgrade-Linux` — Linux (self-extracting script)
+- `DoINeedToUpgrade.exe` — Windows
+- `DoINeedToUpgrade-Mac-Intel.app` — macOS Intel
+- `DoINeedToUpgrade-Mac-AppleSilicon.app` — macOS Apple Silicon (arm64)
+- `DoINeedToUpgrade-Linux` — Linux (self-extracting script)
 
 ## Usage
 

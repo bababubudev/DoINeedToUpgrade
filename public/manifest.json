@@ -1,5 +1,5 @@
 {
-  "name": "Do I Need An Upgrade",
+  "name": "Do I Need To Upgrade",
   "short_name": "PC Upgrade",
   "description": "Check if your PC can run any Steam game. Compare your CPU, GPU, RAM and storage against game requirements instantly.",
   "start_url": "/",

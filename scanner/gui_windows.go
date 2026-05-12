@@ -44,5 +44,5 @@ func runGUI() {
 			msg += "\n- " + e
 		}
 	}
-	showMessage("DoINeedAnUpgrade", msg)
+	showMessage("DoINeedToUpgrade", msg)
 }

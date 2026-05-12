@@ -14,26 +14,26 @@ const montserrat = Montserrat({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://doineedtoupgrade.com"),
   title: {
-    default: "Do I Need An Upgrade",
-    template: "%s | Do I Need An Upgrade",
+    default: "Do I Need To Upgrade",
+    template: "%s | Do I Need To Upgrade",
   },
   description: "Check if your PC can run any Steam game. Compare your CPU, GPU, RAM and storage against game requirements instantly.",
   keywords: ["PC upgrade", "system requirements", "can I run it", "Steam games", "PC specs", "hardware check", "GPU comparison", "CPU benchmark"],
-  authors: [{ name: "Do I Need An Upgrade" }],
-  creator: "Do I Need An Upgrade",
+  authors: [{ name: "Do I Need To Upgrade" }],
+  creator: "Do I Need To Upgrade",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "Do I Need An Upgrade",
-    title: "Do I Need An Upgrade",
+    siteName: "Do I Need To Upgrade",
+    title: "Do I Need To Upgrade",
     description: "Check if your PC can run any Steam game. Compare your hardware against game requirements instantly.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Do I Need An Upgrade",
+    title: "Do I Need To Upgrade",
     description: "Check if your PC can run any Steam game. Compare your hardware against game requirements instantly.",
   },
   robots: {

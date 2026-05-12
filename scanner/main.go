@@ -54,7 +54,7 @@ func main() {
 
 func runTerminal() {
 	fmt.Println()
-	fmt.Println("=== DoINeedAnUpgrade Hardware Scanner ===")
+	fmt.Println("=== DoINeedToUpgrade Hardware Scanner ===")
 	fmt.Println()
 
 	result := detectSpecs()

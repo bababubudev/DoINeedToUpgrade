@@ -199,7 +199,7 @@ export default function StepResults({
             className="w-28 sm:w-28 rounded shadow-md relative z-10"
           />
           <div className="relative z-10 text-center sm:text-left">
-            <p className="text-base text-base-content/60">Do I need an upgrade for</p>
+            <p className="text-base text-base-content/60">Do I need to upgrade for</p>
             <h3 className="font-bold text-xl sm:text-2xl">{game.name}</h3>
           </div>
         </div>
