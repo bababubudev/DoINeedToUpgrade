@@ -75,7 +75,7 @@ export default function RootLayout({
             <SettingsDropdown />
           </div>
         </div>
-        <main className="flex-1 overflow-y-auto relative z-10">
+        <main className="flex-1 overflow-y-auto relative z-10 scrollbar-subtle" style={{ scrollbarGutter: "stable" }}>
           <div className="container mx-auto px-4 py-6 max-w-5xl">
             {children}
           </div>
