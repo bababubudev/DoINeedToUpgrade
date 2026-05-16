@@ -272,6 +272,8 @@ export default function GeometricBackground() {
         isPaused = false;
         if (!isMotionReduced) {
           lastFrameTime = 0;
+          fpsWindowStart = 0;
+          fpsDrawCount = 0;
           animationId = requestAnimationFrame(loop);
         }
       }
