@@ -8,6 +8,21 @@
 @layer components {
   .card { @apply shadow-sm border border-base-300; }
   .input-bordered { @apply border-base-300 bg-base-100; }
+  /* Tighter card padding on mobile so content fits within narrow viewports */
+  .card-body { padding: 1rem; }
+  @media (min-width: 640px) {
+    .card-body { padding: 2rem; }
+  }
+  /* daisyUI's .collapse uses CSS grid where items default to min-width:auto,
+     which lets wide unwrappable content (e.g. long commands) push the grid
+     wider than its container. Force grid items to shrink. */
+  .collapse {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .collapse > .collapse-title,
+  .collapse > .collapse-content {
+    min-width: 0;
+  }
 }
 
 .steps .step::before {

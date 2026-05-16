@@ -66,9 +66,9 @@ function AnimatedFpsNumber({ target }: { target: number }) {
   }, [target]);
 
   return (
-    <div className="absolute inset-y-0 right-3 flex flex-col justify-center items-end select-none pointer-events-none opacity-[0.18] text-base-content">
-      <div className="text-sm font-bold tracking-[0.2em] uppercase leading-none mb-0.5">~FPS</div>
-      <div className="text-6xl font-black tabular-nums leading-none">{count}</div>
+    <div className="absolute inset-y-0 right-2 sm:right-3 flex flex-col justify-center items-end select-none pointer-events-none opacity-[0.18] text-base-content">
+      <div className="text-[10px] sm:text-sm font-bold tracking-[0.2em] uppercase leading-none mb-0.5">~FPS</div>
+      <div className="text-4xl sm:text-6xl font-black tabular-nums leading-none">{count}</div>
     </div>
   );
 }
@@ -100,21 +100,21 @@ function VerdictCard({ result }: { result: VerdictResult }) {
   return (
     <div className={`collapse rounded-box ${cardColors[result.verdict]} cursor-pointer hover:brightness-95 transition-[filter]`}>
       <input type="checkbox" onChange={(e) => setOpen(e.target.checked)} />
-      <div className="collapse-title flex items-center justify-between !min-h-0 !py-5 !px-4">
-        <div className="flex items-center gap-3">
-          <Icon className="w-6 h-6 shrink-0" />
-          <h3 className="text-base font-bold">{result.title}</h3>
+      <div className="collapse-title flex items-center justify-between gap-3 !min-h-0 !py-4 sm:!py-5 !px-3 sm:!px-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
+          <h3 className="text-sm sm:text-base font-bold break-words">{result.title}</h3>
         </div>
-        <div className="flex items-center gap-1 opacity-70 text-xs font-medium">
-          <span>{open ? "Hide" : "Show"} details</span>
+        <div className="flex items-center gap-1 opacity-70 text-xs font-medium shrink-0">
+          <span className="hidden sm:inline">{open ? "Hide" : "Show"} details</span>
           <HiChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
         </div>
       </div>
-      <div className={`collapse-content px-4 ${contentColors[result.verdict]} rounded-b-box text-base-content`}>
+      <div className={`collapse-content px-3 sm:px-4 ${contentColors[result.verdict]} rounded-b-box text-base-content`}>
         <p className="text-sm text-base-content/70 pt-3">{result.description}</p>
         {hasUpgrades && (
-          <div className="overflow-x-auto mt-3">
-            <table className="table table-sm w-full [&_tr]:border-base-content/10">
+          <div className="overflow-x-auto scrollbar-subtle mt-3 -mx-3 sm:mx-0 px-3 sm:px-0">
+            <table className="table table-xs sm:table-sm w-full [&_tr]:border-base-content/10">
               <thead>
                 <tr className="text-base-content/40">
                   <th>Component</th>
@@ -172,20 +172,20 @@ export default function StepResults({
   return (
     <div className="animate-fadeIn flex flex-col gap-4">
       {game && (
-        <div className="relative flex flex-col sm:flex-row items-center gap-4 p-4 rounded-lg bg-base-200/50 overflow-hidden">
+        <div className="relative flex flex-row items-center gap-3 sm:gap-4 p-3 sm:p-4 pr-16 sm:pr-4 rounded-lg bg-base-200/50 overflow-hidden">
           {/* FPS counter watermark (replaces verdict icon when estimate is available) */}
           {fpsVisible ? (
             <AnimatedFpsNumber target={fpsEstimate.mid} />
           ) : shouldHideFps ? (
             <button
               onClick={() => setShowHiddenFps(true)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 text-base-content/5 hover:text-base-content/15 transition-colors cursor-pointer select-none"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-20 sm:h-20 text-base-content/5 hover:text-base-content/15 transition-colors cursor-pointer select-none"
               title="Show estimated FPS anyway"
             >
               <HiEmojiSad className="w-full h-full" />
             </button>
           ) : (() => {
-            const iconClass = "absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 text-base-content/5 select-none pointer-events-none";
+            const iconClass = "absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-20 sm:h-20 text-base-content/5 select-none pointer-events-none";
             if (!verdict || verdict.verdict === "unknown") return <HiQuestionMarkCircle className={iconClass} />;
             if (verdict.verdict === "pass") return <HiCheckCircle className={iconClass} />;
             if (verdict.verdict === "minimum") return <HiExclamation className={iconClass} />;
@@ -196,11 +196,11 @@ export default function StepResults({
           <img
             src={game.headerImage}
             alt={game.name}
-            className="w-28 sm:w-28 rounded shadow-md relative z-10"
+            className="w-20 sm:w-28 rounded shadow-md relative z-10 shrink-0"
           />
-          <div className="relative z-10 text-center sm:text-left">
-            <p className="text-base text-base-content/60">Do I need to upgrade for</p>
-            <h3 className="font-bold text-xl sm:text-2xl">{game.name}</h3>
+          <div className="relative z-10 text-left min-w-0 flex-1">
+            <p className="text-xs sm:text-base text-base-content/60">Do I need to upgrade for</p>
+            <h3 className="font-bold text-base sm:text-2xl break-words leading-tight">{game.name}</h3>
           </div>
         </div>
       )}
@@ -292,7 +292,7 @@ export default function StepResults({
         )}
       </div>
 
-      <div className="flex gap-3 justify-center pt-2">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center pt-2">
         <button className="btn btn-primary" onClick={onCheckAnother}>
           Check Another Game
         </button>

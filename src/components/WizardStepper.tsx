@@ -11,7 +11,7 @@ const defaultSteps = ["Pick a Game", "Your System", "Results"];
 
 export default function WizardStepper({ currentStep, onStepClick, maxReached, steps = defaultSteps }: Props) {
   return (
-    <ul className="steps steps-horizontal w-full max-w-xl mx-auto mb-6">
+    <ul className="steps steps-horizontal w-full max-w-xl mx-auto mb-4 sm:mb-6 text-xs sm:text-sm">
       {steps.map((label, i) => {
         const stepNum = i + 1;
         const completed = stepNum < currentStep;

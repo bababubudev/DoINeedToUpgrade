@@ -109,7 +109,7 @@ export default function GameSearch({ onSelect, initialSource = "steam" }: Props)
   }
 
   return (
-    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm">
+    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm w-full max-w-full overflow-visible">
       <div className="card-body">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="card-title">Search for a Game</h2>
@@ -148,7 +148,7 @@ export default function GameSearch({ onSelect, initialSource = "steam" }: Props)
           {loading ? (
             <span className="loading loading-spinner loading-sm absolute right-3 top-3" />
           ) : !query && !isFocused && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none flex items-center gap-0.5 text-xs">
+            <span className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none items-center gap-0.5 text-xs">
               <kbd className="kbd kbd-xs">{isMac ? "⌘" : "ctrl"}</kbd>
               <span>+</span>
               <kbd className="kbd kbd-xs">k</kbd>
