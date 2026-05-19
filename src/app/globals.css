@@ -4,6 +4,8 @@
 
 @layer base {
   body { @apply antialiased; }
+  main { scrollbar-width: none; }
+  main::-webkit-scrollbar { display: none; }
 }
 @layer components {
   .card { @apply shadow-sm border border-base-300; }
