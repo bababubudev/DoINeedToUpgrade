@@ -10,6 +10,21 @@
 @layer components {
   .card { @apply shadow-sm border border-base-300; }
   .input-bordered { @apply border-base-300 bg-base-100; }
+  /* Tighter card padding on mobile so content fits within narrow viewports */
+  .card-body { padding: 1rem; }
+  @media (min-width: 640px) {
+    .card-body { padding: 2rem; }
+  }
+  /* daisyUI's .collapse uses CSS grid where items default to min-width:auto,
+     which lets wide unwrappable content (e.g. long commands) push the grid
+     wider than its container. Force grid items to shrink. */
+  .collapse {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .collapse > .collapse-title,
+  .collapse > .collapse-content {
+    min-width: 0;
+  }
 }
 
 .steps .step::before {
@@ -74,6 +89,22 @@
   animation-duration: 0.01ms !important;
   transition-duration: 0.01ms !important;
 }
+
+.scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--bc) / 0.2) transparent;
+}
+.scrollbar-subtle::-webkit-scrollbar { width: 8px; height: 8px; }
+.scrollbar-subtle::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-subtle::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--bc) / 0.2);
+  border-radius: 8px;
+}
+.scrollbar-subtle::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--bc) / 0.35);
+}
+.scrollbar-subtle::-webkit-scrollbar-button { display: none; }
+.scrollbar-subtle::-webkit-scrollbar-corner { background: transparent; }
 
 @keyframes scroll-text {
   0%, 5%   { transform: translateX(0); }

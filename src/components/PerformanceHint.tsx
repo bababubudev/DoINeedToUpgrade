@@ -23,12 +23,12 @@ export default function PerformanceHint() {
   }
 
   return (
-    <div className="toast toast-end toast-top z-50 mt-16">
-      <div className="alert alert-warning shadow-lg gap-2 py-2">
-        <span className="text-sm">
+    <div className="fixed right-2 sm:right-4 top-16 sm:top-20 z-50 max-w-[calc(100vw-1rem)] sm:max-w-sm">
+      <div className="alert alert-warning shadow-lg gap-2 py-2 px-3 flex items-start sm:items-center">
+        <span className="text-sm flex-1 min-w-0 break-words">
           Animations may be affecting performance. You can disable them in <strong>Settings</strong>.
         </span>
-        <button className="btn btn-ghost btn-xs" onClick={dismiss} aria-label="Dismiss">
+        <button className="btn btn-ghost btn-xs btn-circle shrink-0" onClick={dismiss} aria-label="Dismiss">
           <HiX className="w-4 h-4" />
         </button>
       </div>

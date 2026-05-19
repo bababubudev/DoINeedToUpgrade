@@ -148,13 +148,13 @@ export default function StepSystemSpecs({
     <>
       <div className="animate-fadeIn flex flex-col gap-4 mt-8 py-2">
         {savedAt && (
-          <div className="flex items-center justify-between text-xs text-base-content/40 px-1">
-            <span>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-base-content/40 px-1">
+            <span className="min-w-0">
               Using specs saved on{" "}
               {new Date(savedAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
             </span>
             {onClearSaved && (
-              <button className="btn btn-ghost btn-xs text-base-content/40 gap-1" onClick={onClearSaved}>
+              <button className="btn btn-ghost btn-xs text-base-content/40 gap-1 shrink-0" onClick={onClearSaved}>
                 <HiX className="w-3 h-3" />
                 Clear saved specs
               </button>
@@ -168,11 +168,11 @@ export default function StepSystemSpecs({
             <img
               src={game.headerImage}
               alt={game.name}
-              className="w-24 rounded shadow-sm"
+              className="w-20 sm:w-24 rounded shadow-sm shrink-0"
             />
-            <div>
-              <p className="text-sm text-base-content/70">Checking compatibility for</p>
-              <h3 className="font-bold text-lg">{game.name}</h3>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-base-content/70">Checking compatibility for</p>
+              <h3 className="font-bold text-base sm:text-lg break-words">{game.name}</h3>
             </div>
           </div>
         )}

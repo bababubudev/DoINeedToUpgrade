@@ -67,13 +67,44 @@ function ScrollingCell({ text, className }: { text: string; className: string })
   );
 }
 
+function MobileRow({ item }: { item: ComparisonItem }) {
+  return (
+    <div className="rounded-lg border border-base-300 bg-base-100/60 p-3 flex flex-col gap-2">
+      <div className="font-semibold text-sm">{item.label}</div>
+      <div className="text-xs">
+        <span className="text-base-content/50">Your system: </span>
+        <span className="break-words">{item.userValue}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className={`rounded px-2 py-1.5 text-xs ${cellColor(item.minStatus)}`}>
+          <div className="font-medium text-base-content/60 text-[10px] uppercase tracking-wide">Minimum</div>
+          <div className="break-words">{item.minValue}</div>
+        </div>
+        <div className={`rounded px-2 py-1.5 text-xs ${cellColor(item.recStatus)}`}>
+          <div className="font-medium text-base-content/60 text-[10px] uppercase tracking-wide">Recommended</div>
+          <div className="break-words">{item.recValue}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ComparisonResult({ items }: Props) {
   return (
-    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm">
-      <div className="card-body">
+    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm w-full max-w-full overflow-hidden">
+      <div className="card-body p-4 sm:p-6">
         <h2 className="card-title">Component Breakdown</h2>
-        <div className="overflow-x-auto">
-          <table className="table">
+
+        {/* Mobile: stacked cards */}
+        <div className="flex flex-col gap-2 sm:hidden">
+          {items.map((item) => (
+            <MobileRow key={item.label} item={item} />
+          ))}
+        </div>
+
+        {/* sm and up: table */}
+        <div className="hidden sm:block overflow-x-auto scrollbar-subtle">
+          <table className="table table-sm md:table-md">
             <thead>
               <tr>
                 <th>Component</th>
@@ -85,15 +116,15 @@ export default function ComparisonResult({ items }: Props) {
             <tbody>
               {items.map((item) => (
                 <tr key={item.label}>
-                  <td className="font-semibold">{item.label}</td>
+                  <td className="font-semibold whitespace-normal break-words">{item.label}</td>
                   <td className="whitespace-normal break-words">{item.userValue}</td>
                   <ScrollingCell
                     text={item.minValue}
-                    className={`text-sm max-w-[120px] sm:max-w-[200px] ${cellColor(item.minStatus)}`}
+                    className={`text-sm max-w-[150px] md:max-w-[200px] ${cellColor(item.minStatus)}`}
                   />
                   <ScrollingCell
                     text={item.recValue}
-                    className={`text-sm max-w-[120px] sm:max-w-[200px] ${cellColor(item.recStatus)}`}
+                    className={`text-sm max-w-[150px] md:max-w-[200px] ${cellColor(item.recStatus)}`}
                   />
                 </tr>
               ))}

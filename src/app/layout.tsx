@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
@@ -54,6 +54,12 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -64,9 +70,9 @@ export default function RootLayout({
       <head>
         <StructuredData />
       </head>
-      <body className={`${montserrat.className} h-full overflow-hidden flex flex-col bg-base-200`}>
+      <body className={`${montserrat.className} h-full w-full overflow-hidden flex flex-col bg-base-200`}>
         <GeometricBackground />
-        <div className="navbar bg-base-100/80 backdrop-blur-sm border-b border-base-300 px-4 relative z-20 flex-none">
+        <div className="navbar bg-base-100/80 backdrop-blur-sm border-b border-base-300 px-2 sm:px-4 min-h-0 py-2 relative z-20 flex-none">
           <div className="flex-1">
             <Logo />
           </div>
@@ -75,8 +81,8 @@ export default function RootLayout({
             <SettingsDropdown />
           </div>
         </div>
-        <main className="flex-1 overflow-y-auto relative z-10">
-          <div className="container mx-auto px-4 py-6 max-w-5xl">
+        <main className="flex-1 w-full max-w-full overflow-y-auto overflow-x-hidden relative z-10 scrollbar-subtle" style={{ scrollbarGutter: "stable" }}>
+          <div className="mx-auto w-full max-w-5xl px-3 sm:px-4 py-4 sm:py-6">
             {children}
           </div>
         </main>

@@ -44,7 +44,7 @@ export default function SystemSpecs({ specs, onChange, onSubmit, dirty, cpuList,
   }
 
   return (
-    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm">
+    <div className="card bg-base-100/80 backdrop-blur-sm shadow-sm w-full max-w-full overflow-hidden">
       <div className="card-body">
         <div className="flex items-center justify-between">
           <div>
