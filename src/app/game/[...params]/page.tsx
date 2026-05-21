@@ -79,6 +79,9 @@ export default async function GamePage({ params }: Props) {
 
   const minReqs = game.requirements.minimum;
   const recReqs = game.requirements.recommended;
+  const reqs = recReqs ?? minReqs;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://doineedtoupgrade.com";
+  const canonical = `${baseUrl}/game/${game.appid}/${correctSlug}`;
 
   // Check for multi-platform
   const otherPlatforms = game.availablePlatforms.filter((p) => {
@@ -150,8 +153,8 @@ export default async function GamePage({ params }: Props) {
       </div>
 
       {/* SEO prose — styled subtly so it reads as a natural footer, not filler */}
-      <section className="border-t border-base-content/5 pt-5 mt-2 text-xs text-base-content/30 leading-relaxed max-w-2xl">
-        <h2 className="text-sm font-medium text-base-content/40 mb-1.5">About {game.name} System Requirements</h2>
+      <section className="border-t border-base-content/10 pt-5 mt-2 text-sm text-base-content/60 leading-relaxed max-w-2xl">
+        <h2 className="text-base font-medium text-base-content/80 mb-1.5">About {game.name} System Requirements</h2>
         <p>
           {game.name} is available on {game.availablePlatforms.map((p) => platformLabels[p]).join(", ")}.
           {recReqs?.gpu && ` The recommended graphics card is ${recReqs.gpu}.`}
@@ -172,9 +175,15 @@ export default async function GamePage({ params }: Props) {
             "@context": "https://schema.org",
             "@type": "VideoGame",
             name: game.name,
+            url: canonical,
             image: game.headerImage,
-            gamePlatform: game.availablePlatforms.map((p) => platformLabels[p]),
+            applicationCategory: "GameApplication",
+            gamePlatform: "PC",
             operatingSystem: game.availablePlatforms.map((p) => platformLabels[p]).join(", "),
+            ...(reqs?.cpu && { processorRequirements: reqs.cpu }),
+            ...(reqs?.ram && { memoryRequirements: reqs.ram }),
+            ...(reqs?.storage && { storageRequirements: reqs.storage }),
+            ...(reqs?.os && { softwareRequirements: reqs.os }),
           }),
         }}
       />
