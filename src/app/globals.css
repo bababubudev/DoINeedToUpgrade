@@ -88,6 +88,15 @@
   transition-duration: 0.01ms !important;
 }
 
+/* DaisyUI adds `scrollbar-gutter: stable` to :root when any .modal-open is
+   present, which reserves an extra gutter on the right edge of the viewport.
+   Our layout already locks scrolling at <html>/<body> (overflow-hidden) and
+   reserves the gutter on <main>, so the html-level gutter shows up as empty
+   space next to the scrollbar. Opt back out. */
+:root:has(:is(.modal-open, .modal:target, .modal-toggle:checked + .modal, .modal[open])) {
+  scrollbar-gutter: auto;
+}
+
 .scrollbar-subtle {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--bc) / 0.2) transparent;
